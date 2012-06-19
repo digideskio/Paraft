@@ -16,13 +16,13 @@ public:
     explicit DataBlockController(QObject *parent = 0);
     ~DataBlockController();
 
-    void InitData(int globalID, Vector3d workerNumProcessesXYZ,
-                  Vector3d workerIDXYZ, DataSet dataset);
+    void InitData(int globalID, Vector3i workerNumProcessesXYZ,
+                  Vector3i workerIDXYZ, DataSet dataset);
 
     void TrackForward();
     void ExtractAllFeatures();
-    void UpdateLocalGraph(int workerID, Vector3d workerIDXYZ);
-    Vector3d ConvertLocalCoord2GlobalCoord(Vector3d point, Vector3d workerIDXYZ);
+    void UpdateLocalGraph(int workerID, Vector3i workerIDXYZ);
+    Vector3i ConvertLocalCoord2GlobalCoord(Vector3i point, Vector3i workerIDXYZ);
 
     // Accessor - DataManager
     float* GetMaskMatrixPointer() { return pDataManager->GetMaskMatrixPointer(); }
@@ -30,7 +30,7 @@ public:
     int GetVolumeDimX() { return pDataManager->GetVolumeDimX(); }
     int GetVolumeDimY() { return pDataManager->GetVolumeDimY(); }
     int GetVolumeDimZ() { return pDataManager->GetVolumeDimZ(); }
-    int GetVolumeSize() { return pDataManager->GetVolumeSize(); }
+    int GetVolumeSize() { return pDataManager->getVolumeSize(); }
     int GetFeatureVectorLength() { return pDataManager->GetFeatureVectorLength(); }
     vector<uint> GetHighlightedFeatures() { return highlightedFeatures; }
     vector<Feature> *GetFeatureVector(int index) { return pDataManager->GetFeatureVector(index); }
@@ -62,7 +62,7 @@ private:
     vector<Edge>    localGraph;
 
     void saveExtractedFeatures(vector<Feature>* f);
-    void initAdjacentBlocks(Vector3d workerNumProcessesXYZ, Vector3d workerIDXYZ);
+    void initAdjacentBlocks(Vector3i workerNumProcessesXYZ, Vector3i workerIDXYZ);
     
 };
 

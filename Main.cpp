@@ -5,11 +5,11 @@
 
 int main (int argc, char** argv) {
     if (argc != 5) {
-        std::cout << "argc.0: " << argv[0] << endl;
-        std::cout << "argc.1: " << argv[1] << endl;
-        std::cout << "argc.2: " << argv[2] << endl;
-        std::cout << "argc.3: " << argv[3] << endl;
-        std::cout << "argc.4: " << argv[4] << endl;
+        std::cout << "argv[0]: " << argv[0] << endl;
+        std::cout << "argv[1]: " << argv[1] << endl;
+        std::cout << "argv[2]: " << argv[2] << endl;
+        std::cout << "argv[3]: " << argv[3] << endl;
+        std::cout << "argv[4]: " << argv[4] << endl;
         cerr << "Usage : " << argv[0] << " npx npy npz #dataset(0/1)" << endl;
         return 0;
     }

@@ -22,7 +22,6 @@ TARGET =
 
 SOURCES += \
     Main.cpp \
-    DataHolder.cpp \
     DataManager.cpp \
     FeatureTracker.cpp \
     DataBlockController.cpp \
@@ -30,7 +29,6 @@ SOURCES += \
 
 HEADERS += \
     Consts.h \
-    DataHolder.h \
     DataManager.h \
     FeatureTracker.h \
     DataBlockController.h \

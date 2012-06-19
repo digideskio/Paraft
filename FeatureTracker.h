@@ -84,18 +84,18 @@ private:
     list<DataPoint> surfacePoints;  // For edge points saving
     list<DataPoint> innerPoints;    // Hold the temp buffer of the voxel position
 
-    Vector3d    centroid;       // center point of a single feature
-    Vector3d    featureMin;    // min value of x,y,z of a single feature
-    Vector3d    featureMax;    // max value of x,y,z of a single feature
-    Vector3d    sumCoordinateValue;    // Sum of the voxel values of the feature
+    Vector3i    centroid;       // center point of a single feature
+    Vector3i    featureMin;    // min value of x,y,z of a single feature
+    Vector3i    featureMax;    // max value of x,y,z of a single feature
+    Vector3i    sumCoordinateValue;    // Sum of the voxel values of the feature
 
-    Vector3d    sumBoundaryXYZValue[6];  // Sum of the voxel values on boundary surface
+    Vector3i    sumBoundaryXYZValue[6];  // Sum of the voxel values on boundary surface
     int         numVoxelonBoundary[6];
 
     // 6 possible ghost area
-    Vector3d    boundaryCentroid[6];   // center point of the ghost area of a single feature
-    Vector3d    boundaryMin[6];    // min value of (x,y)|(x,z)|(y,z) of the boundary surface
-    Vector3d    boundaryMax[6];    // max value of (x,y)|(x,z)|(y,z) of the boundary surface
+    Vector3i    boundaryCentroid[6];   // center point of the ghost area of a single feature
+    Vector3i    boundaryMin[6];    // min value of (x,y)|(x,z)|(y,z) of the boundary surface
+    Vector3i    boundaryMax[6];    // max value of (x,y)|(x,z)|(y,z) of the boundary surface
     vector<int> touchedSurfaces; // Which boundary the feature touches
 
     FloatPoint delta;

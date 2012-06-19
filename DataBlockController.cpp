@@ -14,9 +14,9 @@ DataBlockController::~DataBlockController() {
     pFeatureTracker->~FeatureTracker();
 }
 
-void DataBlockController::InitData(int globalID, Vector3d workerNumProcessesXYZ,
-                                   Vector3d workerIDXYZ, DataSet ds) {
-    Vector3d dimXYZ; {
+void DataBlockController::InitData(int globalID, Vector3i workerNumProcessesXYZ,
+                                   Vector3i workerIDXYZ, DataSet ds) {
+    Vector3i dimXYZ; {
         dimXYZ.x = DATA_DIM_X;
         dimXYZ.y = DATA_DIM_Y;
         dimXYZ.z = DATA_DIM_Z;
@@ -36,7 +36,7 @@ void DataBlockController::InitData(int globalID, Vector3d workerNumProcessesXYZ,
     pDataManager->ReadDataSequence(dataset.data_path, dataset.prefix, dataset.surfix,
                                    dataset.index_start, dataset.index_end,
                                    dimXYZ, workerNumProcessesXYZ, workerIDXYZ);
-    pDataManager->CreateNewMaskMatrix(pDataManager->GetVolumeSize());
+    pDataManager->CreateNewMaskMatrix(pDataManager->getVolumeSize());
 
     xs = pDataManager->GetVolumeDimX();
     ys = pDataManager->GetVolumeDimY();
@@ -79,7 +79,7 @@ void DataBlockController::AddHighlightedFeature(int index) {
 }
 
 void DataBlockController::ResetMaskMatrixValue(float value) {
-    memset(pDataManager->GetMaskMatrixPointer(), value, sizeof(float)*pDataManager->GetVolumeSize());
+    memset(pDataManager->GetMaskMatrixPointer(), value, sizeof(float)*pDataManager->getVolumeSize());
 }
 
 void DataBlockController::saveExtractedFeatures(vector<Feature>* f) {
@@ -90,8 +90,8 @@ void DataBlockController::saveExtractedFeatures(vector<Feature>* f) {
     pDataManager->SaveExtractedFeatures(temp);
 }
 
-void DataBlockController::initAdjacentBlocks(Vector3d workerNumProcessesXYZ,
-                                             Vector3d workerIDXYZ) {
+void DataBlockController::initAdjacentBlocks(Vector3i workerNumProcessesXYZ,
+                                             Vector3i workerIDXYZ) {
     int npx = workerNumProcessesXYZ.x;
     int npy = workerNumProcessesXYZ.y;
     int npz = workerNumProcessesXYZ.z;
@@ -106,7 +106,7 @@ void DataBlockController::initAdjacentBlocks(Vector3d workerNumProcessesXYZ,
     adjacentBlocks[SURFACE_BACK]   = z+1 <  npz? npx*npy*(z+1) + npx*y + x : -1;
 }
 
-void DataBlockController::UpdateLocalGraph(int workerID, Vector3d workerIDXYZ) {
+void DataBlockController::UpdateLocalGraph(int workerID, Vector3i workerIDXYZ) {
     localGraph.clear();
 
     vector<Feature> *pCurrentFeatures;
@@ -119,7 +119,7 @@ void DataBlockController::UpdateLocalGraph(int workerID, Vector3d workerIDXYZ) {
     int surface = SURFACE_NULL;
     int adjacentBlock = -1;
     Feature feature;
-    Vector3d centroid;
+    Vector3i centroid;
     Edge edge;
     for (int i = 0; i < pCurrentFeatures->size(); i++) {
         feature = pCurrentFeatures->at(i);
@@ -144,8 +144,8 @@ void DataBlockController::UpdateLocalGraph(int workerID, Vector3d workerIDXYZ) {
     }
 }
 
-Vector3d DataBlockController::ConvertLocalCoord2GlobalCoord(Vector3d point, Vector3d workerIDXYZ) {
-    Vector3d globalCoord;
+Vector3i DataBlockController::ConvertLocalCoord2GlobalCoord(Vector3i point, Vector3i workerIDXYZ) {
+    Vector3i globalCoord;
     globalCoord.x = point.x + xs * workerIDXYZ.x;
     globalCoord.y = point.y + ys * workerIDXYZ.y;
     globalCoord.z = point.z + zs * workerIDXYZ.z;

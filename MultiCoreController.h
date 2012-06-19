@@ -50,8 +50,8 @@ private:
     int globalNumProcesses;
     int workerNumProcesses;
 
-    Vector3d wSegXYZ;
-    Vector3d wXYZ;
+    Vector3i wSegXYZ;
+    Vector3i wXYZ;
 
     Edge *pGlobalGraph;
     int globalGraphSize;

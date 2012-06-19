@@ -181,7 +181,7 @@ void MultiCoreController::trackForward_worker() {
     csv.num_feature = globalGraphSize / 2;
 
     char result[1024];
-    sprintf(result, "../data/result.csv");
+    sprintf(result, "./Data/result.csv");
 
     ofstream outf(result, ios::out | ios::app);
     outf << csv.num_worker << "," << csv.num_feature << ","

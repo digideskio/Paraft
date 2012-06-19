@@ -34,15 +34,16 @@
 
 using namespace std;
 
-typedef struct { int x; int y; int z; } DataPoint, Vector3d;
+typedef struct { int x; int y; int z; } DataPoint, Vector3i;
 typedef struct { float x; float y; float z; } FloatPoint, Vector3f;
+typedef struct { float x; float y; } Vector2f;
 typedef struct { float sim; int idx; } Info;
 
 struct Edge {
     int id;
     int start;
     int end;
-    Vector3d centroid;
+    Vector3i centroid;
 };    // start ---id---> end @ centroid
 
 struct DataSet {
@@ -59,17 +60,17 @@ struct Feature {
     list<DataPoint> SurfacePoints;  // Edge information of the feature
     list<DataPoint> InnerPoints;    // All the voxels in the feature
     list<float>     Uncertainty;    // Uncertainty measure of each edge points
-    Vector3d        Centroid;       // Centers position of the feature
-    Vector3d        Min;            // Minimum position (x,y,z) on boundary
-    Vector3d        Max;            // Maximum position (x,y,z) on boundary
-    Vector3d        BoundaryCentroid[6];   // center point on boundary surface
-    Vector3d        BoundaryMin[6];    // min value on boundary surface
-    Vector3d        BoundaryMax[6];    // max value on boundary surface
+    Vector3i        Centroid;       // Centers position of the feature
+    Vector3i        Min;            // Minimum position (x,y,z) on boundary
+    Vector3i        Max;            // Maximum position (x,y,z) on boundary
+    Vector3i        BoundaryCentroid[6];   // center point on boundary surface
+    Vector3i        BoundaryMin[6];    // min value on boundary surface
+    Vector3i        BoundaryMax[6];    // max value on boundary surface
     vector<int>     TouchedSurfaces;
 };
 
 typedef struct {
-    Vector3d    num_Seg;
+    Vector3i    num_Seg;
     int         num_worker;
     int         num_feature;
     double      time_1;
