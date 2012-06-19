@@ -21,4 +21,17 @@ TARGET =
 # Directories
 
 SOURCES += \
-    Main.cpp
+    Main.cpp \
+    DataHolder.cpp \
+    DataManager.cpp \
+    FeatureTracker.cpp \
+    DataBlockController.cpp \
+    MultiCoreController.cpp
+
+HEADERS += \
+    Consts.h \
+    DataHolder.h \
+    DataManager.h \
+    FeatureTracker.h \
+    DataBlockController.h \
+    MultiCoreController.h
