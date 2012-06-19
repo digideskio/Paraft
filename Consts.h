@@ -36,7 +36,6 @@
 using namespace std;
 
 typedef struct { float x; float y; } Vector2f;
-//typedef struct { float min; float max; } MinMax;
 
 class MinMax {
 public:

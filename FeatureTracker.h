@@ -1,21 +1,21 @@
 #ifndef FEATURETRACKER_H
 #define FEATURETRACKER_H
 
-#include <QObject>
-#include <QHash>
-#include <list>
+//#include <QObject>
+//#include <QHash>
 #include <vector>
+#include <list>
+#include <hash_map.h>
 #include <map>
 #include <math.h>
 #include "Consts.h"
 
 using namespace std;
 
-class FeatureTracker : public QObject {
-    Q_OBJECT
+class FeatureTracker {
 
 public:
-    FeatureTracker(int xsize, int ysize, int zsize, QObject *parent = 0);
+    FeatureTracker(int xsize, int ysize, int zsize);
     ~FeatureTracker() ;
 
     void Reset();
@@ -39,7 +39,9 @@ public:
     int GetPointIndex(DataPoint point) { return xs*ys*point.z+xs*point.y+point.x; }
     float* GetTFColorMap() { return pTFColorMap; }
     int GetTFResolution() { return tfResolution; }
-    QHash<int, float> GetDifferentPoints() { return differentPoints; }
+//    QHash<int, float> GetDifferentPoints() { return differentPoints; }
+    hash_map<int, float> GetDiffPoints() { return diffPoints; }
+
 
     // Get all features information of current time step
     vector<Feature>* GetCurrentFeatureInfo() { return &currentFeaturesHolder; }
@@ -57,7 +59,6 @@ private:
 
     float getOpacity(float DataValue);
 
-
     void resetFeatureBoundaryInfo();
     void updateDiffPointList(int index, float valule);
     void updateFeatureMinMax(DataPoint point);
@@ -73,11 +74,13 @@ private:
     int numVoxelinFeature;      // Used to calculate the number of voxel in the feature
     int xs,ys,zs;               // Dimension of the dataset
     float maskValue;
-    uint volumeSize;
-    uint timestepsAvailableForward;
-    uint timestepsAvailableBackward;
+    int volumeSize;
+    int timestepsAvailableForward;
+    int timestepsAvailableBackward;
 
-    QHash<int, float> differentPoints;  // those points whose value changed zero <-> non-zero
+//    QHash<int, float> differentPoints;  // those points whose value changed zero <-> non-zero
+    hash_map<int, float> diffPoints;
+
 
     // FeatureInfo
     list<DataPoint> dataPointList;  // Active queue for some kind of points ?!

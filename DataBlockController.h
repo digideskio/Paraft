@@ -2,6 +2,7 @@
 #define DATABLOCKCONTROLLER_H
 
 #include <QObject>
+#include <QHash>
 #include "DataManager.h"
 #include "FeatureTracker.h"
 #include "Consts.h"
@@ -34,7 +35,8 @@ public:
     int GetFeatureVectorLength() { return pDataManager->GetFeatureVectorLength(); }
     vector<uint> GetHighlightedFeatures() { return highlightedFeatures; }
     vector<Feature> *GetFeatureVector(int index) { return pDataManager->GetFeatureVector(index); }
-    QHash<int, float> GetDifferentPoints() { return pFeatureTracker->GetDifferentPoints(); }
+//    QHash<int, float> GetDifferentPoints() { return pFeatureTracker->GetDifferentPoints(); }
+    hash_map<int, float> GetDifferentPoints() { return pFeatureTracker->GetDiffPoints(); }
 
     // Feature Connectivity Graph
     QHash<int, int> GetAdjacentBlocks() { return this->adjacentBlocks; }
