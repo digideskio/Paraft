@@ -36,7 +36,7 @@ void DataBlockController::InitData(int globalID, Vector3i workerNumProcessesXYZ,
     pDataManager->ReadDataSequence(dataset.data_path, dataset.prefix, dataset.surfix,
                                    dataset.index_start, dataset.index_end,
                                    dimXYZ, workerNumProcessesXYZ, workerIDXYZ);
-    pDataManager->CreateNewMaskMatrix(pDataManager->getVolumeSize());
+    pDataManager->CreateNewMaskMatrix();
 
     xs = pDataManager->GetVolumeDimX();
     ys = pDataManager->GetVolumeDimY();
@@ -79,7 +79,7 @@ void DataBlockController::AddHighlightedFeature(int index) {
 }
 
 void DataBlockController::ResetMaskMatrixValue(float value) {
-    memset(pDataManager->GetMaskMatrixPointer(), value, sizeof(float)*pDataManager->getVolumeSize());
+    memset(pDataManager->GetMaskMatrixPointer(), value, sizeof(float)*pDataManager->GetVolumeSize());
 }
 
 void DataBlockController::saveExtractedFeatures(vector<Feature>* f) {

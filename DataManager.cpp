@@ -1,10 +1,10 @@
 #include "DataManager.h"
 
-DataManager::DataManager(QObject *parent) : QObject(parent) {
+DataManager::DataManager() {
     pAllocatedBuffer = NULL;
     pMaskMatrix = NULL;
     pDataVector.clear();
-    pLocalMinMax.clear();
+    pLocalMinMaxVector.clear();
     pFeatureVectors.clear();
 }
 
@@ -15,7 +15,7 @@ DataManager::~DataManager() {
             delete [] pDataVector.at(i);
         }
     }
-    pLocalMinMax.clear();
+    pLocalMinMaxVector.clear();
 
     if (pFeatureVectors.size() != 0) {
         for (int i = 0; i < pFeatureVectors.size(); i++) {
@@ -32,53 +32,16 @@ DataManager::~DataManager() {
     }
 }
 
-float* DataManager::AllocateNewDataBuffer(int x, int y, int z) {
-    pAllocatedBuffer = new float[x*y*z];
-    if (pAllocatedBuffer == NULL) {
-        std::cout << "Allocate memory failed." << std::endl;
-        return pAllocatedBuffer;
-    }
-    pDataVector.push_back(pAllocatedBuffer);
-    return pAllocatedBuffer;
-}
-
-void DataManager::setVolumeDimension(int x, int y, int z) {
-    dimX = x; dimY = y; dimZ = z;
-    volumeSize = dimX * dimY * dimZ;
-}
-
-void DataManager::CreateNewMaskMatrix(int size) {
-    pMaskMatrix = new float[size];
-    memset(pMaskMatrix, 0, sizeof(float)*size);
-}
-
-void DataManager::calculateLocalMinMax() {
-    float min = pAllocatedBuffer[0];
-    float max = pAllocatedBuffer[1];
-
-    for (int i = 1; i < volumeSize; i++) {
-        min = min < pAllocatedBuffer[i] ? min : pAllocatedBuffer[i];
-        max = max > pAllocatedBuffer[i] ? max : pAllocatedBuffer[i];
-    }
-
-    Vector2f minMax; {
-        minMax.x = min;
-        minMax.y = max;
-    }
-
-    pLocalMinMax.push_back(minMax);
+void DataManager::CreateNewMaskMatrix() {
+    pMaskMatrix = new float[volumeSize];
+    memset(pMaskMatrix, 0, sizeof(float)*volumeSize);
 }
 
 bool DataManager::ReadDataSequence(string filePath, string prefix, string suffix,
                                    int iStart, int iEnd, Vector3i dimXYZ,
                                    Vector3i workerNumProcXYZ, Vector3i workerIDXYZ) {
-
-    Vector3i segLength;
-    segLength.x = dimXYZ.x / workerNumProcXYZ.x;
-    segLength.y = dimXYZ.y / workerNumProcXYZ.y;
-    segLength.z = dimXYZ.z / workerNumProcXYZ.z;
-
-    setVolumeDimension(segLength.x, segLength.y, segLength.z);
+    volumeDim = dimXYZ / workerNumProcXYZ;
+    volumeSize = volumeDim.x * volumeDim.y * volumeDim.z;
 
     QString fileName;
     bool result;
@@ -87,7 +50,7 @@ bool DataManager::ReadDataSequence(string filePath, string prefix, string suffix
         sprintf(numstr, "%d", i);
         fileName = QString::fromStdString(filePath + "/" + prefix + numstr + "." + suffix);
         qDebug(fileName.toUtf8());
-        result = ReadOneDataFile(fileName, segLength, workerNumProcXYZ, workerIDXYZ);
+        result = ReadOneDataFile(fileName, volumeDim, workerNumProcXYZ, workerIDXYZ);
     }
     normalizeData();
     return result;
@@ -100,9 +63,11 @@ bool DataManager::ReadOneDataFile(QString strFilePath, Vector3i segLength,
 
     int bufferSize = segLength.x * segLength.y * segLength.z;
 
-    float *pBuffer = AllocateNewDataBuffer(segLength.x, segLength.y, segLength.z);
+    float *pBuffer = allocateNewDataBuffer(segLength);
 
     // length per dimension
+//    int *gsizes = (segLength * workerNumProcessesXYZ).v;
+
     int gsizes[3] = { segLength.x * workerNumProcessesXYZ.x,
                       segLength.y * workerNumProcessesXYZ.y,
                       segLength.z * workerNumProcessesXYZ.z };
@@ -134,28 +99,51 @@ bool DataManager::ReadOneDataFile(QString strFilePath, Vector3i segLength,
 }
 
 void DataManager::normalizeData() {
-    float min, max, delta;
-
-    int iTimelength = getCurrentDataLength();
-    int iVolumeSize = getVolumeSize();
-
     // Get the first local min and max
-    min = getMinMaxByIndex(0).x;
-    max = getMinMaxByIndex(0).y;
+    float min = pLocalMinMaxVector.at(0).x;
+    float max = pLocalMinMaxVector.at(0).y;
 
+    int iTimelength = pDataVector.size();
     for (int i = 0 ; i < iTimelength; i++) {
-        min = min < getMinMaxByIndex(i).x ? min : getMinMaxByIndex(i).x;
-        max = max > getMinMaxByIndex(i).y ? max : getMinMaxByIndex(i).y;
+        min = min < pLocalMinMaxVector.at(i).x ? min : pLocalMinMaxVector.at(i).x;
+        max = max > pLocalMinMaxVector.at(i).y ? max : pLocalMinMaxVector.at(i).y;
     }
 
-    delta = max - min;
+    float delta = max - min;
     globalMinMax.x = min;
     globalMinMax.y = max;
 
     for (int j = 0; j < iTimelength; j++) {
-        for (int i = 0; i < iVolumeSize; i++) {
+        for (int i = 0; i < volumeSize; i++) {
             pDataVector.at(j)[i] -= min;
             pDataVector.at(j)[i] /= delta;
         }
     }
+}
+
+float* DataManager::allocateNewDataBuffer(Vector3i dim) {
+    pAllocatedBuffer = new float[dim.x*dim.y*dim.z];
+    if (pAllocatedBuffer == NULL) {
+        std::cout << "Allocate memory failed." << std::endl;
+        return pAllocatedBuffer;
+    }
+    pDataVector.push_back(pAllocatedBuffer);
+    return pAllocatedBuffer;
+}
+
+void DataManager::calculateLocalMinMax() {
+    float min = pAllocatedBuffer[0];
+    float max = pAllocatedBuffer[1];
+
+    for (int i = 1; i < volumeSize; i++) {
+        min = min < pAllocatedBuffer[i] ? min : pAllocatedBuffer[i];
+        max = max > pAllocatedBuffer[i] ? max : pAllocatedBuffer[i];
+    }
+
+    Vector2f minMax; {
+        minMax.x = min;
+        minMax.y = max;
+    }
+
+    pLocalMinMaxVector.push_back(minMax);
 }

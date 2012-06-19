@@ -34,10 +34,49 @@
 
 using namespace std;
 
-typedef struct { int x; int y; int z; } DataPoint, Vector3i;
-typedef struct { float x; float y; float z; } FloatPoint, Vector3f;
+//typedef struct { int x; int y; int z; } DataPoint, Vector3i;
 typedef struct { float x; float y; } Vector2f;
-typedef struct { float sim; int idx; } Info;
+
+class Vector3i {
+public:
+//    int &x, &y, &z;
+//    int v[3];
+//    union { struct { int x, y, z; }; int v[3]; };
+    int x, y, z;
+    Vector3i(int X = 0, int Y = 0, int Z = 0) : x(X), y(Y), z(Z) {}
+    Vector3i operator-() { return Vector3i(-x, -y, -z); }
+    Vector3i operator+(Vector3i const& rhs) const { Vector3i t(*this); t+=rhs; return t; }
+    Vector3i operator-(Vector3i const& rhs) const { Vector3i t(*this); t-=rhs; return t; }
+    Vector3i operator*(Vector3i const& rhs) const { Vector3i t(*this); t*=rhs; return t; }
+    Vector3i operator/(Vector3i const& rhs) const { Vector3i t(*this); t/=rhs; return t; }
+    Vector3i& operator+=(Vector3i const& rhs) { x+=rhs.x, y+=rhs.y, z+= rhs.z; return *this; }
+    Vector3i& operator-=(Vector3i const& rhs) { x-=rhs.x, y-=rhs.y, z-= rhs.z; return *this; }
+    Vector3i& operator*=(Vector3i const& rhs) { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
+    Vector3i& operator/=(Vector3i const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
+    Vector3i operator*(float scale) const { Vector3i t(*this); t*=scale; return t; }
+    Vector3i operator/(float scale) const { Vector3i t(*this); t/=scale; return t; }
+    Vector3i& operator*=(float scale) { x*=scale, y*=scale, z*=scale; return *this; }
+    Vector3i& operator/=(float scale) { x/=scale, y/=scale, z/=scale; return *this; }
+}; typedef Vector3i DataPoint;
+
+class Vector3f {
+public:
+    float x, y, z;
+    Vector3f(float X = 0.0, float Y = 0.0, float Z = 0.0) : x(X), y(Y), z(Z) {}
+    Vector3f operator-() { return Vector3f(-x, -y, -z); }
+    Vector3f operator+(Vector3f const& rhs) const { Vector3f t(*this); t+=rhs; return t; }
+    Vector3f operator-(Vector3f const& rhs) const { Vector3f t(*this); t-=rhs; return t; }
+    Vector3f operator*(Vector3f const& rhs) const { Vector3f t(*this); t*=rhs; return t; }
+    Vector3f operator/(Vector3f const& rhs) const { Vector3f t(*this); t/=rhs; return t; }
+    Vector3f& operator+=(Vector3f const& rhs) { x+=rhs.x, y+=rhs.y, z+= rhs.z; return *this; }
+    Vector3f& operator-=(Vector3f const& rhs) { x-=rhs.x, y-=rhs.y, z-= rhs.z; return *this; }
+    Vector3f& operator*=(Vector3f const& rhs) { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
+    Vector3f& operator/=(Vector3f const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
+    Vector3f operator*(float scale) const { Vector3f t(*this); t*=scale; return t; }
+    Vector3f operator/(float scale) const { Vector3f t(*this); t/=scale; return t; }
+    Vector3f& operator*=(float scale) { x*=scale, y*=scale, z*=scale; return *this; }
+    Vector3f& operator/=(float scale) { x/=scale, y/=scale, z/=scale; return *this; }
+};
 
 struct Edge {
     int id;

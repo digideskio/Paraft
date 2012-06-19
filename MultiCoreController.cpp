@@ -203,7 +203,8 @@ void MultiCoreController::trackForward_worker() {
 
 Edge* MultiCoreController::updateGlobalConnectivityGraph(vector<Edge> localEdgesVector) {
     int localEdgeSize = localEdgesVector.size();
-    Edge localEdges[localEdgeSize];
+    Edge *localEdges = new Edge[localEdgeSize];
+
     for (int i = 0; i < localEdgeSize; i++) {
         localEdges[i] = localEdgesVector.at(i);
     }
@@ -258,6 +259,7 @@ Edge* MultiCoreController::updateGlobalConnectivityGraph(vector<Edge> localEdges
         }
     }
 
+    delete [] localEdges;
     return pGlobalGraph;
 }
 

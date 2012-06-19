@@ -5,30 +5,21 @@
 #include "Consts.h"
 #include "mpi.h"
 
-class DataManager : public QObject {
-    Q_OBJECT
+class DataManager {
 
 public:
-    DataManager(QObject *parent = 0);
+    DataManager();
     ~DataManager();
 
-    // Get the data pointer by timestep
+    void CreateNewMaskMatrix();
+
     float* GetVolumeDataPointer(int index) { return pDataVector.at(index); }
     float* GetMaskMatrixPointer() { return pMaskMatrix; }
-    float* AllocateNewDataBuffer(int x, int y, int z);
 
-    Vector2f getMinMaxByIndex(int index) { return pLocalMinMax.at(index); }
-
-    void SaveData(float* pt) { pDataVector.push_back(pt); }
-    int getCurrentDataLength() { return pDataVector.size(); }
-
-    void setVolumeDimension(int x, int y, int z);
-    void calculateLocalMinMax();
-
-    int getVolumeSize() { return volumeSize; }
-    int GetVolumeDimX() { return dimX; }
-    int GetVolumeDimY() { return dimY; }
-    int GetVolumeDimZ() { return dimZ; }
+    int GetVolumeSize() { return volumeSize; }
+    int GetVolumeDimX() { return volumeDim.x; }
+    int GetVolumeDimY() { return volumeDim.y; }
+    int GetVolumeDimZ() { return volumeDim.z; }
     int GetFeatureVectorLength() { return pFeatureVectors.size(); }
 
 
@@ -46,23 +37,25 @@ public:
     vector<Feature> *GetFeatureVector(int iTime) { return &(pFeatureVectors.at(iTime)); }
     Feature *getFeature(int iTime, int index) { return &(pFeatureVectors.at(iTime).at(index)); }
 
-    void CreateNewMaskMatrix(int size);
-
 private:
-    Vector2f globalMinMax;
-    float* pCurrentDataPointer;
+    Vector3i volumeDim;
+    int volumeSize;
 
-    // Global normalization of the data
-    void normalizeData();
+    // not used yet
+    Vector2f globalMinMax;
 
     vector<float*> pDataVector;
-    vector<Vector2f> pLocalMinMax;
+    vector<Vector2f> pLocalMinMaxVector;
     vector< vector<Feature> > pFeatureVectors;
 
     float* pAllocatedBuffer;
     float* pMaskMatrix;
-    int dimX, dimY, dimZ;
-    int volumeSize;
+    float* pCurrentDataPointer;
+
+    // Global normalization of the data
+    void normalizeData();
+    void calculateLocalMinMax();
+    float* allocateNewDataBuffer(Vector3i dim);
 };
 
 #endif // DATAMANAGER_H

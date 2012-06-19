@@ -30,7 +30,7 @@ public:
     int GetVolumeDimX() { return pDataManager->GetVolumeDimX(); }
     int GetVolumeDimY() { return pDataManager->GetVolumeDimY(); }
     int GetVolumeDimZ() { return pDataManager->GetVolumeDimZ(); }
-    int GetVolumeSize() { return pDataManager->getVolumeSize(); }
+    int GetVolumeSize() { return pDataManager->GetVolumeSize(); }
     int GetFeatureVectorLength() { return pDataManager->GetFeatureVectorLength(); }
     vector<uint> GetHighlightedFeatures() { return highlightedFeatures; }
     vector<Feature> *GetFeatureVector(int index) { return pDataManager->GetFeatureVector(index); }

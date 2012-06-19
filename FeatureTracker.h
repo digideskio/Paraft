@@ -98,7 +98,7 @@ private:
     Vector3i    boundaryMax[6];    // max value of (x,y)|(x,z)|(y,z) of the boundary surface
     vector<int> touchedSurfaces; // Which boundary the feature touches
 
-    FloatPoint delta;
+    Vector3f delta;
 
     vector<Feature> currentFeaturesHolder; // Hold all the features information in current time step
     vector<Feature> backup1FeaturesHolder; // Hold all the features information in the first backup time step
