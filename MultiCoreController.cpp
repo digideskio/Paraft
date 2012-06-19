@@ -112,7 +112,7 @@ void MultiCoreController::synchronizeParameters_both() {
 
     if (gID == HOST_NODE) {
         ifstream inf(config, ios::binary);
-        if (!inf) { qDebug("[%d/%d] cannot read ready", wID, gID); }
+        if (!inf) { qDebug("[%d/%d] cannot read data", wID, gID); }
         inf.read(reinterpret_cast<char *>(pTFColorMap), bufSize);
         inf.close();
     }

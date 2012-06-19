@@ -1,7 +1,6 @@
 #ifndef DATAMANAGER_H
 #define DATAMANAGER_H
 
-#include <QObject>
 #include "Consts.h"
 #include "mpi.h"
 
@@ -27,15 +26,12 @@ public:
                           int iStart, int iEnd, Vector3i dimXYZ,
                           Vector3i workerNumProcXYZ, Vector3i workerIDXYZ);
 
-    bool ReadOneDataFile(QString strFilePath, Vector3i segLength,
+    bool ReadOneDataFile(string filePath, Vector3i segLength,
                          Vector3i workerNumProcessesXYZ, Vector3i workerIDXYZ);
 
-    // Set features
-    void SaveExtractedFeatures(vector<Feature> f) { pFeatureVectors.push_back(f); }
-
-    // Get features
     vector<Feature> *GetFeatureVector(int iTime) { return &(pFeatureVectors.at(iTime)); }
     Feature *getFeature(int iTime, int index) { return &(pFeatureVectors.at(iTime).at(index)); }
+    void SaveExtractedFeatures(vector<Feature> f) { pFeatureVectors.push_back(f); }
 
 private:
     Vector3i volumeDim;
@@ -45,14 +41,12 @@ private:
     Vector2f globalMinMax;
 
     vector<float*> pDataVector;
-    vector<Vector2f> pLocalMinMaxVector;
+    vector<MinMax> pMinMaxVector;
     vector< vector<Feature> > pFeatureVectors;
 
     float* pAllocatedBuffer;
     float* pMaskMatrix;
-    float* pCurrentDataPointer;
 
-    // Global normalization of the data
     void normalizeData();
     void calculateLocalMinMax();
     float* allocateNewDataBuffer(Vector3i dim);

@@ -1,6 +1,7 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
+#include <string>
 #include <vector>
 #include <list>
 #include <map>
@@ -34,27 +35,32 @@
 
 using namespace std;
 
-//typedef struct { int x; int y; int z; } DataPoint, Vector3i;
 typedef struct { float x; float y; } Vector2f;
+//typedef struct { float min; float max; } MinMax;
+
+class MinMax {
+public:
+    float min, max;
+    MinMax(float min_, float max_) : min(min_), max(max_) {}
+};
 
 class Vector3i {
 public:
-//    int &x, &y, &z;
-//    int v[3];
-//    union { struct { int x, y, z; }; int v[3]; };
     int x, y, z;
-    Vector3i(int X = 0, int Y = 0, int Z = 0) : x(X), y(Y), z(Z) {}
+    int *toArray() { return &x; }
+    int volume() { return x*y*z; }
+    Vector3i(int x_ = 0, int y_ = 0, int z_ = 0) : x(x_), y(y_), z(z_) {}
     Vector3i operator-() { return Vector3i(-x, -y, -z); }
     Vector3i operator+(Vector3i const& rhs) const { Vector3i t(*this); t+=rhs; return t; }
     Vector3i operator-(Vector3i const& rhs) const { Vector3i t(*this); t-=rhs; return t; }
     Vector3i operator*(Vector3i const& rhs) const { Vector3i t(*this); t*=rhs; return t; }
     Vector3i operator/(Vector3i const& rhs) const { Vector3i t(*this); t/=rhs; return t; }
-    Vector3i& operator+=(Vector3i const& rhs) { x+=rhs.x, y+=rhs.y, z+= rhs.z; return *this; }
-    Vector3i& operator-=(Vector3i const& rhs) { x-=rhs.x, y-=rhs.y, z-= rhs.z; return *this; }
-    Vector3i& operator*=(Vector3i const& rhs) { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
-    Vector3i& operator/=(Vector3i const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
     Vector3i operator*(float scale) const { Vector3i t(*this); t*=scale; return t; }
     Vector3i operator/(float scale) const { Vector3i t(*this); t/=scale; return t; }
+    Vector3i& operator+=(Vector3i const& rhs) { x+=rhs.x, y+=rhs.y, z+=rhs.z; return *this; }
+    Vector3i& operator-=(Vector3i const& rhs) { x-=rhs.x, y-=rhs.y, z-=rhs.z; return *this; }
+    Vector3i& operator*=(Vector3i const& rhs) { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
+    Vector3i& operator/=(Vector3i const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
     Vector3i& operator*=(float scale) { x*=scale, y*=scale, z*=scale; return *this; }
     Vector3i& operator/=(float scale) { x/=scale, y/=scale, z/=scale; return *this; }
 }; typedef Vector3i DataPoint;
@@ -62,21 +68,23 @@ public:
 class Vector3f {
 public:
     float x, y, z;
-    Vector3f(float X = 0.0, float Y = 0.0, float Z = 0.0) : x(X), y(Y), z(Z) {}
+    float *toArray() { return &x; }
+    int volume() { return x*y*z; }
+    Vector3f(float x_ = .0f, float y_ = .0f, float z_ = .0f) : x(x_), y(y_), z(z_) {}
     Vector3f operator-() { return Vector3f(-x, -y, -z); }
     Vector3f operator+(Vector3f const& rhs) const { Vector3f t(*this); t+=rhs; return t; }
     Vector3f operator-(Vector3f const& rhs) const { Vector3f t(*this); t-=rhs; return t; }
     Vector3f operator*(Vector3f const& rhs) const { Vector3f t(*this); t*=rhs; return t; }
     Vector3f operator/(Vector3f const& rhs) const { Vector3f t(*this); t/=rhs; return t; }
-    Vector3f& operator+=(Vector3f const& rhs) { x+=rhs.x, y+=rhs.y, z+= rhs.z; return *this; }
-    Vector3f& operator-=(Vector3f const& rhs) { x-=rhs.x, y-=rhs.y, z-= rhs.z; return *this; }
-    Vector3f& operator*=(Vector3f const& rhs) { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
-    Vector3f& operator/=(Vector3f const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
     Vector3f operator*(float scale) const { Vector3f t(*this); t*=scale; return t; }
     Vector3f operator/(float scale) const { Vector3f t(*this); t/=scale; return t; }
+    Vector3f& operator+=(Vector3f const& rhs) { x+=rhs.x, y+=rhs.y, z+=rhs.z; return *this; }
+    Vector3f& operator-=(Vector3f const& rhs) { x-=rhs.x, y-=rhs.y, z-=rhs.z; return *this; }
+    Vector3f& operator*=(Vector3f const& rhs) { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
+    Vector3f& operator/=(Vector3f const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
     Vector3f& operator*=(float scale) { x*=scale, y*=scale, z*=scale; return *this; }
     Vector3f& operator/=(float scale) { x/=scale, y/=scale, z/=scale; return *this; }
-};
+}; typedef Vector3f FloatPoint;
 
 struct Edge {
     int id;

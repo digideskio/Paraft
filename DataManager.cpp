@@ -4,7 +4,7 @@ DataManager::DataManager() {
     pAllocatedBuffer = NULL;
     pMaskMatrix = NULL;
     pDataVector.clear();
-    pLocalMinMaxVector.clear();
+    pMinMaxVector.clear();
     pFeatureVectors.clear();
 }
 
@@ -15,7 +15,7 @@ DataManager::~DataManager() {
             delete [] pDataVector.at(i);
         }
     }
-    pLocalMinMaxVector.clear();
+    pMinMaxVector.clear();
 
     if (pFeatureVectors.size() != 0) {
         for (int i = 0; i < pFeatureVectors.size(); i++) {
@@ -41,15 +41,14 @@ bool DataManager::ReadDataSequence(string filePath, string prefix, string suffix
                                    int iStart, int iEnd, Vector3i dimXYZ,
                                    Vector3i workerNumProcXYZ, Vector3i workerIDXYZ) {
     volumeDim = dimXYZ / workerNumProcXYZ;
-    volumeSize = volumeDim.x * volumeDim.y * volumeDim.z;
+    volumeSize = volumeDim.volume();
 
-    QString fileName;
+    string fileName;
     bool result;
     char numstr[21];
     for (int i = iStart; i <= iEnd; i++) {
         sprintf(numstr, "%d", i);
-        fileName = QString::fromStdString(filePath + "/" + prefix + numstr + "." + suffix);
-        qDebug(fileName.toUtf8());
+        fileName = filePath + "/" + prefix + numstr + "." + suffix;
         result = ReadOneDataFile(fileName, volumeDim, workerNumProcXYZ, workerIDXYZ);
     }
     normalizeData();
@@ -57,34 +56,25 @@ bool DataManager::ReadDataSequence(string filePath, string prefix, string suffix
 }
 
 // Read one file from disk and save it to the end of the data vector
-bool DataManager::ReadOneDataFile(QString strFilePath, Vector3i segLength,
+bool DataManager::ReadOneDataFile(string filePath, Vector3i segLength,
                                   Vector3i workerNumProcessesXYZ,
                                   Vector3i workerIDXYZ) {
 
-    int bufferSize = segLength.x * segLength.y * segLength.z;
-
+    int bufferSize = segLength.volume();
     float *pBuffer = allocateNewDataBuffer(segLength);
 
-    // length per dimension
-//    int *gsizes = (segLength * workerNumProcessesXYZ).v;
-
-    int gsizes[3] = { segLength.x * workerNumProcessesXYZ.x,
-                      segLength.y * workerNumProcessesXYZ.y,
-                      segLength.z * workerNumProcessesXYZ.z };
-
-    int subsizes[3] = { segLength.x, segLength.y, segLength.z };
-
-    int starts[3] = { segLength.x * workerIDXYZ.x,
-                      segLength.y * workerIDXYZ.y,
-                      segLength.z * workerIDXYZ.z };
-
-    char filename[1024];
-    sprintf(filename, "%s", strFilePath.toLocal8Bit().constData());
+    int *gsizes = (segLength * workerNumProcessesXYZ).toArray();
+    int *subsizes = segLength.toArray();
+    int *starts = (segLength * workerIDXYZ).toArray();
 
     MPI_Datatype filetype;
     MPI_Type_create_subarray(3, gsizes, subsizes, starts,
                              MPI_ORDER_FORTRAN, MPI_FLOAT, &filetype);
     MPI_Type_commit(&filetype);
+
+    char *filename = new char[filePath.size() + 1];
+    copy(filePath.begin(), filePath.end(), filename);
+    filename[filePath.size()] = '\0';
 
     MPI_File file;
     MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
@@ -95,18 +85,20 @@ bool DataManager::ReadOneDataFile(QString strFilePath, Vector3i segLength,
     MPI_Type_free(&filetype);
 
     calculateLocalMinMax();
+
+    delete[] filename;
     return true;
 }
 
 void DataManager::normalizeData() {
     // Get the first local min and max
-    float min = pLocalMinMaxVector.at(0).x;
-    float max = pLocalMinMaxVector.at(0).y;
+    float min = pMinMaxVector.at(0).min;
+    float max = pMinMaxVector.at(0).max;
 
     int iTimelength = pDataVector.size();
     for (int i = 0 ; i < iTimelength; i++) {
-        min = min < pLocalMinMaxVector.at(i).x ? min : pLocalMinMaxVector.at(i).x;
-        max = max > pLocalMinMaxVector.at(i).y ? max : pLocalMinMaxVector.at(i).y;
+        min = min < pMinMaxVector.at(i).min ? min : pMinMaxVector.at(i).min;
+        max = max > pMinMaxVector.at(i).max ? max : pMinMaxVector.at(i).max;
     }
 
     float delta = max - min;
@@ -122,7 +114,7 @@ void DataManager::normalizeData() {
 }
 
 float* DataManager::allocateNewDataBuffer(Vector3i dim) {
-    pAllocatedBuffer = new float[dim.x*dim.y*dim.z];
+    pAllocatedBuffer = new float[dim.volume()];
     if (pAllocatedBuffer == NULL) {
         std::cout << "Allocate memory failed." << std::endl;
         return pAllocatedBuffer;
@@ -140,10 +132,5 @@ void DataManager::calculateLocalMinMax() {
         max = max > pAllocatedBuffer[i] ? max : pAllocatedBuffer[i];
     }
 
-    Vector2f minMax; {
-        minMax.x = min;
-        minMax.y = max;
-    }
-
-    pLocalMinMaxVector.push_back(minMax);
+    pMinMaxVector.push_back(MinMax(min, max));
 }
