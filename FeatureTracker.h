@@ -1,13 +1,11 @@
 #ifndef FEATURETRACKER_H
 #define FEATURETRACKER_H
 
-//#include <QObject>
-//#include <QHash>
+#include <hash_map.h>
+#include <math.h>
 #include <vector>
 #include <list>
-#include <hash_map.h>
 #include <map>
-#include <math.h>
 #include "Consts.h"
 
 using namespace std;
@@ -39,7 +37,6 @@ public:
     int GetPointIndex(DataPoint point) { return xs*ys*point.z+xs*point.y+point.x; }
     float* GetTFColorMap() { return pTFColorMap; }
     int GetTFResolution() { return tfResolution; }
-//    QHash<int, float> GetDifferentPoints() { return differentPoints; }
     hash_map<int, float> GetDiffPoints() { return diffPoints; }
 
 
@@ -73,14 +70,13 @@ private:
     int tfResolution;
     int numVoxelinFeature;      // Used to calculate the number of voxel in the feature
     int xs,ys,zs;               // Dimension of the dataset
+
     float maskValue;
     int volumeSize;
     int timestepsAvailableForward;
     int timestepsAvailableBackward;
 
-//    QHash<int, float> differentPoints;  // those points whose value changed zero <-> non-zero
     hash_map<int, float> diffPoints;
-
 
     // FeatureInfo
     list<DataPoint> dataPointList;  // Active queue for some kind of points ?!
@@ -91,6 +87,7 @@ private:
     Vector3i    featureMin;    // min value of x,y,z of a single feature
     Vector3i    featureMax;    // max value of x,y,z of a single feature
     Vector3i    sumCoordinateValue;    // Sum of the voxel values of the feature
+    Vector3f    delta;
 
     Vector3i    sumBoundaryXYZValue[6];  // Sum of the voxel values on boundary surface
     int         numVoxelonBoundary[6];
@@ -100,8 +97,6 @@ private:
     Vector3i    boundaryMin[6];    // min value of (x,y)|(x,z)|(y,z) of the boundary surface
     Vector3i    boundaryMax[6];    // max value of (x,y)|(x,z)|(y,z) of the boundary surface
     vector<int> touchedSurfaces; // Which boundary the feature touches
-
-    Vector3f delta;
 
     vector<Feature> currentFeaturesHolder; // Hold all the features information in current time step
     vector<Feature> backup1FeaturesHolder; // Hold all the features information in the first backup time step

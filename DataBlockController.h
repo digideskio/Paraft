@@ -1,8 +1,7 @@
 #ifndef DATABLOCKCONTROLLER_H
 #define DATABLOCKCONTROLLER_H
 
-#include <QObject>
-#include <QHash>
+#include "hash_map.h"
 #include "DataManager.h"
 #include "FeatureTracker.h"
 #include "Consts.h"
@@ -10,11 +9,10 @@
 #define LOW_THRESHOLD       0.2
 #define HIGH_THRESHOLD      1.0
 
-class DataBlockController : public QObject {
-    Q_OBJECT
+class DataBlockController {
 
 public:
-    explicit DataBlockController(QObject *parent = 0);
+    DataBlockController();
     ~DataBlockController();
 
     void InitData(int globalID, Vector3i workerNumProcessesXYZ,
@@ -33,14 +31,15 @@ public:
     int GetVolumeDimZ() { return pDataManager->GetVolumeDimZ(); }
     int GetVolumeSize() { return pDataManager->GetVolumeSize(); }
     int GetFeatureVectorLength() { return pDataManager->GetFeatureVectorLength(); }
-    vector<uint> GetHighlightedFeatures() { return highlightedFeatures; }
+    vector<int> GetHighlightedFeatures() { return highlightedFeatures; }
     vector<Feature> *GetFeatureVector(int index) { return pDataManager->GetFeatureVector(index); }
-//    QHash<int, float> GetDifferentPoints() { return pFeatureTracker->GetDifferentPoints(); }
     hash_map<int, float> GetDifferentPoints() { return pFeatureTracker->GetDiffPoints(); }
 
     // Feature Connectivity Graph
-    QHash<int, int> GetAdjacentBlocks() { return this->adjacentBlocks; }
-    vector<Edge> GetLocalEdges() { return this->localGraph; }
+//    QHash<int, int> GetAdjacentBlocks() { return this->adjacentBlocks; }
+    hash_map<int, int> GetAdjacentBlocks() { return adjacentBlocks; }
+
+    vector<Edge> GetLocalEdges() { return localGraph; }
 
     // Accessor - FeatureTracker
     void SetVolumeDataPointerByIndex(int index) { pFeatureTracker->SetVolumeDataPointer(pDataManager->GetVolumeDataPointer(index));}
@@ -55,8 +54,9 @@ public:
 private:
     DataManager     *pDataManager;
     FeatureTracker  *pFeatureTracker;
-    vector<uint>    highlightedFeatures;
-    QHash<int, int> adjacentBlocks;
+    vector<int>    highlightedFeatures;
+//    QHash<int, int> adjacentBlocks;
+    hash_map<int, int>  adjacentBlocks;
     DataSet         dataset;
     int             currentTimestep;
     int             xs, ys, zs;

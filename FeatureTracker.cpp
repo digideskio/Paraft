@@ -29,7 +29,6 @@ FeatureTracker::~FeatureTracker() {
     surfacePoints.clear();
     innerPoints.clear();
     diffPoints.clear();
-//    differentPoints.clear();
 }
 
 void FeatureTracker::Reset() {
@@ -56,7 +55,6 @@ void FeatureTracker::Reset() {
     surfacePoints.clear();
     innerPoints.clear();
     diffPoints.clear();
-//    differentPoints.clear();
 }
 
 void FeatureTracker::resetFeatureBoundaryInfo() {
@@ -111,7 +109,6 @@ void FeatureTracker::FindNewFeature(int x, int y, int z, float lowerValue, float
         maskValue += 1.0f;
         pMaskMatrixCurrent[index] = maskValue;
     } else {
-//        qDebug("Current maskValue = %f\n", maskValue);
         return;
     }
 
@@ -229,12 +226,6 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
                     temp = (*p).y + (int)floor(delta.y); (*p).y = temp <= 0 ? 0 : (temp < ys ? temp : ys-1);
                     temp = (*p).z + (int)floor(delta.z); (*p).z = temp <= 0 ? 0 : (temp < zs ? temp : zs-1);
                 }
-
-//                foreach (DataPoint point, b3f.SurfacePoints) {
-//                    temp = point.x + (int)floor(delta.x); point.x = temp <= 0 ? 0 : (temp < xs ? temp : xs - 1);
-//                    temp = point.y + (int)floor(delta.y); point.y = temp <= 0 ? 0 : (temp < ys ? temp : ys - 1);
-//                    temp = point.z + (int)floor(delta.z); point.z = temp <= 0 ? 0 : (temp < zs ? temp : zs - 1);
-//                }
             }
         break;
         case TRACKING_MODE_POLYNO: // PREDICT_POLY
@@ -254,11 +245,6 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
                         delta.z = b3f.Centroid.z - b2f.Centroid.z;
                     }
                 }
-//                foreach (DataPoint point, b3f.SurfacePoints) {
-//                    temp = point.x + (int)floor(delta.x); point.x = temp <= 0 ? 0 : (temp < xs ? temp : xs - 1);
-//                    temp = point.y + (int)floor(delta.y); point.y = temp <= 0 ? 0 : (temp < ys ? temp : ys - 1);
-//                    temp = point.z + (int)floor(delta.z); point.z = temp <= 0 ? 0 : (temp < zs ? temp : zs - 1);
-//                }
                 list<DataPoint>::iterator p;
                 for (p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); p++) {
                     temp = (*p).x + (int)floor(delta.x); (*p).x = temp <= 0 ? 0 : (temp < xs ? temp : xs-1);
@@ -316,41 +302,6 @@ inline void FeatureTracker::fillRegion(float maskValue) {
         }
     }
 
-//    foreach (DataPoint point, surfacePoints) {  // predicted to be on edge
-//        index = GetPointIndex(point);
-//        if (pMaskMatrixCurrent[index] == 0) {
-//            pMaskMatrixCurrent[index] = maskValue;
-//            updateDiffPointList(index, maskValue);
-//        }
-//        sumCoordinateValue.x += point.x;
-//        sumCoordinateValue.y += point.y;
-//        sumCoordinateValue.z += point.z;
-//        numVoxelinFeature++;
-//        innerPoints.push_back(point);
-//    }
-
-//    foreach (DataPoint point, surfacePoints) {  // currently not on edge but previously on edge
-//        index = GetPointIndex(point);
-//        point.x++;
-//        while (point.x >= 0 && point.x <= xs && point.x - delta.x >= 0 && point.x - delta.x <= xs &&
-//               point.y >= 0 && point.y <= ys && point.y - delta.y >= 0 && point.y - delta.y <= ys &&
-//               point.z >= 0 && point.z <= zs && point.z - delta.z >= 0 && point.z - delta.z <= zs &&
-//               pMaskMatrixCurrent[index] == 0 &&
-//               pMaskMatrixPrevious[(int)floor(xs*ys*(point.z-delta.z)+xs*(point.y-delta.y)+(point.x-delta.x))] == maskValue) {
-
-//            // Mark all points: 1. currently = 1; 2. currently = 0 but previously = 1;
-//            pMaskMatrixCurrent[index] = maskValue;
-//            updateDiffPointList(index, maskValue);
-
-//            sumCoordinateValue.x += point.x;
-//            sumCoordinateValue.y += point.y;
-//            sumCoordinateValue.z += point.z;
-//            innerPoints.push_back(point);
-//            numVoxelinFeature++;
-//            point.x++;
-//        }
-//    }
-
     if (numVoxelinFeature == 0) { return; }
     centroid.x = sumCoordinateValue.x / numVoxelinFeature;
     centroid.y = sumCoordinateValue.y / numVoxelinFeature;
@@ -391,18 +342,6 @@ inline void FeatureTracker::shrinkRegion(float maskValue) {
 
         if (isPointOnEdge == true) { surfacePoints.push_back(point); }
     }
-
-//    foreach (DataPoint point, surfacePoints) {
-//        if (pMaskMatrixCurrent[(xs)*(ys)*point.z+(xs)*point.y+point.x] != maskValue) {
-//            sumCoordinateValue.x += point.x;
-//            sumCoordinateValue.y += point.y;
-//            sumCoordinateValue.z += point.z;
-//            numVoxelinFeature++;
-//            pMaskMatrixCurrent[(xs)*(ys)*point.z+(xs)*point.y+point.x] = maskValue;
-//            updateDiffPointList(index, maskValue);
-//            innerPoints.push_back(point);
-//        }
-//    }
 
     list<DataPoint>::iterator p;
     for (p = surfacePoints.begin(); p != surfacePoints.end(); p++) {
@@ -542,7 +481,6 @@ void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
  float FeatureTracker::getOpacity(float DataValue) {
     if (pTFColorMap == NULL || tfResolution == 0) {
         cout << "Set TF pointer first." << endl;
-//        qDebug("Set TF pointer first!");
         return -1;
     }
     int factor = (int)(tfResolution * DataValue);
@@ -550,8 +488,6 @@ void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
  }
 
  void FeatureTracker::updateDiffPointList(int index, float value) {
-//    hash_map<int, float>::iterator it = find(diffPoints.begin(), diffPoints.end(), index);
-
     hash_map<int, float>::iterator it = diffPoints.find(index);
     if (it == diffPoints.end()) {   // !contain
         diffPoints[index] = value;
@@ -560,20 +496,11 @@ void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
     } else {
         diffPoints.erase(it);
     }
-
-//    if(differentPoints.contains(index) == false) {
-//        differentPoints.insert(index, value);
-//    } else if (differentPoints[index] != value) {
-//        differentPoints[index] = value;
-//    } else {    // delete those not changed
-//        differentPoints.remove(index);
-//    }
  }
 
 void FeatureTracker::backupFeatureInfo(int direction) {
     if (direction != TRACKING_DIRECTION_FORWARD && direction != TRACKING_DIRECTION_BACKWARD) {
-//        qDebug("Direction is neither FORWARD or BACKWARD? Something must be wrong here...");
-        cout << "Direction is neither FORWARD or BACKWARD? Something must be wrong here..." << endl;
+        cout << "Direction is neither FORWARD or BACKWARD?" << endl;
         return;
     }
     backup1FeaturesHolder = backup2FeaturesHolder;

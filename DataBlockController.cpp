@@ -1,9 +1,9 @@
 #include "DataBlockController.h"
 
-DataBlockController::DataBlockController(QObject *parent) : QObject(parent) {
+DataBlockController::DataBlockController() {
     xs = 0; ys = 0; zs = 0;
     for (int surface = 0; surface < 6; surface++) {
-        adjacentBlocks.insert(surface, SURFACE_NULL);
+        adjacentBlocks[surface] = SURFACE_NULL;
     }
 }
 
@@ -72,7 +72,7 @@ void DataBlockController::ExtractAllFeatures() {
 }
 
 void DataBlockController::AddHighlightedFeature(int index) {
-    vector<uint>::iterator it = find(highlightedFeatures.begin(), highlightedFeatures.end(), index);
+    vector<int>::iterator it = find(highlightedFeatures.begin(), highlightedFeatures.end(), index);
     if (it == highlightedFeatures.end()) {
         highlightedFeatures.push_back(index);
     }
@@ -146,7 +146,7 @@ void DataBlockController::UpdateLocalGraph(int workerID, Vector3i workerIDXYZ) {
 
 Vector3i DataBlockController::ConvertLocalCoord2GlobalCoord(Vector3i point, Vector3i workerIDXYZ) {
     Vector3i globalCoord;
-    globalCoord.x = point.x + xs * workerIDXYZ.x;
+    globalCoord.x = point.x + xs. * workerIDXYZ.x;
     globalCoord.y = point.y + ys * workerIDXYZ.y;
     globalCoord.z = point.z + zs * workerIDXYZ.z;
     return globalCoord;
