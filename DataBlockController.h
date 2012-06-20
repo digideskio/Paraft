@@ -36,10 +36,9 @@ public:
     hash_map<int, float> GetDifferentPoints() { return pFeatureTracker->GetDiffPoints(); }
 
     // Feature Connectivity Graph
-//    QHash<int, int> GetAdjacentBlocks() { return this->adjacentBlocks; }
     hash_map<int, int> GetAdjacentBlocks() { return adjacentBlocks; }
 
-    vector<Edge> GetLocalEdges() { return localGraph; }
+    vector<Edge> GetLocalEdges() { return localConnectivityGraph; }
 
     // Accessor - FeatureTracker
     void SetVolumeDataPointerByIndex(int index) { pFeatureTracker->SetVolumeDataPointer(pDataManager->GetVolumeDataPointer(index));}
@@ -55,17 +54,15 @@ private:
     DataManager     *pDataManager;
     FeatureTracker  *pFeatureTracker;
     vector<int>    highlightedFeatures;
-//    QHash<int, int> adjacentBlocks;
     hash_map<int, int>  adjacentBlocks;
     DataSet         dataset;
     int             currentTimestep;
     int             xs, ys, zs;
 
-    vector<Edge>    localGraph;
+    vector<Edge>    localConnectivityGraph;
 
     void saveExtractedFeatures(vector<Feature>* f);
     void initAdjacentBlocks(Vector3i workerNumProcessesXYZ, Vector3i workerIDXYZ);
-    
 };
 
 #endif // DATABLOCKCONTROLLER_H

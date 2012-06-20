@@ -11,6 +11,9 @@
 #define FEATURE_MIN_VOXEL_NUM 10
 #define NUM_TRACK_STEPS 5
 
+#define INT_SIZE 1
+#define FLOAT_SIZE sizeof(float)
+
 #define DATA_DIM_X 128
 #define DATA_DIM_Y 128
 #define DATA_DIM_Z 128
@@ -32,6 +35,21 @@
 #define SURFACE_TOP     3   // y = ys
 #define SURFACE_FRONT   4   // z = 0
 #define SURFACE_BACK    5   // z = zs
+
+// MPI TAG
+#define MPI_TAG_NULL -1
+#define MPI_TAG_TIMESTEP_0 0
+#define MPI_TAG_TF_RESOLUTION 2
+#define MPI_TAG_TF_COLOR_MAP 3
+#define MPI_TAG_SEGMENT_MATRIX 4
+#define MPI_TAG_ROUTER 5
+#define MPI_TAG_HIGHLIGHT_FEATURE 6
+#define MPI_TAG_SELECTED_FEATURE_INFO 7
+#define MPI_TAG_SELECTED_FEATURE_INFO_SIZE 8
+#define MPI_TAG_SYNC_TIMESTEP 9
+#define MPI_TAG_TRACK_FORWARD 10
+#define MPI_TAG_GET_FEATURE_ID 11
+#define MPI_TAG_SET_FEATURE_ID 12
 
 using namespace std;
 

@@ -1,41 +1,18 @@
 #ifndef MULTICORECONTROLLER_H
 #define MULTICORECONTROLLER_H
 
-#define MPI_TAG_NULL -1
-#define MPI_TAG_TIMESTEP_0 0
-#define MPI_TAG_TF_RESOLUTION 2
-#define MPI_TAG_TF_COLOR_MAP 3
-#define MPI_TAG_SEGMENT_MATRIX 4
-#define MPI_TAG_ROUTER 5
-#define MPI_TAG_HIGHLIGHT_FEATURE 6
-#define MPI_TAG_SELECTED_FEATURE_INFO 7
-#define MPI_TAG_SELECTED_FEATURE_INFO_SIZE 8
-#define MPI_TAG_SYNC_TIMESTEP 9
-#define MPI_TAG_TRACK_FORWARD 10
-#define MPI_TAG_GET_FEATURE_ID 11
-#define MPI_TAG_SET_FEATURE_ID 12
-
-#define INT_SIZE 1
-#define FLOAT_SIZE sizeof(float)
-
 #include <fstream>
-#include <QObject>
-#include <QDebug>
 #include "DataBlockController.h"
 #include "mpi.h"
 
-class MultiCoreController : public QObject {
-    Q_OBJECT
+class MultiCoreController {
 public:
-    explicit MultiCoreController(QObject *parent = 0);
+    MultiCoreController();
     ~MultiCoreController();
 
     void Init(int argc, char** argv);
     void Start();
-signals:
-
-public slots:
-    void TrackForward_host();
+    void TrackForward();
 
 private:
     DataBlockController *pDataBlockController;
@@ -59,13 +36,14 @@ private:
     CSVWriter   csv;
     DataSet     ds;
 
-    void initVolumeData_both();
-    void synchronizeParameters_both();
-    void precalculateFirstStep_both();
-    void waitForUIEvent();
+    void initVolumeData();
+    void syncTFParameters();
+    void precalculateT0();
+    void waitingForOrders();
     void trackForward_worker();
 
     Edge* updateGlobalConnectivityGraph(vector<Edge> localEdgesVector);
+    void debug(string msg);
 };
 
 #endif // MULTICORECONTROLLER_H

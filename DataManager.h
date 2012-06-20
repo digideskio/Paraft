@@ -30,15 +30,14 @@ public:
                          Vector3i workerNumProcessesXYZ, Vector3i workerIDXYZ);
 
     vector<Feature> *GetFeatureVector(int iTime) { return &(pFeatureVectors.at(iTime)); }
-    Feature *getFeature(int iTime, int index) { return &(pFeatureVectors.at(iTime).at(index)); }
+    Feature *GetFeature(int iTime, int index) { return &(pFeatureVectors.at(iTime).at(index)); }
     void SaveExtractedFeatures(vector<Feature> f) { pFeatureVectors.push_back(f); }
 
 private:
     Vector3i volumeDim;
     int volumeSize;
 
-    // not used yet
-    Vector2f globalMinMax;
+    Vector2f globalMinMax;      // not used yet
 
     vector<float*> pDataVector;
     vector<MinMax> pMinMaxVector;

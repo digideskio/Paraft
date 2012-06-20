@@ -33,3 +33,6 @@ HEADERS += \
     FeatureTracker.h \
     DataBlockController.h \
     MultiCoreController.h
+
+OTHER_FILES += \
+    tf_config.dat

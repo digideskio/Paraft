@@ -9,7 +9,7 @@ DataBlockController::DataBlockController() {
 
 DataBlockController::~DataBlockController() {
     highlightedFeatures.clear();
-    localGraph.clear();
+    localConnectivityGraph.clear();
     pDataManager->~DataManager();
     pFeatureTracker->~FeatureTracker();
 }
@@ -107,7 +107,7 @@ void DataBlockController::initAdjacentBlocks(Vector3i workerNumProcessesXYZ,
 }
 
 void DataBlockController::UpdateLocalGraph(int workerID, Vector3i workerIDXYZ) {
-    localGraph.clear();
+    localConnectivityGraph.clear();
 
     vector<Feature> *pCurrentFeatures;
     pCurrentFeatures = pDataManager->GetFeatureVector(currentTimestep);
@@ -139,14 +139,14 @@ void DataBlockController::UpdateLocalGraph(int workerID, Vector3i workerIDXYZ) {
             edge.end        = adjacentBlock;
             edge.centroid = ConvertLocalCoord2GlobalCoord(centroid, workerIDXYZ);
 
-            localGraph.push_back(edge);
+            localConnectivityGraph.push_back(edge);
         }
     }
 }
 
 Vector3i DataBlockController::ConvertLocalCoord2GlobalCoord(Vector3i point, Vector3i workerIDXYZ) {
     Vector3i globalCoord;
-    globalCoord.x = point.x + xs. * workerIDXYZ.x;
+    globalCoord.x = point.x + xs * workerIDXYZ.x;
     globalCoord.y = point.y + ys * workerIDXYZ.y;
     globalCoord.z = point.z + zs * workerIDXYZ.z;
     return globalCoord;

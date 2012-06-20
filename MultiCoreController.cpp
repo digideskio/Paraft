@@ -1,7 +1,6 @@
 #include "MultiCoreController.h"
 
-MultiCoreController::MultiCoreController(QObject *parent) : QObject(parent) { }
-
+MultiCoreController::MultiCoreController() {}
 MultiCoreController::~MultiCoreController() {
     MPI_Finalize();
     pDataBlockController->~DataBlockController();
@@ -49,31 +48,30 @@ void MultiCoreController::Init(int argc, char **argv) {
 }
 
 void MultiCoreController::Start() {
-    initVolumeData_both();
+    initVolumeData();
+    syncTFParameters();
+    precalculateT0();
 
-    // get tf params from host and set them to workers
-    synchronizeParameters_both();
-    precalculateFirstStep_both();
-
-    if (gID == HOST_NODE) {    /* master node */
+    if (gID == HOST_NODE) {
         for (int i = 0; i < NUM_TRACK_STEPS; i++ ){
-            TrackForward_host();
+            TrackForward();
         }
-    } else {                        /* slave nodes */
-        waitForUIEvent();
+    } else { // slave nodes
+        waitingForOrders();
     }
 }
 
-//// Slots ///////////////////////////////////////////////////////////////
-void MultiCoreController::TrackForward_host() {  // called by processor 0
-    qDebug("[%d/%d] TrackForward() start", wID, gID);
+void MultiCoreController::TrackForward() {  // called by processor 0
+    debug("TrackForward() start");
+
     timestep++;
     if (timestep > ds.index_end) {
         timestep = ds.index_end;
-        qDebug("Already last timestep: %d", ds.index_end);
+        debug("Already last timestep");
         return;
     }
-    qDebug("[%d/%d] |-- Timestep: %d", wID, gID, timestep);
+
+    cout << "["<<wID<<"/"<<gID<<"]" << " |-- Time: " << timestep << endl;
 
     int router = MPI_TAG_SYNC_TIMESTEP;
     for (wGID = 1; wGID < globalNumProcesses; wGID++) {
@@ -85,34 +83,31 @@ void MultiCoreController::TrackForward_host() {  // called by processor 0
     for (wGID = 1; wGID < globalNumProcesses; wGID++) {
         MPI_Ssend(&router, INT_SIZE, MPI_INT, wGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
     }
-    qDebug("[%d/%d] TrackForward() done ", wID, gID);
+
+    debug("TrackForward() end");
 }
 
-//// Slots ///////////////////////////////////////////////////////////////
-
 //// Member Function /////////////////////////////////////////////////////
-void MultiCoreController::initVolumeData_both() {
+void MultiCoreController::initVolumeData() {
     pDataBlockController = new DataBlockController();
     pDataBlockController->InitData(gID, wSegXYZ, wXYZ, ds);
     xs = pDataBlockController->GetVolumeDimX();
     ys = pDataBlockController->GetVolumeDimY();
     zs = pDataBlockController->GetVolumeDimZ();
-    qDebug("[%d/%d] Load volume data (%s) ready", wID, gID, ds.prefix.c_str());
+    debug("Load volume data: " + ds.prefix + " ready");
 }
 
-void MultiCoreController::synchronizeParameters_both() {
-    int tfSize = TF_RESOLUTION*4;           // float*rgba
-    int bufSize = tfSize * sizeof(float);   // file size
+void MultiCoreController::syncTFParameters() {
+    int tfSize = TF_RESOLUTION * 4;         // float*rgba
+    int bufSize = tfSize * FLOAT_SIZE;      // file size
 
     float* pTFColorMap = new float[tfSize];
     timestep = ds.index_start;
 
-    char config[1024];
-    sprintf(config, "../data/tf_config.dat");
-
+    string configFile = "tf_config.dat";
     if (gID == HOST_NODE) {
-        ifstream inf(config, ios::binary);
-        if (!inf) { qDebug("[%d/%d] cannot read data", wID, gID); }
+        ifstream inf(configFile.c_str(), ios::binary);
+        if (!inf) { debug("Cannot read config file: " + configFile); }
         inf.read(reinterpret_cast<char *>(pTFColorMap), bufSize);
         inf.close();
     }
@@ -123,21 +118,18 @@ void MultiCoreController::synchronizeParameters_both() {
     pDataBlockController->SetCurrentTimestep(timestep);
     pDataBlockController->SetTFResolution(TF_RESOLUTION);
     pDataBlockController->SetTFColorMap(pTFColorMap);
-    qDebug("[%d/%d] DataBlockController ready", wID, gID);
+    debug("DataBlockController ready");
 }
 
-void MultiCoreController::precalculateFirstStep_both() {
+void MultiCoreController::precalculateT0() {
     timestep++;
-    qDebug("[%d/%d] 1", wID, gID);
     pDataBlockController->ExtractAllFeatures();
-    qDebug("[%d/%d] 2", wID, gID);
     pDataBlockController->SetCurrentTimestep(timestep);
-    qDebug("[%d/%d] 3", wID, gID);
     pDataBlockController->TrackForward();
-    qDebug("[%d/%d] Pre-calculate timestep 1 ready", wID, gID);
+    debug("Pre-calculate timestep 1 ready");
 }
 
-void MultiCoreController::waitForUIEvent() {
+void MultiCoreController::waitingForOrders() {
     int router = MPI_TAG_NULL;
     while (true) {
         MPI_Recv(&router, INT_SIZE, MPI_INT, HOST_NODE, MPI_TAG_ROUTER,
@@ -151,7 +143,7 @@ void MultiCoreController::waitForUIEvent() {
                 trackForward_worker();
                 break;
         default:
-            qDebug() << "Internal Error: No matched tag found";
+            debug("Internal Error: No matched tag found");
         }
     }
 }
@@ -189,13 +181,14 @@ void MultiCoreController::trackForward_worker() {
          << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
     outf.close();
 
-    qDebug("[%d/%d] done ----------------------", wID, gID);
+    debug("Done ----------------------");
 
     //// Test Graph ////////////////////////////////////////////////
     if (wID == 0) {
         for (int i = 0; i < globalGraphSize; i++) {
-            qDebug() << pGlobalGraph[i].id << pGlobalGraph[i].start << "->" << pGlobalGraph[i].end
-                     << pGlobalGraph[i].centroid.x << pGlobalGraph[i].centroid.y << pGlobalGraph[i].centroid.z;
+            cout << pGlobalGraph[i].id << pGlobalGraph[i].start << "->" << pGlobalGraph[i].end
+                 << pGlobalGraph[i].centroid.x << pGlobalGraph[i].centroid.y << pGlobalGraph[i].centroid.z
+                 << endl;
         }
     }
     ////////////////////////////////////////////////////////////////
@@ -261,6 +254,11 @@ Edge* MultiCoreController::updateGlobalConnectivityGraph(vector<Edge> localEdges
 
     delete [] localEdges;
     return pGlobalGraph;
+}
+
+void MultiCoreController::debug(string msg) {
+    cout << "[" << wID << "/" << gID << "] ";
+    cout << msg << endl;
 }
 
 //// Member Function /////////////////////////////////////////////////////
