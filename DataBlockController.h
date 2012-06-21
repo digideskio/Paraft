@@ -6,16 +6,13 @@
 #include "FeatureTracker.h"
 #include "Consts.h"
 
-#define LOW_THRESHOLD       0.2
-#define HIGH_THRESHOLD      1.0
-
 class DataBlockController {
 
 public:
     DataBlockController();
     ~DataBlockController();
 
-    void InitData(int globalID, Vector3i workerNumProcessesXYZ,
+    void InitData(int globalID, Vector3i workerNumProcXYZ,
                   Vector3i workerIDXYZ, DataSet dataset);
 
     void TrackForward();
@@ -51,18 +48,19 @@ public:
     int GetPointIndex(DataPoint p) { return pFeatureTracker->GetPointIndex(p); }
 
 private:
+    hash_map<int, int>  adjacentBlocks;
     DataManager     *pDataManager;
     FeatureTracker  *pFeatureTracker;
-    vector<int>    highlightedFeatures;
-    hash_map<int, int>  adjacentBlocks;
-    DataSet         dataset;
+    vector<int>     highlightedFeatures;
+//    DataSet         dataset;
     int             currentTimestep;
     int             xs, ys, zs;
+    Vector3i        dataDim;
 
     vector<Edge>    localConnectivityGraph;
 
     void saveExtractedFeatures(vector<Feature>* f);
-    void initAdjacentBlocks(Vector3i workerNumProcessesXYZ, Vector3i workerIDXYZ);
+    void initAdjacentBlocks(Vector3i workerNumProcXYZ, Vector3i workerIDXYZ);
 };
 
 #endif // DATABLOCKCONTROLLER_H

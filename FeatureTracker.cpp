@@ -478,12 +478,12 @@ void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
     timestepsAvailableBackward = 0;
 }
 
- float FeatureTracker::getOpacity(float DataValue) {
+ float FeatureTracker::getOpacity(float value) {
     if (pTFColorMap == NULL || tfResolution == 0) {
         cout << "Set TF pointer first." << endl;
         return -1;
     }
-    int factor = (int)(tfResolution * DataValue);
+    int factor = (int)(tfResolution * value);
     return pTFColorMap[4*factor+3];
  }
 

@@ -1,7 +1,7 @@
 #include "DataBlockController.h"
 
 DataBlockController::DataBlockController() {
-    xs = 0; ys = 0; zs = 0;
+    dataDim.x = dataDim.y = dataDim.z = 0;
     for (int surface = 0; surface < 6; surface++) {
         adjacentBlocks[surface] = SURFACE_NULL;
     }
@@ -14,34 +14,25 @@ DataBlockController::~DataBlockController() {
     pFeatureTracker->~FeatureTracker();
 }
 
-void DataBlockController::InitData(int globalID, Vector3i workerNumProcessesXYZ,
+void DataBlockController::InitData(int globalID, Vector3i workerNumProcXYZ,
                                    Vector3i workerIDXYZ, DataSet ds) {
-    Vector3i dimXYZ; {
-        dimXYZ.x = DATA_DIM_X;
-        dimXYZ.y = DATA_DIM_Y;
-        dimXYZ.z = DATA_DIM_Z;
-    }
+
+    Vector3i dimXYZ(DATA_DIM_X, DATA_DIM_Y, DATA_DIM_Z);
 
     if (globalID == HOST_NODE) {
-        workerNumProcessesXYZ.x = 1;
-        workerNumProcessesXYZ.y = 1;
-        workerNumProcessesXYZ.z = 1;
+        workerNumProcXYZ.x = 1;
+        workerNumProcXYZ.y = 1;
+        workerNumProcXYZ.z = 1;
     } else {
-        initAdjacentBlocks(workerNumProcessesXYZ, workerIDXYZ);
+        initAdjacentBlocks(workerNumProcXYZ, workerIDXYZ);
     }
 
-    dataset = ds;
-
     pDataManager = new DataManager();
-    pDataManager->ReadDataSequence(dataset.data_path, dataset.prefix, dataset.surfix,
-                                   dataset.index_start, dataset.index_end,
-                                   dimXYZ, workerNumProcessesXYZ, workerIDXYZ);
+    pDataManager->ReadDataSequence(ds, dimXYZ, workerNumProcXYZ, workerIDXYZ);
     pDataManager->CreateNewMaskMatrix();
 
-    xs = pDataManager->GetVolumeDimX();
-    ys = pDataManager->GetVolumeDimY();
-    zs = pDataManager->GetVolumeDimZ();
-    pFeatureTracker = new FeatureTracker(xs, ys, zs);
+    dataDim = pDataManager->GetVolumeDimension();
+    pFeatureTracker = new FeatureTracker(dataDim.x, dataDim.y, dataDim.z);
 }
 
 void DataBlockController::TrackForward() {
@@ -53,14 +44,14 @@ void DataBlockController::TrackForward() {
 
 void DataBlockController::ExtractAllFeatures() {
     float opacity;
-    int index, tfIndex;
+    int index, tfIndex, tfRes = pFeatureTracker->GetTFResolution();
 
-    for (int z = 0; z < zs; z++) {
-        for (int y = 0; y < ys; y++ ) {
-            for (int x = 0; x < xs; x++) {
-                index = z * ys * xs + y * xs + x;
+    for (int z = 0; z < dataDim.z; z++) {
+        for (int y = 0; y < dataDim.y; y++ ) {
+            for (int x = 0; x < dataDim.x; x++) {
+                index = z * dataDim.y * dataDim.x + y * dataDim.x + x;
                 if (pFeatureTracker->GetMaskMatrixPointer()[index] != 0) { continue; }
-                tfIndex = (int)(pDataManager->GetVolumeDataPointer(currentTimestep)[index] * pFeatureTracker->GetTFResolution());
+                tfIndex = (int)(pDataManager->GetVolumeDataPointer(currentTimestep)[index] * tfRes);
                 opacity = pFeatureTracker->GetTFColorMap()[tfIndex*4+3];
                 if (opacity >= LOW_THRESHOLD && opacity <= HIGH_THRESHOLD) {
                     pFeatureTracker->FindNewFeature(x, y, z, LOW_THRESHOLD, HIGH_THRESHOLD);
@@ -90,11 +81,11 @@ void DataBlockController::saveExtractedFeatures(vector<Feature>* f) {
     pDataManager->SaveExtractedFeatures(temp);
 }
 
-void DataBlockController::initAdjacentBlocks(Vector3i workerNumProcessesXYZ,
+void DataBlockController::initAdjacentBlocks(Vector3i workerNumProcXYZ,
                                              Vector3i workerIDXYZ) {
-    int npx = workerNumProcessesXYZ.x;
-    int npy = workerNumProcessesXYZ.y;
-    int npz = workerNumProcessesXYZ.z;
+    int npx = workerNumProcXYZ.x;
+    int npy = workerNumProcXYZ.y;
+    int npz = workerNumProcXYZ.z;
     int z = workerIDXYZ.z;
     int y = workerIDXYZ.y;
     int x = workerIDXYZ.x;
@@ -145,9 +136,5 @@ void DataBlockController::UpdateLocalGraph(int workerID, Vector3i workerIDXYZ) {
 }
 
 Vector3i DataBlockController::ConvertLocalCoord2GlobalCoord(Vector3i point, Vector3i workerIDXYZ) {
-    Vector3i globalCoord;
-    globalCoord.x = point.x + xs * workerIDXYZ.x;
-    globalCoord.y = point.y + ys * workerIDXYZ.y;
-    globalCoord.z = point.z + zs * workerIDXYZ.z;
-    return globalCoord;
+    return point + dataDim * workerIDXYZ;
 }

@@ -37,35 +37,34 @@ void DataManager::CreateNewMaskMatrix() {
     memset(pMaskMatrix, 0, sizeof(float)*volumeSize);
 }
 
-bool DataManager::ReadDataSequence(string filePath, string prefix, string suffix,
-                                   int iStart, int iEnd, Vector3i dimXYZ,
-                                   Vector3i workerNumProcXYZ, Vector3i workerIDXYZ) {
-    volumeDim = dimXYZ / workerNumProcXYZ;
+void DataManager::ReadDataSequence(DataSet ds, Vector3i origVolumeDim,
+                                   Vector3i partition,
+                                   Vector3i workerIDXYZ) {
+    volumeDim = origVolumeDim / partition;
     volumeSize = volumeDim.volume();
 
     string fileName;
-    bool result;
-    char numstr[21];
-    for (int i = iStart; i <= iEnd; i++) {
+    char numstr[21]; // enough to hold all numbers up to 64-bits
+    for (int i = ds.index_start; i <= ds.index_end; i++) {
         sprintf(numstr, "%d", i);
-        fileName = filePath + "/" + prefix + numstr + "." + suffix;
-        result = ReadOneDataFile(fileName, volumeDim, workerNumProcXYZ, workerIDXYZ);
+        fileName = ds.data_path + "/" + ds.prefix + numstr + "." + ds.surfix;
+        ReadOneDataFile(fileName, volumeDim, partition, workerIDXYZ);
     }
+
     normalizeData();
-    return result;
 }
 
 // Read one file from disk and save it to the end of the data vector
-bool DataManager::ReadOneDataFile(string filePath, Vector3i segLength,
-                                  Vector3i workerNumProcessesXYZ,
+bool DataManager::ReadOneDataFile(string filePath, Vector3i volumeDim,
+                                  Vector3i workerNumProcXYZ,
                                   Vector3i workerIDXYZ) {
 
-    int bufferSize = segLength.volume();
-    float *pBuffer = allocateNewDataBuffer(segLength);
+    int bufferSize = volumeDim.volume();
+    float *pBuffer = allocateNewDataBuffer(bufferSize);
 
-    int *gsizes = (segLength * workerNumProcessesXYZ).toArray();
-    int *subsizes = segLength.toArray();
-    int *starts = (segLength * workerIDXYZ).toArray();
+    int *gsizes = (volumeDim * workerNumProcXYZ).toArray();
+    int *subsizes = volumeDim.toArray();
+    int *starts = (volumeDim * workerIDXYZ).toArray();
 
     MPI_Datatype filetype;
     MPI_Type_create_subarray(3, gsizes, subsizes, starts,
@@ -78,7 +77,7 @@ bool DataManager::ReadOneDataFile(string filePath, Vector3i segLength,
 
     MPI_File file;
     MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
-    MPI_File_set_view(file, 0 /* offset */, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
+    MPI_File_set_view(file, 0, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
     MPI_File_read_all(file, pBuffer, bufferSize, MPI_FLOAT, MPI_STATUS_IGNORE);
 
     MPI_File_close(&file);
@@ -113,10 +112,10 @@ void DataManager::normalizeData() {
     }
 }
 
-float* DataManager::allocateNewDataBuffer(Vector3i dim) {
-    pAllocatedBuffer = new float[dim.volume()];
+float* DataManager::allocateNewDataBuffer(int bufferSize) {
+    pAllocatedBuffer = new float[bufferSize];
     if (pAllocatedBuffer == NULL) {
-        std::cout << "Allocate memory failed." << std::endl;
+        cerr << "Allocate memory failed" << endl;
         return pAllocatedBuffer;
     }
     pDataVector.push_back(pAllocatedBuffer);

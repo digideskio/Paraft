@@ -26,13 +26,13 @@ void MultiCoreController::Init(int argc, char **argv) {
         ds.index_end   = 10;
         ds.prefix      = "vorts";
         ds.surfix      = "data";
-        ds.data_path   = "../../Data/vorts";
+        ds.data_path   = "../Data/vorts";
     } else if (datasetID == 1) {
         ds.index_start = 0;
         ds.index_end   = 7;
         ds.prefix      = "large_vorts_";
         ds.surfix      = "dat";
-        ds.data_path   = "../../Data/vorts1";
+        ds.data_path   = "../Data/vorts1";
     }
 
     wXYZ.z = wID / (wSegXYZ.x * wSegXYZ.y);
@@ -48,12 +48,12 @@ void MultiCoreController::Init(int argc, char **argv) {
 }
 
 void MultiCoreController::Start() {
-    initVolumeData();
+    initDataBlockController();
     syncTFParameters();
     precalculateT0();
 
     if (gID == HOST_NODE) {
-        for (int i = 0; i < NUM_TRACK_STEPS; i++ ){
+        for (int i = 0; i < NUM_TRACK_STEPS; i++) {
             TrackForward();
         }
     } else { // slave nodes
@@ -61,39 +61,10 @@ void MultiCoreController::Start() {
     }
 }
 
-void MultiCoreController::TrackForward() {  // called by processor 0
-    debug("TrackForward() start");
-
-    timestep++;
-    if (timestep > ds.index_end) {
-        timestep = ds.index_end;
-        debug("Already last timestep");
-        return;
-    }
-
-    cout << "["<<wID<<"/"<<gID<<"]" << " |-- Time: " << timestep << endl;
-
-    int router = MPI_TAG_SYNC_TIMESTEP;
-    for (wGID = 1; wGID < globalNumProcesses; wGID++) {
-        MPI_Ssend(&router, INT_SIZE, MPI_INT, wGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
-        MPI_Ssend(&timestep, INT_SIZE, MPI_INT, wGID, MPI_TAG_SYNC_TIMESTEP, MPI_COMM_WORLD);
-    }
-
-    router = MPI_TAG_TRACK_FORWARD;
-    for (wGID = 1; wGID < globalNumProcesses; wGID++) {
-        MPI_Ssend(&router, INT_SIZE, MPI_INT, wGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
-    }
-
-    debug("TrackForward() end");
-}
-
 //// Member Function /////////////////////////////////////////////////////
-void MultiCoreController::initVolumeData() {
+void MultiCoreController::initDataBlockController() {
     pDataBlockController = new DataBlockController();
     pDataBlockController->InitData(gID, wSegXYZ, wXYZ, ds);
-    xs = pDataBlockController->GetVolumeDimX();
-    ys = pDataBlockController->GetVolumeDimY();
-    zs = pDataBlockController->GetVolumeDimZ();
     debug("Load volume data: " + ds.prefix + " ready");
 }
 
@@ -105,7 +76,7 @@ void MultiCoreController::syncTFParameters() {
     timestep = ds.index_start;
 
     string configFile = "tf_config.dat";
-    if (gID == HOST_NODE) {
+    if (gID == HOST_NODE) { // host read in, then broadcast to others
         ifstream inf(configFile.c_str(), ios::binary);
         if (!inf) { debug("Cannot read config file: " + configFile); }
         inf.read(reinterpret_cast<char *>(pTFColorMap), bufSize);
@@ -122,18 +93,43 @@ void MultiCoreController::syncTFParameters() {
 }
 
 void MultiCoreController::precalculateT0() {
-    timestep++;
+    timestep++; // all nodes
     pDataBlockController->ExtractAllFeatures();
     pDataBlockController->SetCurrentTimestep(timestep);
     pDataBlockController->TrackForward();
     debug("Pre-calculate timestep 1 ready");
 }
 
+void MultiCoreController::TrackForward() {  // triggered by host
+    debug("TrackForward() triggered");
+
+    timestep++;
+    if (timestep > ds.index_end) {
+        timestep = ds.index_end;
+        debug("Already last timestep");
+        return;
+    }
+
+    cout << "|-- Current timestep: " << timestep << endl;
+
+    int router = MPI_TAG_SYNC_TIMESTEP;
+    for (wGID = 1; wGID < globalNumProcesses; wGID++) {
+        MPI_Ssend(&router, INT_SIZE, MPI_INT, wGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
+        MPI_Ssend(&timestep, INT_SIZE, MPI_INT, wGID, MPI_TAG_SYNC_TIMESTEP, MPI_COMM_WORLD);
+    }
+
+    router = MPI_TAG_TRACK_FORWARD;
+    for (wGID = 1; wGID < globalNumProcesses; wGID++) {
+        MPI_Ssend(&router, INT_SIZE, MPI_INT, wGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
+    }
+
+    debug("TrackForward() done");
+}
+
 void MultiCoreController::waitingForOrders() {
     int router = MPI_TAG_NULL;
     while (true) {
-        MPI_Recv(&router, INT_SIZE, MPI_INT, HOST_NODE, MPI_TAG_ROUTER,
-                 MPI_COMM_WORLD, &status);
+        MPI_Recv(&router, INT_SIZE, MPI_INT, HOST_NODE, MPI_TAG_ROUTER, MPI_COMM_WORLD, &status);
         switch (router) {
             case MPI_TAG_SYNC_TIMESTEP:
                 MPI_Recv(&timestep, INT_SIZE, MPI_INT, HOST_NODE,
@@ -172,10 +168,8 @@ void MultiCoreController::trackForward_worker() {
     csv.time_3 = t3 - t2;
     csv.num_feature = globalGraphSize / 2;
 
-    char result[1024];
-    sprintf(result, "./Data/result.csv");
-
-    ofstream outf(result, ios::out | ios::app);
+    string result = "result.csv";
+    ofstream outf(result.c_str(), ios::out | ios::app);
     outf << csv.num_worker << "," << csv.num_feature << ","
          << csv.num_Seg.x << "," << csv.num_Seg.y << "," << csv.num_Seg.z << ","
          << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
@@ -185,6 +179,7 @@ void MultiCoreController::trackForward_worker() {
 
     //// Test Graph ////////////////////////////////////////////////
     if (wID == 0) {
+//        cerr << "globalGraphSize: " << globalGraphSize << endl;
         for (int i = 0; i < globalGraphSize; i++) {
             cout << pGlobalGraph[i].id << pGlobalGraph[i].start << "->" << pGlobalGraph[i].end
                  << pGlobalGraph[i].centroid.x << pGlobalGraph[i].centroid.y << pGlobalGraph[i].centroid.z
@@ -197,6 +192,8 @@ void MultiCoreController::trackForward_worker() {
 Edge* MultiCoreController::updateGlobalConnectivityGraph(vector<Edge> localEdgesVector) {
     int localEdgeSize = localEdgesVector.size();
     Edge *localEdges = new Edge[localEdgeSize];
+
+//    cerr << "localEdgeSize: " << localEdgeSize << endl;
 
     for (int i = 0; i < localEdgeSize; i++) {
         localEdges[i] = localEdgesVector.at(i);

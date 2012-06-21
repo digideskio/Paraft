@@ -6,6 +6,7 @@
 #include "mpi.h"
 
 class MultiCoreController {
+
 public:
     MultiCoreController();
     ~MultiCoreController();
@@ -19,7 +20,6 @@ private:
     MPI_Comm MY_COMM_WORKER;
     MPI_Status status;
 
-    int xs, ys, zs;
     int gID;
     int wID;
     int wGID;
@@ -36,7 +36,7 @@ private:
     CSVWriter   csv;
     DataSet     ds;
 
-    void initVolumeData();
+    void initDataBlockController();
     void syncTFParameters();
     void precalculateT0();
     void waitingForOrders();

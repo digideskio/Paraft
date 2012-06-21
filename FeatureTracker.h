@@ -54,7 +54,7 @@ private:
     void shrinkEdge(DataPoint point, float maskValue);      // sub-func inside shrinkRegion
     void backupFeatureInfo(int direction);                  // Update the feature vectors information after tracking
 
-    float getOpacity(float DataValue);
+    float getOpacity(float value);
 
     void resetFeatureBoundaryInfo();
     void updateDiffPointList(int index, float valule);

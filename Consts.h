@@ -20,6 +20,9 @@
 
 #define TF_RESOLUTION 1024
 
+#define LOW_THRESHOLD       0.2
+#define HIGH_THRESHOLD      1.0
+
 #define TRACKING_MODE_DIRECT    0
 #define TRACKING_MODE_LINEAR    1
 #define TRACKING_MODE_POLYNO    2

@@ -21,13 +21,13 @@ public:
     int GetVolumeDimZ() { return volumeDim.z; }
     int GetFeatureVectorLength() { return pFeatureVectors.size(); }
 
+    Vector3i GetVolumeDimension() { return volumeDim; }
 
-    bool ReadDataSequence(string filePath, string prefix, string suffix,
-                          int iStart, int iEnd, Vector3i dimXYZ,
+    void ReadDataSequence(DataSet ds, Vector3i origVolumeDim,
                           Vector3i workerNumProcXYZ, Vector3i workerIDXYZ);
 
-    bool ReadOneDataFile(string filePath, Vector3i segLength,
-                         Vector3i workerNumProcessesXYZ, Vector3i workerIDXYZ);
+    bool ReadOneDataFile(string filePath, Vector3i volumeDim,
+                         Vector3i workerNumProcXYZ, Vector3i workerIDXYZ);
 
     vector<Feature> *GetFeatureVector(int iTime) { return &(pFeatureVectors.at(iTime)); }
     Feature *GetFeature(int iTime, int index) { return &(pFeatureVectors.at(iTime).at(index)); }
@@ -48,7 +48,7 @@ private:
 
     void normalizeData();
     void calculateLocalMinMax();
-    float* allocateNewDataBuffer(Vector3i dim);
+    float* allocateNewDataBuffer(int bufferSize);
 };
 
 #endif // DATAMANAGER_H

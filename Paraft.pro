@@ -24,15 +24,15 @@ SOURCES += \
     Main.cpp \
     DataManager.cpp \
     FeatureTracker.cpp \
-    DataBlockController.cpp \
-    MultiCoreController.cpp
+    MultiCoreController.cpp \
+    DataBlockController.cpp
 
 HEADERS += \
     Consts.h \
     DataManager.h \
     FeatureTracker.h \
-    DataBlockController.h \
-    MultiCoreController.h
+    MultiCoreController.h \
+    DataBlockController.h
 
 OTHER_FILES += \
     tf_config.dat
