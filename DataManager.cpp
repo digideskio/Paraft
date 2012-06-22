@@ -100,14 +100,10 @@ void DataManager::normalizeData() {
         max = max > pMinMaxVector.at(i).max ? max : pMinMaxVector.at(i).max;
     }
 
-    float delta = max - min;
-    globalMinMax.x = min;
-    globalMinMax.y = max;
-
     for (int j = 0; j < iTimelength; j++) {
         for (int i = 0; i < volumeSize; i++) {
             pDataVector.at(j)[i] -= min;
-            pDataVector.at(j)[i] /= delta;
+            pDataVector.at(j)[i] /= (max-min);
         }
     }
 }

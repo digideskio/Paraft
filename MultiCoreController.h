@@ -20,18 +20,23 @@ private:
     MPI_Comm MY_COMM_WORKER;
     MPI_Status status;
 
-    int gID;
-    int wID;
-    int wGID;
+    int globalID;
+    int blockID;
+    int blockGID;
     int timestep;
-    int globalNumProcesses;
-    int workerNumProcesses;
+    int globalNumProc;
+    int blockCount;
 
-    Vector3i wSegXYZ;
-    Vector3i wXYZ;
+    Vector3i partition;
+    Vector3i wCoord;
 
-    Edge *pGlobalGraph;
+    // for global graph
     int globalGraphSize;
+    Edge *pGlobalGraph;
+    Edge* updateGlobalGraph(vector<Edge> localEdgesVector);
+
+    // for feature graph
+    Edge* updateFeatureGraph(vector<Edge> localEdgesVector);
 
     CSVWriter   csv;
     DataSet     ds;
@@ -42,7 +47,6 @@ private:
     void waitingForOrders();
     void trackForward_worker();
 
-    Edge* updateGlobalConnectivityGraph(vector<Edge> localEdgesVector);
     void debug(string msg);
 };
 

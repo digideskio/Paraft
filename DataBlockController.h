@@ -17,15 +17,11 @@ public:
 
     void TrackForward();
     void ExtractAllFeatures();
-    void UpdateLocalGraph(int workerID, Vector3i workerIDXYZ);
-    Vector3i ConvertLocalCoord2GlobalCoord(Vector3i point, Vector3i workerIDXYZ);
+    void UpdateLocalGraph(int blockID, Vector3i blockCoord);
 
     // Accessor - DataManager
     float* GetMaskMatrixPointer() { return pDataManager->GetMaskMatrixPointer(); }
     float* GetVolumeDataPointer(int index) { return pDataManager->GetVolumeDataPointer(index); }
-    int GetVolumeDimX() { return pDataManager->GetVolumeDimX(); }
-    int GetVolumeDimY() { return pDataManager->GetVolumeDimY(); }
-    int GetVolumeDimZ() { return pDataManager->GetVolumeDimZ(); }
     int GetVolumeSize() { return pDataManager->GetVolumeSize(); }
     int GetFeatureVectorLength() { return pDataManager->GetFeatureVectorLength(); }
     vector<int> GetHighlightedFeatures() { return highlightedFeatures; }
@@ -35,7 +31,7 @@ public:
     // Feature Connectivity Graph
     hash_map<int, int> GetAdjacentBlocks() { return adjacentBlocks; }
 
-    vector<Edge> GetLocalEdges() { return localConnectivityGraph; }
+    vector<Edge> GetLocalEdges() { return localGraph; }
 
     // Accessor - FeatureTracker
     void SetVolumeDataPointerByIndex(int index) { pFeatureTracker->SetVolumeDataPointer(pDataManager->GetVolumeDataPointer(index));}
@@ -51,16 +47,14 @@ private:
     hash_map<int, int>  adjacentBlocks;
     DataManager     *pDataManager;
     FeatureTracker  *pFeatureTracker;
+    vector<Edge>    localGraph;
     vector<int>     highlightedFeatures;
-//    DataSet         dataset;
+    Vector3i        dataDim;
     int             currentTimestep;
     int             xs, ys, zs;
-    Vector3i        dataDim;
-
-    vector<Edge>    localConnectivityGraph;
 
     void saveExtractedFeatures(vector<Feature>* f);
-    void initAdjacentBlocks(Vector3i workerNumProcXYZ, Vector3i workerIDXYZ);
+    void initAdjacentBlocks(Vector3i blockPartition, Vector3i blockCoord);
 };
 
 #endif // DATABLOCKCONTROLLER_H

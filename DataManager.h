@@ -16,9 +16,6 @@ public:
     float* GetMaskMatrixPointer() { return pMaskMatrix; }
 
     int GetVolumeSize() { return volumeSize; }
-    int GetVolumeDimX() { return volumeDim.x; }
-    int GetVolumeDimY() { return volumeDim.y; }
-    int GetVolumeDimZ() { return volumeDim.z; }
     int GetFeatureVectorLength() { return pFeatureVectors.size(); }
 
     Vector3i GetVolumeDimension() { return volumeDim; }
@@ -36,8 +33,6 @@ public:
 private:
     Vector3i volumeDim;
     int volumeSize;
-
-    Vector2f globalMinMax;      // not used yet
 
     vector<float*> pDataVector;
     vector<MinMax> pMinMaxVector;

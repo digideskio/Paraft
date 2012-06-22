@@ -9,7 +9,7 @@ DataBlockController::DataBlockController() {
 
 DataBlockController::~DataBlockController() {
     highlightedFeatures.clear();
-    localConnectivityGraph.clear();
+    localGraph.clear();
     pDataManager->~DataManager();
     pFeatureTracker->~FeatureTracker();
 }
@@ -38,7 +38,7 @@ void DataBlockController::InitData(int globalID, Vector3i workerNumProcXYZ,
 void DataBlockController::TrackForward() {
     pFeatureTracker->TrackFeature(pDataManager->GetVolumeDataPointer(currentTimestep),
                                   LOW_THRESHOLD, HIGH_THRESHOLD,
-                                  TRACKING_DIRECTION_FORWARD, TRACKING_MODE_DIRECT);
+                                  TRACKING_FORWARD, TRACKING_MODE_DIRECT);
     ExtractAllFeatures();
 }
 
@@ -70,7 +70,8 @@ void DataBlockController::AddHighlightedFeature(int index) {
 }
 
 void DataBlockController::ResetMaskMatrixValue(float value) {
-    memset(pDataManager->GetMaskMatrixPointer(), value, sizeof(float)*pDataManager->GetVolumeSize());
+    memset(pDataManager->GetMaskMatrixPointer(), value,
+           sizeof(float)*pDataManager->GetVolumeSize());
 }
 
 void DataBlockController::saveExtractedFeatures(vector<Feature>* f) {
@@ -81,24 +82,22 @@ void DataBlockController::saveExtractedFeatures(vector<Feature>* f) {
     pDataManager->SaveExtractedFeatures(temp);
 }
 
-void DataBlockController::initAdjacentBlocks(Vector3i workerNumProcXYZ,
-                                             Vector3i workerIDXYZ) {
-    int npx = workerNumProcXYZ.x;
-    int npy = workerNumProcXYZ.y;
-    int npz = workerNumProcXYZ.z;
-    int z = workerIDXYZ.z;
-    int y = workerIDXYZ.y;
-    int x = workerIDXYZ.x;
-    adjacentBlocks[SURFACE_LEFT]   = x-1 >= 0  ? npx*npy*z + npx*y + x - 1 : -1;
-    adjacentBlocks[SURFACE_RIGHT]  = x+1 <  npx? npx*npy*z + npx*y + x + 1 : -1;
-    adjacentBlocks[SURFACE_BOTTOM] = y-1 >= 0  ? npx*npy*z + npx*(y-1) + x : -1;
-    adjacentBlocks[SURFACE_TOP]    = y+1 <  npy? npx*npy*z + npx*(y+1) + x : -1;
-    adjacentBlocks[SURFACE_FRONT]  = z-1 >= 0  ? npx*npy*(z-1) + npx*y + x : -1;
-    adjacentBlocks[SURFACE_BACK]   = z+1 <  npz? npx*npy*(z+1) + npx*y + x : -1;
+void DataBlockController::initAdjacentBlocks(Vector3i blockPartition,
+                                             Vector3i blockCoord) {
+
+    int px = blockPartition.x, py = blockPartition.y, pz = blockPartition.z;
+    int  x = blockCoord.x,      y = blockCoord.y,      z = blockCoord.z;
+
+    adjacentBlocks[SURFACE_LEFT]   = x-1 >= 0  ? px*py*z + px*y + x - 1 : -1;
+    adjacentBlocks[SURFACE_RIGHT]  = x+1 <  px ? px*py*z + px*y + x + 1 : -1;
+    adjacentBlocks[SURFACE_BOTTOM] = y-1 >= 0  ? px*py*z + px*(y-1) + x : -1;
+    adjacentBlocks[SURFACE_TOP]    = y+1 <  py ? px*py*z + px*(y+1) + x : -1;
+    adjacentBlocks[SURFACE_FRONT]  = z-1 >= 0  ? px*py*(z-1) + px*y + x : -1;
+    adjacentBlocks[SURFACE_BACK]   = z+1 <  pz ? px*py*(z+1) + px*y + x : -1;
 }
 
-void DataBlockController::UpdateLocalGraph(int workerID, Vector3i workerIDXYZ) {
-    localConnectivityGraph.clear();
+void DataBlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
+    localGraph.clear();
 
     vector<Feature> *pCurrentFeatures;
     pCurrentFeatures = pDataManager->GetFeatureVector(currentTimestep);
@@ -126,15 +125,11 @@ void DataBlockController::UpdateLocalGraph(int workerID, Vector3i workerIDXYZ) {
             centroid = feature.BoundaryCentroid[surface];
 
             edge.id         = feature.ID;
-            edge.start      = workerID;
+            edge.start      = blockID;
             edge.end        = adjacentBlock;
-            edge.centroid = ConvertLocalCoord2GlobalCoord(centroid, workerIDXYZ);
+            edge.centroid   = centroid + dataDim * blockCoord;
 
-            localConnectivityGraph.push_back(edge);
+            localGraph.push_back(edge);
         }
     }
-}
-
-Vector3i DataBlockController::ConvertLocalCoord2GlobalCoord(Vector3i point, Vector3i workerIDXYZ) {
-    return point + dataDim * workerIDXYZ;
 }

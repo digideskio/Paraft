@@ -18,7 +18,7 @@ public:
 
     void Reset();
 
-    // Set seed at current time step. SetSeed will do three things :
+    // Set seed at current time step. FindNewFeature will do three things :
     // 1. Do region growing at the current time step
     // 2. Adding a center point into the center point list
     // 3. Adding edge points into the edge list
@@ -35,10 +35,9 @@ public:
     void SetTFColorMap(float* map) { pTFColorMap = map; }
     void SetTFResolution(int res) { tfResolution = res; }
     int GetPointIndex(DataPoint point) { return xs*ys*point.z+xs*point.y+point.x; }
-    float* GetTFColorMap() { return pTFColorMap; }
     int GetTFResolution() { return tfResolution; }
+    float* GetTFColorMap() { return pTFColorMap; }
     hash_map<int, float> GetDiffPoints() { return diffPoints; }
-
 
     // Get all features information of current time step
     vector<Feature>* GetCurrentFeatureInfo() { return &currentFeaturesHolder; }
@@ -93,15 +92,15 @@ private:
     int         numVoxelonBoundary[6];
 
     // 6 possible ghost area
-    Vector3i    boundaryCentroid[6];   // center point of the ghost area of a single feature
-    Vector3i    boundaryMin[6];    // min value of (x,y)|(x,z)|(y,z) of the boundary surface
-    Vector3i    boundaryMax[6];    // max value of (x,y)|(x,z)|(y,z) of the boundary surface
-    vector<int> touchedSurfaces; // Which boundary the feature touches
+    Vector3i    boundaryCentroid[6];// center point of the ghost area of a single feature
+    Vector3i    boundaryMin[6];     // min value of (x,y)|(x,z)|(y,z) of the boundary surface
+    Vector3i    boundaryMax[6];     // max value of (x,y)|(x,z)|(y,z) of the boundary surface
+    vector<int> touchedSurfaces;    // Which boundary the feature touches
 
-    vector<Feature> currentFeaturesHolder; // Hold all the features information in current time step
-    vector<Feature> backup1FeaturesHolder; // Hold all the features information in the first backup time step
-    vector<Feature> backup2FeaturesHolder; // Hold all the features information in the second backup time step
-    vector<Feature> backup3FeaturesHolder; // Hold all the features information in the third backup time step
+    vector<Feature> currentFeaturesHolder; // Features info in current time step
+    vector<Feature> backup1FeaturesHolder; // ... in the 1st backup time step
+    vector<Feature> backup2FeaturesHolder; // ... in the 2nd backup time step
+    vector<Feature> backup3FeaturesHolder; // ... in the 3rd backup time step
 };
 
 #endif // FEATURETRACKER_H

@@ -1,6 +1,7 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
+#include <math.h>
 #include <string>
 #include <vector>
 #include <list>
@@ -27,8 +28,8 @@
 #define TRACKING_MODE_LINEAR    1
 #define TRACKING_MODE_POLYNO    2
 
-#define TRACKING_DIRECTION_FORWARD  0
-#define TRACKING_DIRECTION_BACKWARD 1
+#define TRACKING_FORWARD  0
+#define TRACKING_BACKWARD 1
 
 // Surface
 #define SURFACE_NULL   -1   // for init
@@ -69,6 +70,9 @@ public:
     int x, y, z;
     int *toArray() { return &x; }
     int volume() { return x*y*z; }
+    float distanceFrom(Vector3i const& r) const { Vector3i l(*this);
+        return sqrt((l.x-r.x)*(l.x-r.x)+(l.y-r.y)*(l.y-r.y)+(l.z-r.z)*(l.z-r.z));
+    }
     Vector3i(int x_ = 0, int y_ = 0, int z_ = 0) : x(x_), y(y_), z(z_) {}
     Vector3i operator-() { return Vector3i(-x, -y, -z); }
     Vector3i operator+(Vector3i const& rhs) const { Vector3i t(*this); t+=rhs; return t; }
@@ -137,7 +141,7 @@ struct Feature {
 };
 
 typedef struct {
-    Vector3i    num_Seg;
+    Vector3i    partition;
     int         num_worker;
     int         num_feature;
     double      time_1;

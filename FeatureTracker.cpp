@@ -196,7 +196,7 @@ void FeatureTracker::updateTouchedSurfaces() {
 }
 
 inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
-    int timestepsAvailable = direction == TRACKING_DIRECTION_BACKWARD ?
+    int timestepsAvailable = direction == TRACKING_BACKWARD ?
                 timestepsAvailableBackward : timestepsAvailableForward;
 
     delta.x = delta.y = delta.z = 0;
@@ -210,7 +210,7 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
             break;
         case TRACKING_MODE_LINEAR: // PREDICT_LINEAR
             if (timestepsAvailable > 1) {
-                if (direction == TRACKING_DIRECTION_BACKWARD) {
+                if (direction == TRACKING_BACKWARD) {
                     delta.x = b2f.Centroid.x - b1f.Centroid.x;
                     delta.y = b2f.Centroid.y - b1f.Centroid.y;
                     delta.z = b2f.Centroid.z - b1f.Centroid.z;
@@ -235,7 +235,7 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
                     delta.y = b3f.Centroid.y*2 - b2f.Centroid.y*3 + b1f.Centroid.y;
                     delta.z = b3f.Centroid.z*2 - b2f.Centroid.z*3 + b1f.Centroid.z;
                 } else {    // [1,2)
-                    if (direction == TRACKING_DIRECTION_BACKWARD) {
+                    if (direction == TRACKING_BACKWARD) {
                         delta.x = b2f.Centroid.x - b1f.Centroid.x;
                         delta.y = b2f.Centroid.y - b1f.Centroid.y;
                         delta.z = b2f.Centroid.z - b1f.Centroid.z;
@@ -499,7 +499,7 @@ void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
  }
 
 void FeatureTracker::backupFeatureInfo(int direction) {
-    if (direction != TRACKING_DIRECTION_FORWARD && direction != TRACKING_DIRECTION_BACKWARD) {
+    if (direction != TRACKING_FORWARD && direction != TRACKING_BACKWARD) {
         cout << "Direction is neither FORWARD or BACKWARD?" << endl;
         return;
     }
@@ -507,7 +507,7 @@ void FeatureTracker::backupFeatureInfo(int direction) {
     backup2FeaturesHolder = backup3FeaturesHolder;
     backup3FeaturesHolder = currentFeaturesHolder;
 
-    if (direction == TRACKING_DIRECTION_FORWARD) {
+    if (direction == TRACKING_FORWARD) {
         if (timestepsAvailableForward  < 3) timestepsAvailableForward++;
         if (timestepsAvailableBackward > 0) timestepsAvailableBackward--;
     } else {    // direction is either FORWARD or BACKWARD

@@ -8,17 +8,17 @@ MultiCoreController::~MultiCoreController() {
 
 void MultiCoreController::Init(int argc, char **argv) {
     MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &gID);
-    MPI_Comm_size(MPI_COMM_WORLD, &globalNumProcesses);
+    MPI_Comm_rank(MPI_COMM_WORLD, &globalID);
+    MPI_Comm_size(MPI_COMM_WORLD, &globalNumProc);
 
-    int color = gID == HOST_NODE ? 0 : 1;
-    MPI_Comm_split(MPI_COMM_WORLD, color, gID, &MY_COMM_WORKER);
-    MPI_Comm_rank(MY_COMM_WORKER, &wID);
-    MPI_Comm_size(MY_COMM_WORKER, &workerNumProcesses);
+    int color = globalID == HOST_NODE ? 0 : 1;
+    MPI_Comm_split(MPI_COMM_WORLD, color, globalID, &MY_COMM_WORKER);
+    MPI_Comm_rank(MY_COMM_WORKER, &blockID);
+    MPI_Comm_size(MY_COMM_WORKER, &blockCount);
 
-    wSegXYZ.x = atoi(argv[1]);
-    wSegXYZ.y = atoi(argv[2]);
-    wSegXYZ.z = atoi(argv[3]);
+    partition.x = atoi(argv[1]);
+    partition.y = atoi(argv[2]);
+    partition.z = atoi(argv[3]);
 
     int datasetID = atoi(argv[4]);
     if (datasetID == 0) {
@@ -35,12 +35,12 @@ void MultiCoreController::Init(int argc, char **argv) {
         ds.data_path   = "../Data/vorts1";
     }
 
-    wXYZ.z = wID / (wSegXYZ.x * wSegXYZ.y);
-    wXYZ.y = (wID - wXYZ.z * wSegXYZ.x * wSegXYZ.y) / wSegXYZ.x;
-    wXYZ.x = wID % wSegXYZ.x;
+    wCoord.z = blockID / (partition.x * partition.y);
+    wCoord.y = (blockID - wCoord.z * partition.x * partition.y) / partition.x;
+    wCoord.x = blockID % partition.x;
 
-    csv.num_Seg = wSegXYZ;
-    csv.num_worker = workerNumProcesses;
+    csv.partition = partition;
+    csv.num_worker = blockCount;
     csv.num_feature = 0;
     csv.time_1 = 0;
     csv.time_2 = 0;
@@ -52,7 +52,7 @@ void MultiCoreController::Start() {
     syncTFParameters();
     precalculateT0();
 
-    if (gID == HOST_NODE) {
+    if (globalID == HOST_NODE) {
         for (int i = 0; i < NUM_TRACK_STEPS; i++) {
             TrackForward();
         }
@@ -64,7 +64,7 @@ void MultiCoreController::Start() {
 //// Member Function /////////////////////////////////////////////////////
 void MultiCoreController::initDataBlockController() {
     pDataBlockController = new DataBlockController();
-    pDataBlockController->InitData(gID, wSegXYZ, wXYZ, ds);
+    pDataBlockController->InitData(globalID, partition, wCoord, ds);
     debug("Load volume data: " + ds.prefix + " ready");
 }
 
@@ -76,7 +76,7 @@ void MultiCoreController::syncTFParameters() {
     timestep = ds.index_start;
 
     string configFile = "tf_config.dat";
-    if (gID == HOST_NODE) { // host read in, then broadcast to others
+    if (globalID == HOST_NODE) { // host read in, then broadcast to others
         ifstream inf(configFile.c_str(), ios::binary);
         if (!inf) { debug("Cannot read config file: " + configFile); }
         inf.read(reinterpret_cast<char *>(pTFColorMap), bufSize);
@@ -113,14 +113,14 @@ void MultiCoreController::TrackForward() {  // triggered by host
     cout << "|-- Current timestep: " << timestep << endl;
 
     int router = MPI_TAG_SYNC_TIMESTEP;
-    for (wGID = 1; wGID < globalNumProcesses; wGID++) {
-        MPI_Ssend(&router, INT_SIZE, MPI_INT, wGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
-        MPI_Ssend(&timestep, INT_SIZE, MPI_INT, wGID, MPI_TAG_SYNC_TIMESTEP, MPI_COMM_WORLD);
+    for (blockGID = 1; blockGID < globalNumProc; blockGID++) {
+        MPI_Ssend(&router, INT_SIZE, MPI_INT, blockGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
+        MPI_Ssend(&timestep, INT_SIZE, MPI_INT, blockGID, MPI_TAG_SYNC_TIMESTEP, MPI_COMM_WORLD);
     }
 
     router = MPI_TAG_TRACK_FORWARD;
-    for (wGID = 1; wGID < globalNumProcesses; wGID++) {
-        MPI_Ssend(&router, INT_SIZE, MPI_INT, wGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
+    for (blockGID = 1; blockGID < globalNumProc; blockGID++) {
+        MPI_Ssend(&router, INT_SIZE, MPI_INT, blockGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
     }
 
     debug("TrackForward() done");
@@ -153,12 +153,18 @@ void MultiCoreController::trackForward_worker() {
     MPI_Barrier(MY_COMM_WORKER);
     double t1 = MPI_Wtime();
 
-    pDataBlockController->UpdateLocalGraph(wID, wXYZ);
+    pDataBlockController->UpdateLocalGraph(blockID, wCoord);
     MPI_Barrier(MY_COMM_WORKER);
     double t2 = MPI_Wtime();
 
     vector<Edge> localEdges = pDataBlockController->GetLocalEdges();
-    updateGlobalConnectivityGraph(localEdges);
+
+    // option1: all gather and create a global graph
+    updateGlobalGraph(localEdges);
+
+    // option2: gather adjacent to create feaure graph
+
+
     MPI_Barrier(MY_COMM_WORKER);
     double t3 = MPI_Wtime();
 
@@ -171,15 +177,15 @@ void MultiCoreController::trackForward_worker() {
     string result = "result.csv";
     ofstream outf(result.c_str(), ios::out | ios::app);
     outf << csv.num_worker << "," << csv.num_feature << ","
-         << csv.num_Seg.x << "," << csv.num_Seg.y << "," << csv.num_Seg.z << ","
+         << csv.partition.x << "," << csv.partition.y << "," << csv.partition.z << ","
          << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
     outf.close();
 
     debug("Done ----------------------");
 
     //// Test Graph ////////////////////////////////////////////////
-    if (wID == 0) {
-//        cerr << "globalGraphSize: " << globalGraphSize << endl;
+    if (blockID == 0) {
+        cerr << "globalGraphSize: " << globalGraphSize << endl;
         for (int i = 0; i < globalGraphSize; i++) {
             cout << pGlobalGraph[i].id << pGlobalGraph[i].start << "->" << pGlobalGraph[i].end
                  << pGlobalGraph[i].centroid.x << pGlobalGraph[i].centroid.y << pGlobalGraph[i].centroid.z
@@ -189,29 +195,27 @@ void MultiCoreController::trackForward_worker() {
     ////////////////////////////////////////////////////////////////
 }
 
-Edge* MultiCoreController::updateGlobalConnectivityGraph(vector<Edge> localEdgesVector) {
+Edge* MultiCoreController::updateGlobalGraph(vector<Edge> localEdgesVector) {
     int localEdgeSize = localEdgesVector.size();
     Edge *localEdges = new Edge[localEdgeSize];
-
-//    cerr << "localEdgeSize: " << localEdgeSize << endl;
 
     for (int i = 0; i < localEdgeSize; i++) {
         localEdges[i] = localEdgesVector.at(i);
     }
 
-    int globalGraphSizeSeg[workerNumProcesses];  // allgather result container
+    int globalGraphSizeSeg[blockCount];  // allgather result container
     MPI_Allgather(&localEdgeSize, 1, MPI_INT, globalGraphSizeSeg, 1, MPI_INT, MY_COMM_WORKER);
 
     globalGraphSize = 0;
-    for (int i = 0; i < workerNumProcesses; i++) {
+    for (int i = 0; i < blockCount; i++) {
         globalGraphSize += globalGraphSizeSeg[i];
     }
 
     pGlobalGraph = new Edge[globalGraphSize];
 
-    int displs[workerNumProcesses];
+    int displs[blockCount];
     displs[0] = 0;
-    for (int i = 1; i < workerNumProcesses; i++) {
+    for (int i = 1; i < blockCount; i++) {
         displs[i] = globalGraphSizeSeg[i-1] + displs[i-1];
     }
 
@@ -231,15 +235,13 @@ Edge* MultiCoreController::updateGlobalConnectivityGraph(vector<Edge> localEdges
         }
         for (int j = i+1; j < globalGraphSize; j++) {
             ej = pGlobalGraph[j];
-            if (ej.start > ej.end) {
+            if (ej.start > ej.end) {    // always in ascending order
                 ej.start = pGlobalGraph[j].end;
                 ej.end = pGlobalGraph[j].start;
             }
             if (ei.start == ej.start && ei.end == ej.end) {
-                if ((ei.centroid.x - ej.centroid.x) * (ei.centroid.x - ej.centroid.x) +
-                    (ei.centroid.y - ej.centroid.y) * (ei.centroid.y - ej.centroid.y) +
-                    (ei.centroid.z - ej.centroid.z) * (ei.centroid.z - ej.centroid.z) <= 4) {
-                    if (ei.id < ej.id) {
+                if (ei.centroid.distanceFrom(ej.centroid) <= 4) {
+                    if (ei.id < ej.id) {    // use the smaller id
                         pGlobalGraph[j].id = pGlobalGraph[i].id;
                     } else {
                         pGlobalGraph[i].id = pGlobalGraph[j].id;
@@ -254,7 +256,7 @@ Edge* MultiCoreController::updateGlobalConnectivityGraph(vector<Edge> localEdges
 }
 
 void MultiCoreController::debug(string msg) {
-    cout << "[" << wID << "/" << gID << "] ";
+    cout << "[" << blockID << "/" << globalID << "] ";
     cout << msg << endl;
 }
 
