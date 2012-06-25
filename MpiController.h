@@ -20,7 +20,6 @@ private:
 
     MPI_Comm workerCommunicator;
     MPI_Comm adjacentCommunicator;
-//    MPI_Group adjacentGroup;
     MPI_Status status;
 
     int globalID;

@@ -8,53 +8,53 @@
 #include <list>
 #include <map>
 
-#define HOST_NODE 0
+const int HOST_NODE = 0;
 
-#define FEATURE_MIN_VOXEL_NUM 10
-#define NUM_TRACK_STEPS 5
+const int FEATURE_MIN_VOXEL_NUM = 10;
+const int NUM_TRACK_STEPS = 5;
 
-#define INT_SIZE 1
-#define FLOAT_SIZE sizeof(float)
+const int INT_SIZE = 1;
+const int FLOAT_SIZE = sizeof(float);
 
-#define DATA_DIM_X 128
-#define DATA_DIM_Y 128
-#define DATA_DIM_Z 128
+const int DATA_DIM_X = 128;
+const int DATA_DIM_Y = 128;
+const int DATA_DIM_Z = 128;
 
-#define TF_RESOLUTION 1024
+const int TF_RESOLUTION = 1024;
 
-#define LOW_THRESHOLD       0.2
-#define HIGH_THRESHOLD      1.0
+const float LOW_THRESHOLD   = 0.2;
+const float HIGH_THRESHOLD  = 1.0;
 
-#define TRACKING_MODE_DIRECT    0
-#define TRACKING_MODE_LINEAR    1
-#define TRACKING_MODE_POLYNO    2
+const int TRACKING_MODE_DIRECT = 0;
+const int TRACKING_MODE_LINEAR = 1;
+const int TRACKING_MODE_POLYNO = 2;
 
-#define TRACKING_FORWARD  0
-#define TRACKING_BACKWARD 1
+const int TRACKING_FORWARD  = 0;
+const int TRACKING_BACKWARD = 1;
 
 // Surface
-#define SURFACE_NULL   -1   // for init
-#define SURFACE_LEFT    0   // x = 0
-#define SURFACE_RIGHT   1   // x = xs
-#define SURFACE_BOTTOM  2   // y = 0
-#define SURFACE_TOP     3   // y = ys
-#define SURFACE_FRONT   4   // z = 0
-#define SURFACE_BACK    5   // z = zs
+const int SURFACE_NULL   = -1;   // for init
+const int SURFACE_LEFT   = 0;   // x = 0
+const int SURFACE_RIGHT  = 1;   // x = xs
+const int SURFACE_BOTTOM = 2;   // y = 0
+const int SURFACE_TOP    = 3;   // y = ys
+const int SURFACE_FRONT  = 4;   // z = 0
+const int SURFACE_BACK   = 5;   // z = zs
 
 // MPI TAG
-#define MPI_TAG_NULL -1
-#define MPI_TAG_TIMESTEP_0 0
-#define MPI_TAG_TF_RESOLUTION 2
-#define MPI_TAG_TF_COLOR_MAP 3
-#define MPI_TAG_SEGMENT_MATRIX 4
-#define MPI_TAG_ROUTER 5
-#define MPI_TAG_HIGHLIGHT_FEATURE 6
-#define MPI_TAG_SELECTED_FEATURE_INFO 7
-#define MPI_TAG_SELECTED_FEATURE_INFO_SIZE 8
-#define MPI_TAG_SYNC_TIMESTEP 9
-#define MPI_TAG_TRACK_FORWARD 10
-#define MPI_TAG_GET_FEATURE_ID 11
-#define MPI_TAG_SET_FEATURE_ID 12
+const int MPI_TAG_NULL = -1;
+const int MPI_TAG_TIMESTEP_0 = 0;
+const int MPI_TAG_TF_RESOLUTION = 2;
+const int MPI_TAG_TF_COLOR_MAP = 3;
+const int MPI_TAG_SEGMENT_MATRIX = 4;
+const int MPI_TAG_ROUTER = 5;
+const int MPI_TAG_HIGHLIGHT_FEATURE = 6;
+const int MPI_TAG_SELECTED_FEATURE_INFO = 7;
+const int MPI_TAG_SELECTED_FEATURE_INFO_SIZE = 8;
+const int MPI_TAG_SYNC_TIMESTEP = 9;
+const int MPI_TAG_TRACK_FORWARD = 10;
+const int MPI_TAG_GET_FEATURE_ID = 11;
+const int MPI_TAG_SET_FEATURE_ID = 12;
 
 using namespace std;
 
