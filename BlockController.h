@@ -2,19 +2,17 @@
 #define DATABLOCKCONTROLLER_H
 
 #include "hash_map.h"
+#include "Consts.h"
 #include "DataManager.h"
 #include "FeatureTracker.h"
-#include "Consts.h"
 
-class DataBlockController {
+class BlockController {
 
 public:
-    DataBlockController();
-    ~DataBlockController();
+    BlockController();
+    ~BlockController();
 
-    void InitData(int globalID, Vector3i workerNumProcXYZ,
-                  Vector3i workerIDXYZ, DataSet dataset);
-
+    void InitData(int globalID, Vector3i partition, Vector3i blockCoord, DataSet dataset);
     void TrackForward();
     void ExtractAllFeatures();
     void UpdateLocalGraph(int blockID, Vector3i blockCoord);
@@ -26,11 +24,10 @@ public:
     int GetFeatureVectorLength() { return pDataManager->GetFeatureVectorLength(); }
     vector<int> GetHighlightedFeatures() { return highlightedFeatures; }
     vector<Feature> *GetFeatureVector(int index) { return pDataManager->GetFeatureVector(index); }
-    hash_map<int, float> GetDifferentPoints() { return pFeatureTracker->GetDiffPoints(); }
+    IndexValueMap GetDifferentPoints() { return pFeatureTracker->GetDiffPoints(); }
 
     // Feature Connectivity Graph
-    hash_map<int, int> GetAdjacentBlocks() { return adjacentBlocks; }
-
+    IntMap GetAdjacentBlocks() { return adjacentBlocks; }
     vector<Edge> GetLocalEdges() { return localGraph; }
 
     // Accessor - FeatureTracker
@@ -41,15 +38,15 @@ public:
     void ClearHighlightedFeatureList() { highlightedFeatures.clear(); }
     void AddHighlightedFeature(int index);
     void ResetMaskMatrixValue(float value);
-    int GetPointIndex(DataPoint p) { return pFeatureTracker->GetPointIndex(p); }
+    int  GetPointIndex(DataPoint p) { return pFeatureTracker->GetPointIndex(p); }
 
 private:
-    hash_map<int, int>  adjacentBlocks;
+    IntMap          adjacentBlocks;
     DataManager     *pDataManager;
     FeatureTracker  *pFeatureTracker;
     vector<Edge>    localGraph;
     vector<int>     highlightedFeatures;
-    Vector3i        dataDim;
+    Vector3i        blockSize;
     int             currentTimestep;
     int             xs, ys, zs;
 

@@ -1,6 +1,6 @@
 #include <QCoreApplication>
 #include <cassert>
-#include "MultiCoreController.h"
+#include "MpiController.h"
 #include <iostream>
 
 int main (int argc, char** argv) {
@@ -15,9 +15,9 @@ int main (int argc, char** argv) {
     }
 
     QCoreApplication app(argc, argv);
-    MultiCoreController mcc;
-    mcc.Init(argc, argv);
-    mcc.Start();
+    MpiController mc;
+    mc.Init(argc, argv);
+    mc.Start();
 
     return app.exec();
 }

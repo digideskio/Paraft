@@ -1,6 +1,7 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
+#include <hash_map.h>
 #include <math.h>
 #include <string>
 #include <vector>
@@ -58,6 +59,8 @@
 using namespace std;
 
 typedef struct { float x; float y; } Vector2f;
+typedef hash_map<int, int> IntMap;
+typedef hash_map<int, float> IndexValueMap;
 
 class MinMax {
 public:

@@ -11,15 +11,15 @@ DataManager::DataManager() {
 DataManager::~DataManager() {
     if (pDataVector.size() != 0) {
         std::cout << "Clean data vector" << std::endl;
-        for (int i = 0; i < pDataVector.size(); i++) {
+        for (int i = 0; i < pDataVector.size(); ++i) {
             delete [] pDataVector.at(i);
         }
     }
     pMinMaxVector.clear();
 
     if (pFeatureVectors.size() != 0) {
-        for (int i = 0; i < pFeatureVectors.size(); i++) {
-            for (int j = 0; j < pFeatureVectors.at(i).size(); j++) {
+        for (int i = 0; i < pFeatureVectors.size(); ++i) {
+            for (int j = 0; j < pFeatureVectors.at(i).size(); ++j) {
                 pFeatureVectors.at(i).at(j).SurfacePoints.clear();
                 pFeatureVectors.at(i).at(j).InnerPoints.clear();
                 pFeatureVectors.at(i).at(j).Uncertainty.clear();
@@ -45,7 +45,7 @@ void DataManager::ReadDataSequence(DataSet ds, Vector3i origVolumeDim,
 
     string fileName;
     char numstr[21]; // enough to hold all numbers up to 64-bits
-    for (int i = ds.index_start; i <= ds.index_end; i++) {
+    for (int i = ds.index_start; i <= ds.index_end; ++i) {
         sprintf(numstr, "%d", i);
         fileName = ds.data_path + "/" + ds.prefix + numstr + "." + ds.surfix;
         ReadOneDataFile(fileName, volumeDim, partition, workerIDXYZ);
@@ -95,13 +95,13 @@ void DataManager::normalizeData() {
     float max = pMinMaxVector.at(0).max;
 
     int iTimelength = pDataVector.size();
-    for (int i = 0 ; i < iTimelength; i++) {
+    for (int i = 0 ; i < iTimelength; ++i) {
         min = min < pMinMaxVector.at(i).min ? min : pMinMaxVector.at(i).min;
         max = max > pMinMaxVector.at(i).max ? max : pMinMaxVector.at(i).max;
     }
 
-    for (int j = 0; j < iTimelength; j++) {
-        for (int i = 0; i < volumeSize; i++) {
+    for (int j = 0; j < iTimelength; ++j) {
+        for (int i = 0; i < volumeSize; ++i) {
             pDataVector.at(j)[i] -= min;
             pDataVector.at(j)[i] /= (max-min);
         }
@@ -122,7 +122,7 @@ void DataManager::calculateLocalMinMax() {
     float min = pAllocatedBuffer[0];
     float max = pAllocatedBuffer[1];
 
-    for (int i = 1; i < volumeSize; i++) {
+    for (int i = 1; i < volumeSize; ++i) {
         min = min < pAllocatedBuffer[i] ? min : pAllocatedBuffer[i];
         max = max > pAllocatedBuffer[i] ? max : pAllocatedBuffer[i];
     }

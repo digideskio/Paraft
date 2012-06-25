@@ -1,55 +1,53 @@
-#include "DataBlockController.h"
+#include "BlockController.h"
 
-DataBlockController::DataBlockController() {
-    dataDim.x = dataDim.y = dataDim.z = 0;
-    for (int surface = 0; surface < 6; surface++) {
+BlockController::BlockController() {
+    blockSize.x = blockSize.y = blockSize.z = 0;
+    for (int surface = 0; surface < 6; ++surface) {
         adjacentBlocks[surface] = SURFACE_NULL;
     }
 }
 
-DataBlockController::~DataBlockController() {
+BlockController::~BlockController() {
     highlightedFeatures.clear();
     localGraph.clear();
     pDataManager->~DataManager();
     pFeatureTracker->~FeatureTracker();
 }
 
-void DataBlockController::InitData(int globalID, Vector3i workerNumProcXYZ,
-                                   Vector3i workerIDXYZ, DataSet ds) {
+void BlockController::InitData(int globalID, Vector3i partition,
+                               Vector3i blockCoord, DataSet dataset) {
 
-    Vector3i dimXYZ(DATA_DIM_X, DATA_DIM_Y, DATA_DIM_Z);
+    Vector3i dataDim(DATA_DIM_X, DATA_DIM_Y, DATA_DIM_Z);
 
     if (globalID == HOST_NODE) {
-        workerNumProcXYZ.x = 1;
-        workerNumProcXYZ.y = 1;
-        workerNumProcXYZ.z = 1;
+        partition.x = partition.y = partition.z = 1;    // host, all set to 1
     } else {
-        initAdjacentBlocks(workerNumProcXYZ, workerIDXYZ);
+        initAdjacentBlocks(partition, blockCoord);
     }
 
     pDataManager = new DataManager();
-    pDataManager->ReadDataSequence(ds, dimXYZ, workerNumProcXYZ, workerIDXYZ);
+    pDataManager->ReadDataSequence(dataset, dataDim, partition, blockCoord);
     pDataManager->CreateNewMaskMatrix();
 
-    dataDim = pDataManager->GetVolumeDimension();
-    pFeatureTracker = new FeatureTracker(dataDim.x, dataDim.y, dataDim.z);
+    blockSize = pDataManager->GetVolumeDimension();
+    pFeatureTracker = new FeatureTracker(blockSize.x, blockSize.y, blockSize.z);
 }
 
-void DataBlockController::TrackForward() {
+void BlockController::TrackForward() {
     pFeatureTracker->TrackFeature(pDataManager->GetVolumeDataPointer(currentTimestep),
                                   LOW_THRESHOLD, HIGH_THRESHOLD,
                                   TRACKING_FORWARD, TRACKING_MODE_DIRECT);
     ExtractAllFeatures();
 }
 
-void DataBlockController::ExtractAllFeatures() {
+void BlockController::ExtractAllFeatures() {
     float opacity;
     int index, tfIndex, tfRes = pFeatureTracker->GetTFResolution();
 
-    for (int z = 0; z < dataDim.z; z++) {
-        for (int y = 0; y < dataDim.y; y++ ) {
-            for (int x = 0; x < dataDim.x; x++) {
-                index = z * dataDim.y * dataDim.x + y * dataDim.x + x;
+    for (int z = 0; z < blockSize.z; ++z) {
+        for (int y = 0; y < blockSize.y; ++y ) {
+            for (int x = 0; x < blockSize.x; ++x) {
+                index = z * blockSize.y * blockSize.x + y * blockSize.x + x;
                 if (pFeatureTracker->GetMaskMatrixPointer()[index] != 0) { continue; }
                 tfIndex = (int)(pDataManager->GetVolumeDataPointer(currentTimestep)[index] * tfRes);
                 opacity = pFeatureTracker->GetTFColorMap()[tfIndex*4+3];
@@ -62,29 +60,29 @@ void DataBlockController::ExtractAllFeatures() {
     saveExtractedFeatures(pFeatureTracker->GetCurrentFeatureInfo());
 }
 
-void DataBlockController::AddHighlightedFeature(int index) {
-    vector<int>::iterator it = find(highlightedFeatures.begin(), highlightedFeatures.end(), index);
+void BlockController::AddHighlightedFeature(int index) {
+    vector<int>::iterator it = find(highlightedFeatures.begin(),
+                                    highlightedFeatures.end(), index);
     if (it == highlightedFeatures.end()) {
         highlightedFeatures.push_back(index);
     }
 }
 
-void DataBlockController::ResetMaskMatrixValue(float value) {
+void BlockController::ResetMaskMatrixValue(float value) {
     memset(pDataManager->GetMaskMatrixPointer(), value,
            sizeof(float)*pDataManager->GetVolumeSize());
 }
 
-void DataBlockController::saveExtractedFeatures(vector<Feature>* f) {
+void BlockController::saveExtractedFeatures(vector<Feature>* f) {
     vector<Feature> temp;
-    for (int i = 0; i < f->size(); i++) {
+    for (int i = 0; i < f->size(); ++i) {
         temp.push_back(f->at(i));
     }
     pDataManager->SaveExtractedFeatures(temp);
 }
 
-void DataBlockController::initAdjacentBlocks(Vector3i blockPartition,
-                                             Vector3i blockCoord) {
-
+void BlockController::initAdjacentBlocks(Vector3i blockPartition,
+                                         Vector3i blockCoord) {
     int px = blockPartition.x, py = blockPartition.y, pz = blockPartition.z;
     int  x = blockCoord.x,      y = blockCoord.y,      z = blockCoord.z;
 
@@ -96,7 +94,7 @@ void DataBlockController::initAdjacentBlocks(Vector3i blockPartition,
     adjacentBlocks[SURFACE_BACK]   = z+1 <  pz ? px*py*(z+1) + px*y + x : -1;
 }
 
-void DataBlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
+void BlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
     localGraph.clear();
 
     vector<Feature> *pCurrentFeatures;
@@ -111,11 +109,11 @@ void DataBlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
     Feature feature;
     Vector3i centroid;
     Edge edge;
-    for (int i = 0; i < pCurrentFeatures->size(); i++) {
+    for (int i = 0; i < pCurrentFeatures->size(); ++i) {
         feature = pCurrentFeatures->at(i);
         touchedSurfaces = feature.TouchedSurfaces;
 
-        for (int j = 0; j < touchedSurfaces.size(); j++) {
+        for (int j = 0; j < touchedSurfaces.size(); ++j) {
             surface = touchedSurfaces[j];
             adjacentBlock = adjacentBlocks[surface];
             if (adjacentBlock == -1) {
@@ -127,7 +125,7 @@ void DataBlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
             edge.id         = feature.ID;
             edge.start      = blockID;
             edge.end        = adjacentBlock;
-            edge.centroid   = centroid + dataDim * blockCoord;
+            edge.centroid   = centroid + blockSize * blockCoord;
 
             localGraph.push_back(edge);
         }

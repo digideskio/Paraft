@@ -1,11 +1,9 @@
 #ifndef FEATURETRACKER_H
 #define FEATURETRACKER_H
 
-#include <hash_map.h>
 #include <math.h>
 #include <vector>
 #include <list>
-#include <map>
 #include "Consts.h"
 
 using namespace std;
@@ -37,7 +35,7 @@ public:
     int GetPointIndex(DataPoint point) { return xs*ys*point.z+xs*point.y+point.x; }
     int GetTFResolution() { return tfResolution; }
     float* GetTFColorMap() { return pTFColorMap; }
-    hash_map<int, float> GetDiffPoints() { return diffPoints; }
+    IndexValueMap GetDiffPoints() { return diffPoints; }
 
     // Get all features information of current time step
     vector<Feature>* GetCurrentFeatureInfo() { return &currentFeaturesHolder; }
@@ -75,7 +73,7 @@ private:
     int timestepsAvailableForward;
     int timestepsAvailableBackward;
 
-    hash_map<int, float> diffPoints;
+    IndexValueMap diffPoints;
 
     // FeatureInfo
     list<DataPoint> dataPointList;  // Active queue for some kind of points ?!

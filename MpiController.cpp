@@ -1,20 +1,20 @@
-#include "MultiCoreController.h"
+#include "MpiController.h"
 
-MultiCoreController::MultiCoreController() {}
-MultiCoreController::~MultiCoreController() {
+MpiController::MpiController() {}
+MpiController::~MpiController() {
     MPI_Finalize();
-    pDataBlockController->~DataBlockController();
+    pBlockController->~BlockController();
 }
 
-void MultiCoreController::Init(int argc, char **argv) {
+void MpiController::Init(int argc, char **argv) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &globalID);
     MPI_Comm_size(MPI_COMM_WORLD, &globalNumProc);
 
     int color = globalID == HOST_NODE ? 0 : 1;
-    MPI_Comm_split(MPI_COMM_WORLD, color, globalID, &MY_COMM_WORKER);
-    MPI_Comm_rank(MY_COMM_WORKER, &blockID);
-    MPI_Comm_size(MY_COMM_WORKER, &blockCount);
+    MPI_Comm_split(MPI_COMM_WORLD, color, globalID, &workerCommunicator);
+    MPI_Comm_rank(workerCommunicator, &blockID);
+    MPI_Comm_size(workerCommunicator, &blockCount);
 
     partition.x = atoi(argv[1]);
     partition.y = atoi(argv[2]);
@@ -22,22 +22,22 @@ void MultiCoreController::Init(int argc, char **argv) {
 
     int datasetID = atoi(argv[4]);
     if (datasetID == 0) {
-        ds.index_start = 0;
-        ds.index_end   = 10;
-        ds.prefix      = "vorts";
-        ds.surfix      = "data";
-        ds.data_path   = "../Data/vorts";
+        dataset.index_start = 0;
+        dataset.index_end   = 10;
+        dataset.prefix      = "vorts";
+        dataset.surfix      = "data";
+        dataset.data_path   = "../Data/vorts";
     } else if (datasetID == 1) {
-        ds.index_start = 0;
-        ds.index_end   = 7;
-        ds.prefix      = "large_vorts_";
-        ds.surfix      = "dat";
-        ds.data_path   = "../Data/vorts1";
+        dataset.index_start = 0;
+        dataset.index_end   = 7;
+        dataset.prefix      = "large_vorts_";
+        dataset.surfix      = "dat";
+        dataset.data_path   = "../Data/vorts1";
     }
 
-    wCoord.z = blockID / (partition.x * partition.y);
-    wCoord.y = (blockID - wCoord.z * partition.x * partition.y) / partition.x;
-    wCoord.x = blockID % partition.x;
+    blockCoord.z = blockID / (partition.x*partition.y);
+    blockCoord.y = (blockID - blockCoord.z*partition.x*partition.y) / partition.x;
+    blockCoord.x = blockID % partition.x;
 
     csv.partition = partition;
     csv.num_worker = blockCount;
@@ -47,13 +47,14 @@ void MultiCoreController::Init(int argc, char **argv) {
     csv.time_3 = 0;
 }
 
-void MultiCoreController::Start() {
-    initDataBlockController();
+void MpiController::Start() {
+    initBlockController();
+    initLocalCommunicator();
     syncTFParameters();
     precalculateT0();
 
     if (globalID == HOST_NODE) {
-        for (int i = 0; i < NUM_TRACK_STEPS; i++) {
+        for (int i = 0; i < NUM_TRACK_STEPS; ++i) {
             TrackForward();
         }
     } else { // slave nodes
@@ -62,18 +63,39 @@ void MultiCoreController::Start() {
 }
 
 //// Member Function /////////////////////////////////////////////////////
-void MultiCoreController::initDataBlockController() {
-    pDataBlockController = new DataBlockController();
-    pDataBlockController->InitData(globalID, partition, wCoord, ds);
-    debug("Load volume data: " + ds.prefix + " ready");
+void MpiController::initBlockController() {
+    pBlockController = new BlockController();
+    pBlockController->InitData(globalID, partition, blockCoord, dataset);
+    debug("Load volume data: " + dataset.prefix + " ready");
 }
 
-void MultiCoreController::syncTFParameters() {
+////
+void MpiController::initLocalCommunicator() {
+    IntMap adjacentBlocks = pBlockController->GetAdjacentBlocks();
+
+    vector<int> neighbors;
+    for (int i = 0; i < adjacentBlocks.size(); ++i) {
+        if (adjacentBlocks[i] != -1) {  // -1: no neighbor in this direction
+            neighbors.push_back(adjacentBlocks[i]);
+        }
+    }
+    neighbors.push_back(blockID);   // add self to adjacentCommunicator;
+
+    MPI_Group workerGroup, adjacentGroup;
+    MPI_Comm_group(workerCommunicator, &workerGroup);
+    MPI_Group_incl(workerGroup, neighbors.size(), &neighbors[0], &adjacentGroup);
+    MPI_Comm_create(workerCommunicator, adjacentGroup, &adjacentCommunicator);
+    MPI_Group_free(&workerGroup);
+    MPI_Group_free(&adjacentGroup);
+}
+////
+
+void MpiController::syncTFParameters() {
     int tfSize = TF_RESOLUTION * 4;         // float*rgba
     int bufSize = tfSize * FLOAT_SIZE;      // file size
 
     float* pTFColorMap = new float[tfSize];
-    timestep = ds.index_start;
+    timestep = dataset.index_start;
 
     string configFile = "tf_config.dat";
     if (globalID == HOST_NODE) { // host read in, then broadcast to others
@@ -85,27 +107,27 @@ void MultiCoreController::syncTFParameters() {
 
     MPI_Bcast(pTFColorMap, tfSize, MPI_FLOAT, HOST_NODE, MPI_COMM_WORLD);
 
-    pDataBlockController->SetVolumeDataPointerByIndex(timestep);
-    pDataBlockController->SetCurrentTimestep(timestep);
-    pDataBlockController->SetTFResolution(TF_RESOLUTION);
-    pDataBlockController->SetTFColorMap(pTFColorMap);
+    pBlockController->SetVolumeDataPointerByIndex(timestep);
+    pBlockController->SetCurrentTimestep(timestep);
+    pBlockController->SetTFResolution(TF_RESOLUTION);
+    pBlockController->SetTFColorMap(pTFColorMap);
     debug("DataBlockController ready");
 }
 
-void MultiCoreController::precalculateT0() {
+void MpiController::precalculateT0() {
     timestep++; // all nodes
-    pDataBlockController->ExtractAllFeatures();
-    pDataBlockController->SetCurrentTimestep(timestep);
-    pDataBlockController->TrackForward();
+    pBlockController->ExtractAllFeatures();
+    pBlockController->SetCurrentTimestep(timestep);
+    pBlockController->TrackForward();
     debug("Pre-calculate timestep 1 ready");
 }
 
-void MultiCoreController::TrackForward() {  // triggered by host
+void MpiController::TrackForward() {  // triggered by host
     debug("TrackForward() triggered");
 
     timestep++;
-    if (timestep > ds.index_end) {
-        timestep = ds.index_end;
+    if (timestep > dataset.index_end) {
+        timestep = dataset.index_end;
         debug("Already last timestep");
         return;
     }
@@ -113,20 +135,20 @@ void MultiCoreController::TrackForward() {  // triggered by host
     cout << "|-- Current timestep: " << timestep << endl;
 
     int router = MPI_TAG_SYNC_TIMESTEP;
-    for (blockGID = 1; blockGID < globalNumProc; blockGID++) {
+    for (blockGID = 1; blockGID < globalNumProc; ++blockGID) {
         MPI_Ssend(&router, INT_SIZE, MPI_INT, blockGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
         MPI_Ssend(&timestep, INT_SIZE, MPI_INT, blockGID, MPI_TAG_SYNC_TIMESTEP, MPI_COMM_WORLD);
     }
 
     router = MPI_TAG_TRACK_FORWARD;
-    for (blockGID = 1; blockGID < globalNumProc; blockGID++) {
+    for (blockGID = 1; blockGID < globalNumProc; ++blockGID) {
         MPI_Ssend(&router, INT_SIZE, MPI_INT, blockGID, MPI_TAG_ROUTER, MPI_COMM_WORLD);
     }
 
     debug("TrackForward() done");
 }
 
-void MultiCoreController::waitingForOrders() {
+void MpiController::waitingForOrders() {
     int router = MPI_TAG_NULL;
     while (true) {
         MPI_Recv(&router, INT_SIZE, MPI_INT, HOST_NODE, MPI_TAG_ROUTER, MPI_COMM_WORLD, &status);
@@ -144,28 +166,28 @@ void MultiCoreController::waitingForOrders() {
     }
 }
 
-void MultiCoreController::trackForward_worker() {
-    pDataBlockController->SetCurrentTimestep(timestep);
-    MPI_Barrier(MY_COMM_WORKER);
+void MpiController::trackForward_worker() {
+    pBlockController->SetCurrentTimestep(timestep);
+    MPI_Barrier(workerCommunicator);
     double t0 = MPI_Wtime();
 
-    pDataBlockController->TrackForward();
-    MPI_Barrier(MY_COMM_WORKER);
+    pBlockController->TrackForward();
+    MPI_Barrier(workerCommunicator);
     double t1 = MPI_Wtime();
 
-    pDataBlockController->UpdateLocalGraph(blockID, wCoord);
-    MPI_Barrier(MY_COMM_WORKER);
+    pBlockController->UpdateLocalGraph(blockID, blockCoord);
+    MPI_Barrier(workerCommunicator);
     double t2 = MPI_Wtime();
 
-    vector<Edge> localEdges = pDataBlockController->GetLocalEdges();
+    vector<Edge> localEdges = pBlockController->GetLocalEdges();
 
     // option1: all gather and create a global graph
     updateGlobalGraph(localEdges);
 
     // option2: gather adjacent to create feaure graph
+    updateFeatureGraph(localEdges);
 
-
-    MPI_Barrier(MY_COMM_WORKER);
+    MPI_Barrier(workerCommunicator);
     double t3 = MPI_Wtime();
 
     ///////////////////////////////////////////
@@ -186,7 +208,7 @@ void MultiCoreController::trackForward_worker() {
     //// Test Graph ////////////////////////////////////////////////
     if (blockID == 0) {
         cerr << "globalGraphSize: " << globalGraphSize << endl;
-        for (int i = 0; i < globalGraphSize; i++) {
+        for (int i = 0; i < globalGraphSize; ++i) {
             cout << pGlobalGraph[i].id << pGlobalGraph[i].start << "->" << pGlobalGraph[i].end
                  << pGlobalGraph[i].centroid.x << pGlobalGraph[i].centroid.y << pGlobalGraph[i].centroid.z
                  << endl;
@@ -195,19 +217,23 @@ void MultiCoreController::trackForward_worker() {
     ////////////////////////////////////////////////////////////////
 }
 
-Edge* MultiCoreController::updateGlobalGraph(vector<Edge> localEdgesVector) {
+Edge* MpiController::updateFeatureGraph(vector<Edge> localEdgesVector) {
+
+}
+
+Edge* MpiController::updateGlobalGraph(vector<Edge> localEdgesVector) {
     int localEdgeSize = localEdgesVector.size();
     Edge *localEdges = new Edge[localEdgeSize];
 
-    for (int i = 0; i < localEdgeSize; i++) {
+    for (int i = 0; i < localEdgeSize; ++i) {
         localEdges[i] = localEdgesVector.at(i);
     }
 
     int globalGraphSizeSeg[blockCount];  // allgather result container
-    MPI_Allgather(&localEdgeSize, 1, MPI_INT, globalGraphSizeSeg, 1, MPI_INT, MY_COMM_WORKER);
+    MPI_Allgather(&localEdgeSize, 1, MPI_INT, globalGraphSizeSeg, 1, MPI_INT, workerCommunicator);
 
     globalGraphSize = 0;
-    for (int i = 0; i < blockCount; i++) {
+    for (int i = 0; i < blockCount; ++i) {
         globalGraphSize += globalGraphSizeSeg[i];
     }
 
@@ -215,7 +241,7 @@ Edge* MultiCoreController::updateGlobalGraph(vector<Edge> localEdgesVector) {
 
     int displs[blockCount];
     displs[0] = 0;
-    for (int i = 1; i < blockCount; i++) {
+    for (int i = 1; i < blockCount; ++i) {
         displs[i] = globalGraphSizeSeg[i-1] + displs[i-1];
     }
 
@@ -224,16 +250,16 @@ Edge* MultiCoreController::updateGlobalGraph(vector<Edge> localEdgesVector) {
     MPI_Type_commit(&MPI_TYPE_EDGE);
 
     MPI_Allgatherv(localEdges, localEdgeSize, MPI_TYPE_EDGE, pGlobalGraph,
-                   globalGraphSizeSeg, displs, MPI_TYPE_EDGE, MY_COMM_WORKER);
+                   globalGraphSizeSeg, displs, MPI_TYPE_EDGE, workerCommunicator);
 
     Edge ei, ej;
-    for (int i = 0; i < globalGraphSize; i++) {
+    for (int i = 0; i < globalGraphSize; ++i) {
         ei = pGlobalGraph[i];
         if (ei.start > ei.end) {
             ei.start = pGlobalGraph[i].end;
             ei.end = pGlobalGraph[i].start;
         }
-        for (int j = i+1; j < globalGraphSize; j++) {
+        for (int j = i+1; j < globalGraphSize; ++j) {
             ej = pGlobalGraph[j];
             if (ej.start > ej.end) {    // always in ascending order
                 ej.start = pGlobalGraph[j].end;
@@ -255,7 +281,7 @@ Edge* MultiCoreController::updateGlobalGraph(vector<Edge> localEdgesVector) {
     return pGlobalGraph;
 }
 
-void MultiCoreController::debug(string msg) {
+void MpiController::debug(string msg) {
     cout << "[" << blockID << "/" << globalID << "] ";
     cout << msg << endl;
 }

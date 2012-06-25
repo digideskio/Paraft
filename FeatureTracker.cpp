@@ -65,7 +65,7 @@ void FeatureTracker::resetFeatureBoundaryInfo() {
     featureMax.y = -1;
     featureMax.z = -1;
 
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; ++i) {
         boundaryMin[i].x = xs + 1;
         boundaryMin[i].y = ys + 1;
         boundaryMin[i].z = zs + 1;
@@ -132,7 +132,7 @@ void FeatureTracker::FindNewFeature(int x, int y, int z, float lowerValue, float
         newFeature.Min              = featureMin;
         newFeature.Max              = featureMax;
         newFeature.TouchedSurfaces  = touchedSurfaces;
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 6; ++i) {
             newFeature.BoundaryCentroid[i]  = boundaryCentroid[i];
         }
     }
@@ -158,7 +158,7 @@ void FeatureTracker::TrackFeature(float* pDataSet, float lowerValue,
     memset(pMaskMatrixCurrent, 0, volumeSize*sizeof(float));
 
     Feature fi;
-    for (int i = 0; i < currentFeaturesHolder.size(); i++) {
+    for (int i = 0; i < currentFeaturesHolder.size(); ++i) {
         fi = currentFeaturesHolder[i];
 
         resetFeatureBoundaryInfo();
@@ -176,7 +176,7 @@ void FeatureTracker::TrackFeature(float* pDataSet, float lowerValue,
         fi.Max             = featureMax;
         fi.TouchedSurfaces = touchedSurfaces;
 
-        for (int surface = 0; surface < 6; surface++) {
+        for (int surface = 0; surface < 6; ++surface) {
             fi.BoundaryCentroid[surface] = boundaryCentroid[surface];
         }
         currentFeaturesHolder[i] = fi;
@@ -186,7 +186,7 @@ void FeatureTracker::TrackFeature(float* pDataSet, float lowerValue,
 }
 
 void FeatureTracker::updateTouchedSurfaces() {
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 6; ++i) {
         if (numVoxelonBoundary[i] == 0) { continue; }
         boundaryCentroid[i].x = sumBoundaryXYZValue[i].x / numVoxelonBoundary[i];
         boundaryCentroid[i].y = sumBoundaryXYZValue[i].y / numVoxelonBoundary[i];
@@ -221,7 +221,7 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
                 }
 
                 list<DataPoint>::iterator p;
-                for (p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); p++) {
+                for (p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); ++p) {
                     temp = (*p).x + (int)floor(delta.x); (*p).x = temp <= 0 ? 0 : (temp < xs ? temp : xs-1);
                     temp = (*p).y + (int)floor(delta.y); (*p).y = temp <= 0 ? 0 : (temp < ys ? temp : ys-1);
                     temp = (*p).z + (int)floor(delta.z); (*p).z = temp <= 0 ? 0 : (temp < zs ? temp : zs-1);
@@ -246,7 +246,7 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
                     }
                 }
                 list<DataPoint>::iterator p;
-                for (p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); p++) {
+                for (p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); ++p) {
                     temp = (*p).x + (int)floor(delta.x); (*p).x = temp <= 0 ? 0 : (temp < xs ? temp : xs-1);
                     temp = (*p).y + (int)floor(delta.y); (*p).y = temp <= 0 ? 0 : (temp < ys ? temp : ys-1);
                     temp = (*p).z + (int)floor(delta.z); (*p).z = temp <= 0 ? 0 : (temp < zs ? temp : zs-1);
@@ -266,7 +266,7 @@ inline void FeatureTracker::fillRegion(float maskValue) {
     list<DataPoint>::iterator p;
 
     // predicted to be on edge
-    for (p = surfacePoints.begin(); p != surfacePoints.end(); p++) {
+    for (p = surfacePoints.begin(); p != surfacePoints.end(); ++p) {
         index = GetPointIndex(*p);
         if (pMaskMatrixCurrent[index] == 0) {
             pMaskMatrixCurrent[index] = maskValue;
@@ -280,7 +280,7 @@ inline void FeatureTracker::fillRegion(float maskValue) {
     }
 
     // currently not on edge but previously on edge
-    for (p = surfacePoints.begin(); p != surfacePoints.end(); p++) {
+    for (p = surfacePoints.begin(); p != surfacePoints.end(); ++p) {
         index = GetPointIndex(*p);
         (*p).x++;
         while ((*p).x >= 0 && (*p).x <= xs && (*p).x - delta.x >= 0 && (*p).x - delta.x <= xs &&
@@ -344,7 +344,7 @@ inline void FeatureTracker::shrinkRegion(float maskValue) {
     }
 
     list<DataPoint>::iterator p;
-    for (p = surfacePoints.begin(); p != surfacePoints.end(); p++) {
+    for (p = surfacePoints.begin(); p != surfacePoints.end(); ++p) {
         index = GetPointIndex((*p));
         if (pMaskMatrixCurrent[(xs)*(ys)*point.z+(xs)*point.y+point.x] != maskValue) {
             sumCoordinateValue.x += (*p).x;
@@ -371,7 +371,7 @@ inline void FeatureTracker::shrinkEdge(DataPoint point, float maskValue) {
         sumCoordinateValue.y -= point.y;
         sumCoordinateValue.z -= point.z;
         numVoxelinFeature--;
-        for (list<DataPoint>::iterator it = innerPoints.begin(); it != innerPoints.end(); it++) {
+        for (list<DataPoint>::iterator it = innerPoints.begin(); it != innerPoints.end(); ++it) {
             if (point.x == (*it).x && point.y == (*it).y && point.z == (*it).z) {
                 innerPoints.erase(it); break;
             }
@@ -467,7 +467,7 @@ void FeatureTracker::updateBoundaryMinMax(DataPoint point, int surface) {
 
 void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
     currentFeaturesHolder.clear();
-    for (int i = 0; i < pFeatures->size(); i++) {
+    for (int i = 0; i < pFeatures->size(); ++i) {
         currentFeaturesHolder.push_back(pFeatures->at(i));
     }
 
@@ -488,7 +488,7 @@ void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
  }
 
  void FeatureTracker::updateDiffPointList(int index, float value) {
-    hash_map<int, float>::iterator it = diffPoints.find(index);
+    IndexValueMap::iterator it = diffPoints.find(index);
     if (it == diffPoints.end()) {   // !contain
         diffPoints[index] = value;
     } else if (diffPoints[index] != value) {
