@@ -12,7 +12,6 @@ public:
     BlockController();
     ~BlockController();
 
-//    void InitData(int globalID, Vector3i partition, Vector3i blockCoord, DataSet dataset);
     void InitData(Vector3i partition, Vector3i blockCoord, DataSet ds);
     void TrackForward();
     void ExtractAllFeatures();
@@ -28,6 +27,7 @@ public:
     IndexValueMap GetDifferentPoints() { return pFeatureTracker->GetDiffPoints(); }
 
     // Feature Connectivity Graph
+    vector<int> GetAdjacentBlocksIndices();
     IntMap GetAdjacentBlocks() { return adjacentBlocks; }
     vector<Edge> GetLocalEdges() { return localGraph; }
 

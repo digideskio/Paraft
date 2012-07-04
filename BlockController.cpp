@@ -20,12 +20,6 @@ void BlockController::InitData(Vector3i partition, Vector3i blockCoord, DataSet 
 
     initAdjacentBlocks(partition, blockCoord);
 
-//    if (globalID == HOST_NODE) {
-//        partition.x = partition.y = partition.z = 1;    // host, all set to 1
-//    } else {
-//        initAdjacentBlocks(partition, blockCoord);
-//    }
-
     pDataManager = new DataManager();
     pDataManager->ReadDataSequence(blockCoord, partition, dataDim, ds);
     pDataManager->CreateNewMaskMatrix();
@@ -94,15 +88,15 @@ void BlockController::initAdjacentBlocks(Vector3i partition, Vector3i blockCoord
     adjacentBlocks[SURFACE_BACK]   = z+1 <  pz ? px*py*(z+1) + px*y + x : -1;
 }
 
-//vector<int> BlockController::GetAdjacentBlocksIndices() {
-//    vector<int> indices;
-//    for (int i = 0; i < adjacentBlocks.size(); i++) {
-//        if (adjacentBlocks[i] != -1) {
-//            indices.push_back(adjacentBlocks[i]);
-//        }
-//    }
-//    return indices;
-//}
+vector<int> BlockController::GetAdjacentBlocksIndices() {
+    vector<int> indices;
+    for (int i = 0; i < adjacentBlocks.size(); i++) {
+        if (adjacentBlocks[i] != -1) {
+            indices.push_back(adjacentBlocks[i]);
+        }
+    }
+    return indices;
+}
 
 void BlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
     localGraph.clear();
