@@ -11,15 +11,15 @@ DataManager::DataManager() {
 DataManager::~DataManager() {
     if (pDataVector.size() != 0) {
         std::cout << "Clean data vector" << std::endl;
-        for (int i = 0; i < pDataVector.size(); i++) {
+        for (unsigned int i = 0; i < pDataVector.size(); i++) {
             delete [] pDataVector.at(i);
         }
     }
     pMinMaxVector.clear();
 
     if (pFeatureVectors.size() != 0) {
-        for (int i = 0; i < pFeatureVectors.size(); i++) {
-            for (int j = 0; j < pFeatureVectors.at(i).size(); j++) {
+        for (unsigned int i = 0; i < pFeatureVectors.size(); i++) {
+            for (unsigned int j = 0; j < pFeatureVectors.at(i).size(); j++) {
                 pFeatureVectors.at(i).at(j).SurfacePoints.clear();
                 pFeatureVectors.at(i).at(j).InnerPoints.clear();
                 pFeatureVectors.at(i).at(j).Uncertainty.clear();
@@ -37,9 +37,9 @@ void DataManager::CreateNewMaskMatrix() {
     memset(pMaskMatrix, 0, sizeof(float)*volumeSize);
 }
 
-void DataManager::ReadDataSequence(DataSet ds, Vector3i origVolumeDim,
-                                   Vector3i partition,
-                                   Vector3i workerIDXYZ) {
+void DataManager::ReadDataSequence(Vector3i blockCoord, Vector3i partition,
+                                   Vector3i origVolumeDim, DataSet ds) {
+
     volumeDim = origVolumeDim / partition;
     volumeSize = volumeDim.volume();
 
@@ -48,23 +48,20 @@ void DataManager::ReadDataSequence(DataSet ds, Vector3i origVolumeDim,
     for (int i = ds.index_start; i <= ds.index_end; i++) {
         sprintf(numstr, "%d", i);
         fileName = ds.data_path + "/" + ds.prefix + numstr + "." + ds.surfix;
-        ReadOneDataFile(fileName, volumeDim, partition, workerIDXYZ);
+        readOneDataFile(blockCoord, partition, fileName);
     }
-
     normalizeData();
 }
 
 // Read one file from disk and save it to the end of the data vector
-bool DataManager::ReadOneDataFile(string filePath, Vector3i volumeDim,
-                                  Vector3i workerNumProcXYZ,
-                                  Vector3i workerIDXYZ) {
+bool DataManager::readOneDataFile(Vector3i blockCoord, Vector3i partition,
+                                  string filePath) {
 
-    int bufferSize = volumeDim.volume();
-    float *pBuffer = allocateNewDataBuffer(bufferSize);
+    float *pBuffer = allocateNewDataBuffer(volumeSize);
 
-    int *gsizes = (volumeDim * workerNumProcXYZ).toArray();
+    int *gsizes = (volumeDim * partition).toArray();
     int *subsizes = volumeDim.toArray();
-    int *starts = (volumeDim * workerIDXYZ).toArray();
+    int *starts = (volumeDim * blockCoord).toArray();
 
     MPI_Datatype filetype;
     MPI_Type_create_subarray(3, gsizes, subsizes, starts,
@@ -78,7 +75,7 @@ bool DataManager::ReadOneDataFile(string filePath, Vector3i volumeDim,
     MPI_File file;
     MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
     MPI_File_set_view(file, 0, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
-    MPI_File_read_all(file, pBuffer, bufferSize, MPI_FLOAT, MPI_STATUS_IGNORE);
+    MPI_File_read_all(file, pBuffer, volumeSize, MPI_FLOAT, MPI_STATUS_IGNORE);
 
     MPI_File_close(&file);
     MPI_Type_free(&filetype);

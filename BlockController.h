@@ -12,7 +12,8 @@ public:
     BlockController();
     ~BlockController();
 
-    void InitData(int globalID, Vector3i partition, Vector3i blockCoord, DataSet dataset);
+//    void InitData(int globalID, Vector3i partition, Vector3i blockCoord, DataSet dataset);
+    void InitData(Vector3i partition, Vector3i blockCoord, DataSet ds);
     void TrackForward();
     void ExtractAllFeatures();
     void UpdateLocalGraph(int blockID, Vector3i blockCoord);
@@ -51,7 +52,7 @@ private:
     int             xs, ys, zs;
 
     void saveExtractedFeatures(vector<Feature>* f);
-    void initAdjacentBlocks(Vector3i blockPartition, Vector3i blockCoord);
+    void initAdjacentBlocks(Vector3i partition, Vector3i blockCoord);
 };
 
 #endif // DATABLOCKCONTROLLER_H

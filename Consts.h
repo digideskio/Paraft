@@ -41,36 +41,7 @@ const int SURFACE_TOP    = 3;   // y = ys
 const int SURFACE_FRONT  = 4;   // z = 0
 const int SURFACE_BACK   = 5;   // z = zs
 
-// MPI TAG
-const int MPI_TAG_NULL = -1;
-const int MPI_TAG_TIMESTEP_0 = 0;
-const int MPI_TAG_TF_RESOLUTION = 2;
-const int MPI_TAG_TF_COLOR_MAP = 3;
-const int MPI_TAG_SEGMENT_MATRIX = 4;
-const int MPI_TAG_ROUTER = 5;
-const int MPI_TAG_HIGHLIGHT_FEATURE = 6;
-const int MPI_TAG_SELECTED_FEATURE_INFO = 7;
-const int MPI_TAG_SELECTED_FEATURE_INFO_SIZE = 8;
-const int MPI_TAG_SYNC_TIMESTEP = 9;
-const int MPI_TAG_TRACK_FORWARD = 10;
-const int MPI_TAG_GET_FEATURE_ID = 11;
-const int MPI_TAG_SET_FEATURE_ID = 12;
-const int MPI_TAG_LOCAL_EDGE_SIZE = 13;
-const int MPI_TAG_ADJACENT_EDGE_SIZE = 14;
-
 using namespace std;
-
-typedef struct MPI_Send_Schedule {
-    int     recv_id;
-    char   *send_buf;
-    int     send_size;
-} MPI_Send_Schedule;
-
-typedef struct MPI_Recv_Schedule {
-    int     send_id;
-    char   *recv_buf;
-    int     recv_size;
-} MPI_Recv_Schedule;
 
 typedef struct { float x; float y; } Vector2f;
 typedef hash_map<int, int> IntMap;
@@ -159,7 +130,7 @@ struct Feature {
 
 typedef struct {
     Vector3i    partition;
-    int         num_worker;
+    int         num_proc;
     int         num_feature;
     double      time_1;
     double      time_2;

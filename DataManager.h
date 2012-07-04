@@ -20,11 +20,10 @@ public:
 
     Vector3i GetVolumeDimension() { return volumeDim; }
 
-    void ReadDataSequence(DataSet ds, Vector3i origVolumeDim,
-                          Vector3i workerNumProcXYZ, Vector3i workerIDXYZ);
+    void ReadDataSequence(Vector3i blockCoord, Vector3i partition,
+                          Vector3i origVolumeDim, DataSet ds);
 
-    bool ReadOneDataFile(string filePath, Vector3i volumeDim,
-                         Vector3i workerNumProcXYZ, Vector3i workerIDXYZ);
+    bool readOneDataFile(Vector3i blockCoord, Vector3i partition, string filePath);
 
     vector<Feature> *GetFeatureVector(int iTime) { return &(pFeatureVectors.at(iTime)); }
     Feature *GetFeature(int iTime, int index) { return &(pFeatureVectors.at(iTime).at(index)); }

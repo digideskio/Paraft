@@ -19,15 +19,12 @@ public:
 private:
     BlockController *pBlockController;
 
-    MPI_Comm worker_comm;
-    MPI_Comm adjacent_comm;
+    MPI_Comm local_comm;
     MPI_Status status;
 
-    int globalID;
-    int blockID;
-    int blockGID;
+    int my_rank;
     int timestep;
-    int globalNumProc;
+    int num_proc;
     int blockCount;
 
     Vector3i partition;
@@ -48,10 +45,10 @@ private:
 
     void initBlockController();
     void initLocalCommGroup();
-    void syncTFParameters();
+    void initTFParameters();
     void precalculateT0();
-    void waitingForOrders();
-    void trackForward_worker();
+//    void waitingForOrders();
+//    void trackForward_worker();
 
     void mergeCorrespondentEdges(vector<Edge> &edgeVector);
 

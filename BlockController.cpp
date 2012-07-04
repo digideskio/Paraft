@@ -14,19 +14,20 @@ BlockController::~BlockController() {
     pFeatureTracker->~FeatureTracker();
 }
 
-void BlockController::InitData(int globalID, Vector3i partition,
-                               Vector3i blockCoord, DataSet dataset) {
+void BlockController::InitData(Vector3i partition, Vector3i blockCoord, DataSet ds) {
 
     Vector3i dataDim(DATA_DIM_X, DATA_DIM_Y, DATA_DIM_Z);
 
-    if (globalID == HOST_NODE) {
-        partition.x = partition.y = partition.z = 1;    // host, all set to 1
-    } else {
-        initAdjacentBlocks(partition, blockCoord);
-    }
+    initAdjacentBlocks(partition, blockCoord);
+
+//    if (globalID == HOST_NODE) {
+//        partition.x = partition.y = partition.z = 1;    // host, all set to 1
+//    } else {
+//        initAdjacentBlocks(partition, blockCoord);
+//    }
 
     pDataManager = new DataManager();
-    pDataManager->ReadDataSequence(dataset, dataDim, partition, blockCoord);
+    pDataManager->ReadDataSequence(blockCoord, partition, dataDim, ds);
     pDataManager->CreateNewMaskMatrix();
 
     blockSize = pDataManager->GetVolumeDimension();
@@ -81,10 +82,9 @@ void BlockController::saveExtractedFeatures(vector<Feature>* f) {
     pDataManager->SaveExtractedFeatures(temp);
 }
 
-void BlockController::initAdjacentBlocks(Vector3i blockPartition,
-                                         Vector3i blockCoord) {
-    int px = blockPartition.x, py = blockPartition.y, pz = blockPartition.z;
-    int  x = blockCoord.x,      y = blockCoord.y,      z = blockCoord.z;
+void BlockController::initAdjacentBlocks(Vector3i partition, Vector3i blockCoord) {
+    int px = partition.x,   py = partition.y,   pz = partition.z;
+    int x = blockCoord.x,   y = blockCoord.y,   z = blockCoord.z;
 
     adjacentBlocks[SURFACE_LEFT]   = x-1 >= 0  ? px*py*z + px*y + x - 1 : -1;
     adjacentBlocks[SURFACE_RIGHT]  = x+1 <  px ? px*py*z + px*y + x + 1 : -1;
@@ -94,15 +94,15 @@ void BlockController::initAdjacentBlocks(Vector3i blockPartition,
     adjacentBlocks[SURFACE_BACK]   = z+1 <  pz ? px*py*(z+1) + px*y + x : -1;
 }
 
-vector<int> BlockController::GetAdjacentBlocksIndices() {
-    vector<int> indices;
-    for (int i = 0; i < adjacentBlocks.size(); i++) {
-        if (adjacentBlocks[i] != -1) {
-            indices.push_back(adjacentBlocks[i]);
-        }
-    }
-    return indices;
-}
+//vector<int> BlockController::GetAdjacentBlocksIndices() {
+//    vector<int> indices;
+//    for (int i = 0; i < adjacentBlocks.size(); i++) {
+//        if (adjacentBlocks[i] != -1) {
+//            indices.push_back(adjacentBlocks[i]);
+//        }
+//    }
+//    return indices;
+//}
 
 void BlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
     localGraph.clear();
