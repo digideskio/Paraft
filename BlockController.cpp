@@ -75,7 +75,7 @@ void BlockController::ResetMaskMatrixValue(float value) {
 
 void BlockController::saveExtractedFeatures(vector<Feature>* f) {
     vector<Feature> temp;
-    for (int i = 0; i < f->size(); ++i) {
+    for (int i = 0; i < f->size(); i++) {
         temp.push_back(f->at(i));
     }
     pDataManager->SaveExtractedFeatures(temp);
@@ -94,6 +94,16 @@ void BlockController::initAdjacentBlocks(Vector3i blockPartition,
     adjacentBlocks[SURFACE_BACK]   = z+1 <  pz ? px*py*(z+1) + px*y + x : -1;
 }
 
+vector<int> BlockController::GetAdjacentBlocksIndices() {
+    vector<int> indices;
+    for (int i = 0; i < adjacentBlocks.size(); i++) {
+        if (adjacentBlocks[i] != -1) {
+            indices.push_back(adjacentBlocks[i]);
+        }
+    }
+    return indices;
+}
+
 void BlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
     localGraph.clear();
 
@@ -109,11 +119,11 @@ void BlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
     Feature feature;
     Vector3i centroid;
     Edge edge;
-    for (int i = 0; i < pCurrentFeatures->size(); ++i) {
+    for (int i = 0; i < pCurrentFeatures->size(); i++) {
         feature = pCurrentFeatures->at(i);
         touchedSurfaces = feature.TouchedSurfaces;
 
-        for (int j = 0; j < touchedSurfaces.size(); ++j) {
+        for (int j = 0; j < touchedSurfaces.size(); j++) {
             surface = touchedSurfaces[j];
             adjacentBlock = adjacentBlocks[surface];
             if (adjacentBlock == -1) {
