@@ -88,7 +88,7 @@ void BlockController::initAdjacentBlocks(Vector3i partition, Vector3i blockCoord
     adjacentBlocks[SURFACE_BACK]   = z+1 <  pz ? px*py*(z+1) + px*y + x : -1;
 }
 
-vector<int> BlockController::GetAdjacentBlocksIndices() {
+vector<int> BlockController::GetAdjacentBlocks() {
     vector<int> indices;
     for (int i = 0; i < adjacentBlocks.size(); i++) {
         if (adjacentBlocks[i] != -1) {

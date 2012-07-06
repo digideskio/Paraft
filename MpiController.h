@@ -38,16 +38,17 @@ private:
     vector<Edge> updateGlobalGraph(vector<Edge> localEdgeVector);
 
     // for feature graph
-    int adjacentBlockCount;
-    vector<int> adjacentIndices;
-    Edge *pFeatureGraph;
+//    int adjacentBlockCount;
+    vector<int> adjacentBlocks;
+    vector<Edge> adjacentGraph;
     vector<Edge> updateFeatureGraph(vector<Edge> localEdgeVector);
 
     void initBlockController();
-    void initLocalCommGroup();
+//    void initLocalCommGroup();
     void initTFParameters();
     void precalculateT0();
 
+    void syncFeatureGraph();
     void mergeCorrespondentEdges(vector<Edge> &edgeVector);
 
     void debug(string msg);

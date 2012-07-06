@@ -27,9 +27,8 @@ public:
     IndexValueMap GetDifferentPoints() { return pFeatureTracker->GetDiffPoints(); }
 
     // Feature Connectivity Graph
-    vector<int> GetAdjacentBlocksIndices();
-    IntMap GetAdjacentBlocks() { return adjacentBlocks; }
-    vector<Edge> GetLocalEdges() { return localGraph; }
+    vector<int> GetAdjacentBlocks();
+    vector<Edge> GetLocalGraph() { return localGraph; }
 
     // Accessor - FeatureTracker
     void SetVolumeDataPointerByIndex(int index) { pFeatureTracker->SetVolumeDataPointer(pDataManager->GetVolumeDataPointer(index));}
