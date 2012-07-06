@@ -15,7 +15,6 @@ BlockController::~BlockController() {
 }
 
 void BlockController::InitData(Vector3i partition, Vector3i blockCoord, DataSet ds) {
-
     Vector3i dataDim(DATA_DIM_X, DATA_DIM_Y, DATA_DIM_Z);
 
     initAdjacentBlocks(partition, blockCoord);
@@ -36,16 +35,18 @@ void BlockController::TrackForward() {
 }
 
 void BlockController::ExtractAllFeatures() {
-    float opacity;
-    int index, tfIndex, tfRes = pFeatureTracker->GetTFResolution();
+    int tfRes = pFeatureTracker->GetTFResolution();
 
     for (int z = 0; z < blockSize.z; ++z) {
         for (int y = 0; y < blockSize.y; ++y ) {
             for (int x = 0; x < blockSize.x; ++x) {
-                index = z * blockSize.y * blockSize.x + y * blockSize.x + x;
-                if (pFeatureTracker->GetMaskMatrixPointer()[index] != 0) { continue; }
-                tfIndex = (int)(pDataManager->GetVolumeDataPointer(currentTimestep)[index] * tfRes);
-                opacity = pFeatureTracker->GetTFColorMap()[tfIndex*4+3];
+                int index = z * blockSize.y * blockSize.x + y * blockSize.x + x;
+                if (pFeatureTracker->GetMaskMatrixPointer()[index] != 0) {
+                    continue;
+                }
+                float *pVolume = pDataManager->GetVolumeDataPointer(currentTimestep);
+                int tfIndex = (int)(pVolume[index] * tfRes);
+                float opacity = pFeatureTracker->GetTFColorMap()[tfIndex*4+3];
                 if (opacity >= LOW_THRESHOLD && opacity <= HIGH_THRESHOLD) {
                     pFeatureTracker->FindNewFeature(x, y, z, LOW_THRESHOLD, HIGH_THRESHOLD);
                 }
@@ -107,25 +108,20 @@ void BlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
         return;
     }
 
-    vector<int> touchedSurfaces;
-    int surface = SURFACE_NULL;
-    int adjacentBlock = -1;
-    Feature feature;
-    Vector3i centroid;
-    Edge edge;
     for (int i = 0; i < pCurrentFeatures->size(); i++) {
-        feature = pCurrentFeatures->at(i);
-        touchedSurfaces = feature.TouchedSurfaces;
+        Feature feature = pCurrentFeatures->at(i);
+        vector<int> touchedSurfaces = feature.TouchedSurfaces;
 
         for (int j = 0; j < touchedSurfaces.size(); j++) {
-            surface = touchedSurfaces[j];
-            adjacentBlock = adjacentBlocks[surface];
+            int surface = touchedSurfaces[j];
+            int adjacentBlock = adjacentBlocks[surface];
             if (adjacentBlock == -1) {
                 continue;
             }
 
-            centroid = feature.BoundaryCentroid[surface];
+            Vector3i centroid = feature.BoundaryCentroid[surface];
 
+            Edge edge;
             edge.id         = feature.ID;
             edge.start      = blockID;
             edge.end        = adjacentBlock;

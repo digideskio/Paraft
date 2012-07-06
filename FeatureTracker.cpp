@@ -157,29 +157,28 @@ void FeatureTracker::TrackFeature(float* pDataSet, float lowerValue,
     memcpy(pMaskMatrixPrevious, pMaskMatrixCurrent, volumeSize*sizeof(float));
     memset(pMaskMatrixCurrent, 0, volumeSize*sizeof(float));
 
-    Feature fi;
     for (int i = 0; i < currentFeaturesHolder.size(); i++) {
-        fi = currentFeaturesHolder[i];
+        Feature f = currentFeaturesHolder[i];
 
         resetFeatureBoundaryInfo();
         predictRegion(i, direction, mode);
-        fillRegion(fi.MaskValue);
-        shrinkRegion(fi.MaskValue);
-        expandRegion(fi.MaskValue);
+        fillRegion(f.MaskValue);
+        shrinkRegion(f.MaskValue);
+        expandRegion(f.MaskValue);
         updateTouchedSurfaces();
 
-        fi.ID              = GetPointIndex(centroid);
-        fi.Centroid        = centroid;
-        fi.SurfacePoints   = surfacePoints;
-        fi.InnerPoints     = innerPoints;
-        fi.Min             = featureMin;
-        fi.Max             = featureMax;
-        fi.TouchedSurfaces = touchedSurfaces;
+        f.ID              = GetPointIndex(centroid);
+        f.Centroid        = centroid;
+        f.SurfacePoints   = surfacePoints;
+        f.InnerPoints     = innerPoints;
+        f.Min             = featureMin;
+        f.Max             = featureMax;
+        f.TouchedSurfaces = touchedSurfaces;
 
         for (int surface = 0; surface < 6; ++surface) {
-            fi.BoundaryCentroid[surface] = boundaryCentroid[surface];
+            f.BoundaryCentroid[surface] = boundaryCentroid[surface];
         }
-        currentFeaturesHolder[i] = fi;
+        currentFeaturesHolder[i] = f;
         innerPoints.clear();
     }
     backupFeatureInfo(direction);
@@ -384,9 +383,6 @@ inline void FeatureTracker::shrinkEdge(DataPoint point, float maskValue) {
 // Say if we have several features in one time step, the number we call GrowRegion is the number of features
 // Each time before we call this function, we should copy the edges points of one feature we want to grow in edge
 inline void FeatureTracker::expandRegion(float maskValue) {
-    DataPoint point;
-    bool onBoundary;
-
     // put edge points to feature body
     while (surfacePoints.empty() == false) {
         dataPointList.push_back(surfacePoints.front());
@@ -394,9 +390,9 @@ inline void FeatureTracker::expandRegion(float maskValue) {
     } // edgePointList should be empty
 
     while (dataPointList.empty() == false) {
-        point = dataPointList.front();
+        DataPoint point = dataPointList.front();
         dataPointList.pop_front();
-        onBoundary = false;
+        bool onBoundary = false;
         if (++point.x < xs) { onBoundary |= expandEdge(point, maskValue); } point.x--;  // right
         if (++point.y < ys) { onBoundary |= expandEdge(point, maskValue); } point.y--;  // top
         if (++point.z < zs) { onBoundary |= expandEdge(point, maskValue); } point.z--;  // front

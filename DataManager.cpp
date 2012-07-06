@@ -43,9 +43,9 @@ void DataManager::ReadDataSequence(Vector3i blockCoord, Vector3i partition,
     volumeDim = origVolumeDim / partition;
     volumeSize = volumeDim.volume();
 
-    string fileName;
-    char numstr[21]; // enough to hold all numbers up to 64-bits
     for (int i = ds.index_start; i <= ds.index_end; i++) {
+        string fileName;
+        char numstr[21]; // enough to hold all numbers up to 64-bits
         sprintf(numstr, "%d", i);
         fileName = ds.data_path + "/" + ds.prefix + numstr + "." + ds.surfix;
         readOneDataFile(blockCoord, partition, fileName);
@@ -91,13 +91,12 @@ void DataManager::normalizeData() {
     float min = pMinMaxVector.at(0).min;
     float max = pMinMaxVector.at(0).max;
 
-    int iTimelength = pDataVector.size();
-    for (int i = 0 ; i < iTimelength; i++) {
+    for (unsigned int i = 0 ; i < pDataVector.size(); i++) {
         min = min < pMinMaxVector.at(i).min ? min : pMinMaxVector.at(i).min;
         max = max > pMinMaxVector.at(i).max ? max : pMinMaxVector.at(i).max;
     }
 
-    for (int j = 0; j < iTimelength; j++) {
+    for (unsigned int j = 0; j < pDataVector.size(); j++) {
         for (int i = 0; i < volumeSize; i++) {
             pDataVector.at(j)[i] -= min;
             pDataVector.at(j)[i] /= (max-min);

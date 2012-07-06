@@ -22,7 +22,7 @@ private:
     MPI_Datatype MPI_TYPE_EDGE;
     MPI_Request request;
     MPI_Status status;
-    MPI_Comm local_comm;
+
     int my_rank;
     int num_proc;
 
@@ -38,18 +38,18 @@ private:
     vector<Edge> updateGlobalGraph(vector<Edge> localEdgeVector);
 
     // for feature graph
-//    int adjacentBlockCount;
     vector<int> adjacentBlocks;
     vector<Edge> adjacentGraph;
     vector<Edge> updateFeatureGraph(vector<Edge> localEdgeVector);
 
     void initBlockController();
-//    void initLocalCommGroup();
     void initTFParameters();
     void precalculateT0();
 
     void syncFeatureGraph();
-    void mergeCorrespondentEdges(vector<Edge> &edgeVector);
+//    void updateFeatureInfo();
+
+    void mergeCorrespondentEdges();
 
     void debug(string msg);
 };

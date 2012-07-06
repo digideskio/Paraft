@@ -22,8 +22,9 @@ const int DATA_DIM_Z = 128;
 
 const int TF_RESOLUTION = 1024;
 
-const float LOW_THRESHOLD   = 0.2;
-const float HIGH_THRESHOLD  = 1.0;
+const float LOW_THRESHOLD  = 0.2;
+const float HIGH_THRESHOLD = 1.0;
+const float DIST_THRESHOLD = 9.0;
 
 const int TRACKING_MODE_DIRECT = 0;
 const int TRACKING_MODE_LINEAR = 1;
