@@ -19,8 +19,10 @@ public:
 private:
     BlockController *pBlockController;
 
-    MPI_Comm local_comm;
+    MPI_Datatype MPI_TYPE_EDGE;
+    MPI_Request request;
     MPI_Status status;
+    MPI_Comm local_comm;
     int my_rank;
     int num_proc;
 
@@ -32,14 +34,14 @@ private:
     int timestep;
 
     // for global graph
-    int globalEdgeSize;
-    vector<Edge> updateGlobalGraph(vector<Edge> localEdgesVector);
+    int globalEdgeCount;
+    vector<Edge> updateGlobalGraph(vector<Edge> localEdgeVector);
 
     // for feature graph
     int adjacentBlockCount;
-    int adjacentEdgeCount;
+    vector<int> adjacentIndices;
     Edge *pFeatureGraph;
-    vector<Edge> updateFeatureGraph(vector<Edge> localEdgesVector);
+    vector<Edge> updateFeatureGraph(vector<Edge> localEdgeVector);
 
     void initBlockController();
     void initLocalCommGroup();

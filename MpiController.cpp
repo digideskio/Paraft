@@ -1,6 +1,7 @@
 #include "MpiController.h"
 
 MpiController::MpiController() {}
+
 MpiController::~MpiController() {
     MPI_Finalize();
     pBlockController->~BlockController();
@@ -10,6 +11,10 @@ void MpiController::Init(int argc, char **argv) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
+
+    // init MPI_TYPE_EDGE
+    MPI_Type_contiguous(sizeof(Edge), MPI_BYTE, &MPI_TYPE_EDGE);
+    MPI_Type_commit(&MPI_TYPE_EDGE);
 
     partition.x = atoi(argv[1]);
     partition.y = atoi(argv[2]);
@@ -57,7 +62,7 @@ void MpiController::Start() {
 void MpiController::initBlockController() {
     pBlockController = new BlockController();
     pBlockController->InitData(partition, blockCoord, ds);
-    debug("Load volume data: " + ds.prefix + " ready");
+//    debug("Load volume data: " + ds.prefix + " ready");
 }
 
 void MpiController::initLocalCommGroup() {
@@ -68,20 +73,22 @@ void MpiController::initLocalCommGroup() {
 //    MPI_Cart_create(MPI_COMM_WORLD, ndims, dims, periods, reorder, &local_comm);
 //    MPI_Comm_size(local_comm, &adjacentBlockCount);
 
-    vector<int> adjacentBlocks = pBlockController->GetAdjacentBlocksIndices();
-    adjacentBlocks.push_back(my_rank);
+    adjacentIndices = pBlockController->GetAdjacentBlocksIndices();
+//    adjacentIndices.push_back(my_rank);
 
-    adjacentBlockCount = adjacentBlocks.size();
+    adjacentBlockCount = adjacentIndices.size();
 
     MPI_Group world_group, local_group;
     MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-    MPI_Group_incl(world_group, adjacentBlockCount, &adjacentBlocks[0], &local_group);
+    MPI_Group_incl(world_group, adjacentBlockCount, &adjacentIndices[0], &local_group);
+
     MPI_Comm_create(MPI_COMM_WORLD, local_group, &local_comm);
 
-    int size = 0;
-    MPI_Comm_size(local_comm, &size);
+//    int size = 0;
+//    MPI_Comm_size(local_comm_1, &size);
+////    MPI_Comm_size(local_comm, &size);
 
-    cerr << "adjacentBlockCount: " << adjacentBlockCount << " size: " << size << endl;
+//    cerr << "adjacentBlockCount: " << adjacentBlockCount << " size: " << size << endl;
 
 //    for (unsigned int i = 0; i < adjacentBlocks.size(); i++) {
 //        cerr << my_rank << " adjacentBlocks[i]: " << adjacentBlocks[i] << endl;
@@ -100,7 +107,7 @@ void MpiController::initLocalCommGroup() {
 
 
 //    adjacentBlockCount = pBlockController->GetAdjacentBlocksIndices().size();
-    debug("initLocalCommGroup ready");
+//    debug("initLocalCommGroup ready");
 }
 
 void MpiController::initTFParameters() {
@@ -120,7 +127,7 @@ void MpiController::initTFParameters() {
     pBlockController->SetCurrentTimestep(timestep);
     pBlockController->SetTFResolution(TF_RESOLUTION);
     pBlockController->SetTFColorMap(pTFColorMap);
-    debug("initTFParameters ready");
+//    debug("initTFParameters ready");
 }
 
 void MpiController::precalculateT0() {
@@ -128,7 +135,7 @@ void MpiController::precalculateT0() {
     pBlockController->ExtractAllFeatures();
     pBlockController->SetCurrentTimestep(timestep);
     pBlockController->TrackForward();
-    debug("Pre-calculate timestep 1 ready");
+//    debug("Pre-calculate timestep 1 ready");
 }
 
 void MpiController::TrackForward() {  // triggered by host
@@ -156,10 +163,10 @@ void MpiController::TrackForward() {  // triggered by host
     vector<Edge> localEdges = pBlockController->GetLocalEdges();
 
     // option1: all gather and create a global graph
-//    vector<Edge> edges = updateGlobalGraph(localEdges);
+    vector<Edge> edges = updateGlobalGraph(localEdges);
 
     // option2: gather adjacent to create feaure graph
-    vector<Edge> edges = updateFeatureGraph(localEdges);
+//    vector<Edge> edges = updateFeatureGraph(localEdges);
 
     MPI_Barrier(MPI_COMM_WORLD);
     double t3 = MPI_Wtime();
@@ -168,7 +175,7 @@ void MpiController::TrackForward() {  // triggered by host
     csv.time_1 = t1 - t0;
     csv.time_2 = t2 - t1;
     csv.time_3 = t3 - t2;
-    csv.num_feature = globalEdgeSize / 2;
+    csv.num_feature = globalEdgeCount / 2;
 
     string result = "result.csv";
     ofstream outf(result.c_str(), ios::out | ios::app);
@@ -177,93 +184,79 @@ void MpiController::TrackForward() {  // triggered by host
          << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
     outf.close();
 
-    debug("Done ----------------------");
-
     //// Test Graph ////////////////////////////////////////////////
-//    if (my_rank == 0) {
-//        cerr << "globalEdgeCount: " << globalEdgeCount << endl;
-//        for (int i = 0; i < globalEdgeCount; ++i) {
-//            cout << edges[i].id << edges[i].start << "->" << edges[i].end
-//                 << edges[i].centroid.x << edges[i].centroid.y << edges[i].centroid.z
-//                 << endl;
-//        }
-//    }
+    if (my_rank == 0) {
+        cerr << "Edge count: " << edges.size() << endl;
+        for (unsigned int i = 0; i < edges.size(); ++i) {
+            cout << edges[i].id << " : " << edges[i].start << "->" << edges[i].end
+                 << edges[i].centroid.x << edges[i].centroid.y << edges[i].centroid.z
+                 << endl;
+        }
+    }
     ////////////////////////////////////////////////////////////////
+
+    debug("Done ----------------------");
 }
 
-vector<Edge> MpiController::updateFeatureGraph(vector<Edge> localEdgesVector) {
-    int localEdgeSize = localEdgesVector.size();
+vector<Edge> MpiController::updateFeatureGraph(vector<Edge> localEdgeVector) {
+    int localEdgeCount = localEdgeVector.size();
 
-    cout << "[" << my_rank << "] " << "localEdgeSize: " << localEdgeSize << endl;
+    vector<Edge> adjacentEdgeVector;    // resize later
 
-    vector<int> adjacentEdgeSizeVector(adjacentBlockCount);
+    for (int i = 0; i < adjacentBlockCount; i++) {
+        int dest = adjacentIndices[i];
+        int edgeCount = 0;
 
-    cout << "[" << my_rank << "] " << "adjacentBlockCount: " << adjacentBlockCount << endl;
+        MPI_Irecv(&edgeCount, 1, MPI_INT, dest, 100, MPI_COMM_WORLD, &request);
+        MPI_Send(&localEdgeCount, 1, MPI_INT, dest, 100, MPI_COMM_WORLD);
+        MPI_Wait(&request, &status);
 
-    MPI_Reduce(&localEdgeSize, &adjacentEdgeCount, 1, MPI_INT, MPI_SUM, my_rank, local_comm);
-//    MPI_Allreduce(&localEdgeSize, &adjacentEdgeCount, 1, MPI_INT, MPI_SUM, local_comm);
+        if (edgeCount == 0) {
+            continue;
+        }
 
-    cout << "[" << my_rank << "] " << "adjacentEdgeCount: " << adjacentEdgeCount << endl;
+        Edge *adjacentEdges = new Edge[edgeCount];
+        MPI_Irecv(adjacentEdges, edgeCount, MPI_TYPE_EDGE, dest, 101, MPI_COMM_WORLD, &request);
+        MPI_Send(&localEdgeVector[0], localEdgeCount, MPI_TYPE_EDGE, dest, 101, MPI_COMM_WORLD);
+        MPI_Wait(&request, &status);
 
-    vector<Edge> adjacentEdgeVector(adjacentEdgeCount);
-
-    int displs[num_proc];
-    displs[0] = 0;
-    for (int i = 1; i < num_proc; i++) {
-        displs[i] = adjacentEdgeSizeVector[i-1] + displs[i-1];
+        for (int i = 0; i < edgeCount; i++) {
+            adjacentEdgeVector.push_back(adjacentEdges[i]);
+        }
     }
 
-    for (int i = 0; i < num_proc; i++) {
-        cout << "displs: " << displs[i] << endl;
-    }
-
-    MPI_Datatype MPI_TYPE_EDGE;
-    MPI_Type_contiguous(sizeof(Edge), MPI_BYTE, &MPI_TYPE_EDGE);
-    MPI_Type_commit(&MPI_TYPE_EDGE);
-
-    MPI_Allgatherv(&localEdgesVector[0], localEdgeSize, MPI_TYPE_EDGE, // send
-                   &adjacentEdgeVector[0], &adjacentEdgeSizeVector[0], // recv
-                   displs, MPI_TYPE_EDGE, local_comm);
-
-//    for (int i = 0; i < adjacentEdgeCount; i++) {
-//        cout << "[" << my_rank << "] " << "adjacentEdges: " << adjacentEdgeVector[i].id << endl;
-//    }
-
-    debug("5");
+    adjacentEdgeVector.insert(adjacentEdgeVector.end(), localEdgeVector.begin(),
+                              localEdgeVector.end());
 
     mergeCorrespondentEdges(adjacentEdgeVector);
-
-    debug("6");
-
-    for (int i = 0; i < adjacentEdgeCount; i++) {
-        cout << "[" << my_rank << "] " << "adjacentEdges: " << adjacentEdgeVector[i].id << endl;
-    }
 
     return adjacentEdgeVector;
 }
 
-vector<Edge> MpiController::updateGlobalGraph(vector<Edge> localEdgesVector) {
-    int localEdgeSize = localEdgesVector.size();
+vector<Edge> MpiController::updateGlobalGraph(vector<Edge> localEdgeVector) {
+    int localEdgeCount = localEdgeVector.size();
 
-    vector<int> globalGraphSizeVector(num_proc);
+    vector<int> globalEdgeCountVector(num_proc);
 
-    MPI_Allreduce(&localEdgeSize, &globalEdgeSize, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&localEdgeCount, &globalEdgeCount, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-    vector<Edge> globalEdgeVector(globalEdgeSize);
+    vector<Edge> globalEdgeVector(globalEdgeCount);
 
     int displs[num_proc];
     displs[0] = 0;
     for (int i = 1; i < num_proc; ++i) {
-        displs[i] = globalGraphSizeVector[i-1] + displs[i-1];
+        displs[i] = globalEdgeCountVector[i-1] + displs[i-1];
+        cerr << "displs[" << i << "] = " << displs[i] << " = "
+             << globalEdgeCountVector[i-1] << " + " << displs[i-1] << endl;
     }
 
-    MPI_Datatype MPI_TYPE_EDGE;
-    MPI_Type_contiguous(sizeof(Edge), MPI_BYTE, &MPI_TYPE_EDGE);
-    MPI_Type_commit(&MPI_TYPE_EDGE);
-
-    MPI_Allgatherv(&localEdgesVector[0], localEdgeSize, MPI_TYPE_EDGE,
-                   &globalEdgeVector[0], &globalGraphSizeVector[0],
+    MPI_Allgatherv(&localEdgeVector[0], localEdgeCount, MPI_TYPE_EDGE,
+                   &globalEdgeVector[0], &globalEdgeCountVector[0],
                    displs, MPI_TYPE_EDGE, MPI_COMM_WORLD);
+
+    for (unsigned int i = 0; i < localEdgeVector.size(); i++) {
+        cerr << localEdgeVector[i].id << endl;
+    }
 
     mergeCorrespondentEdges(globalEdgeVector);
 
