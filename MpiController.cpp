@@ -123,7 +123,13 @@ void MpiController::TrackForward() {  // triggered by host
     // option2: gather adjacent to create feaure graph
 //    vector<Edge> edges = updateFeatureGraph(localEdges);
 
-    syncFeatureGraph();
+    int count = 0;
+    featureTableUpdated = true;
+    while (featureTableUpdated) {
+        syncFeatureGraph();
+        count++;
+        cerr << count << endl;
+    }
 
     MPI_Barrier(MPI_COMM_WORLD);
     double t3 = MPI_Wtime();
@@ -141,8 +147,7 @@ void MpiController::TrackForward() {  // triggered by host
          << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
     outf.close();
 
-    //// Test Graph ////////////////////////////////////////////////
-    if (my_rank == 1) {
+    if (my_rank == 0) {
         cerr << "adjacentGraph count: " << adjacentGraph.size() << endl;
         for (unsigned int i = 0; i < adjacentGraph.size(); ++i) {
             cout << adjacentGraph[i].id << " : "
@@ -152,7 +157,19 @@ void MpiController::TrackForward() {  // triggered by host
                  << adjacentGraph[i].centroid.z << ")" << endl;
         }
     }
-    ////////////////////////////////////////////////////////////////
+
+    if (my_rank == 0) {
+        FeatureTable::iterator it;
+        for (it = featureTable.begin(); it != featureTable.end(); it++) {
+            int id = it->first;
+            cerr << id << " ";
+            vector<int> value = it->second;
+            for (unsigned int i = 0; i < value.size(); i++) {
+                cerr << value[i] << " ";
+            }
+            cerr << endl;
+        }
+    }
 
     debug("Done ----------------------");
 }
@@ -191,10 +208,8 @@ void MpiController::syncFeatureGraph() {
 void MpiController::mergeCorrespondentEdges() {
     for (unsigned int i = 0; i < adjacentGraph.size(); i++) {
         Edge ei = adjacentGraph[i];
-
         for (unsigned int j = i+1; j < adjacentGraph.size(); j++) {
             Edge ej = adjacentGraph[j];
-
             if ((ei.start == ej.start && ei.end == ej.end) ||
                 (ei.start == ej.end && ei.end == ej.start)) {
                 if (ei.centroid.distanceFrom(ej.centroid) <= DIST_THRESHOLD) {
@@ -203,9 +218,35 @@ void MpiController::mergeCorrespondentEdges() {
                     } else {
                         adjacentGraph[i].id = adjacentGraph[j].id;
                     }
+                    updateFeatureTable(ei);
                 }
             }
         }
+    }
+}
+
+void MpiController::updateFeatureTable(Edge edge) {
+    featureTableUpdated = false;
+    int key = edge.id;
+
+    if (featureTable.find(key) == featureTable.end()) {
+        vector<int> value;
+        value.push_back(edge.start);
+        value.push_back(edge.end);
+        featureTable[key] = value;
+        featureTableUpdated = true;
+    } else {
+        vector<int> value = featureTable[key];
+        if (find(value.begin(), value.end(), edge.start) == value.end()) {
+            value.push_back(edge.start);
+            featureTableUpdated = true;
+        }
+
+        if (find(value.begin(), value.end(), edge.end) == value.end()) {
+            value.push_back(edge.end);
+            featureTableUpdated = true;
+        }
+        featureTable[key] = value;
     }
 }
 

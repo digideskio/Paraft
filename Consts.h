@@ -47,6 +47,7 @@ using namespace std;
 typedef struct { float x; float y; } Vector2f;
 typedef hash_map<int, int> IntMap;
 typedef hash_map<int, float> IndexValueMap;
+typedef hash_map<int, vector<int> > FeatureTable;
 
 class MinMax {
 public:

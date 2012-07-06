@@ -40,14 +40,17 @@ private:
     // for feature graph
     vector<int> adjacentBlocks;
     vector<Edge> adjacentGraph;
-    vector<Edge> updateFeatureGraph(vector<Edge> localEdgeVector);
+//    vector<Edge> updateFeatureGraph(vector<Edge> localEdgeVector);
+
+    FeatureTable featureTable;
 
     void initBlockController();
     void initTFParameters();
     void precalculateT0();
 
     void syncFeatureGraph();
-//    void updateFeatureInfo();
+    void updateFeatureTable(Edge edge);
+    bool featureTableUpdated;
 
     void mergeCorrespondentEdges();
 
