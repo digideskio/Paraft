@@ -132,6 +132,8 @@ void MpiController::TrackForward() {  // triggered by host
     MPI_Barrier(MPI_COMM_WORLD);
     double t3 = MPI_Wtime();
 
+    featureTableVector[timestep] = featureTable;
+
     csv.time_1 = t1 - t0;
     csv.time_2 = t2 - t1;
     csv.time_3 = t3 - t2;

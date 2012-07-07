@@ -43,7 +43,7 @@ private:
 
     // global feature info
     FeatureTable featureTable;
-    vector<FeatureTable> featureTableVector;    // for time varying data
+    hash_map<int, FeatureTable> featureTableVector;    // for time varying data
 
     void initBlockController();
     void initTFParameters();
