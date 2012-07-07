@@ -49,7 +49,6 @@ void MpiController::Init(int argc, char **argv) {
 
 void MpiController::Start() {
     initBlockController();
-//    initLocalCommGroup();
     initTFParameters();
     precalculateT0();
 
@@ -94,7 +93,7 @@ void MpiController::precalculateT0() {
 }
 
 void MpiController::TrackForward() {  // triggered by host
-    debug("TrackForward() start");
+//    debug("TrackForward() start");
 
     timestep++;
     if (timestep > ds.index_end) {
@@ -115,26 +114,24 @@ void MpiController::TrackForward() {  // triggered by host
     MPI_Barrier(MPI_COMM_WORLD);
     double t2 = MPI_Wtime();
 
-//    vector<Edge> localEdges = pBlockController->GetLocalGraph();
-
     // option1: all gather and create a global graph
 //    vector<Edge> edges = updateGlobalGraph(localEdges);
 
     // option2: gather adjacent to create feaure graph
 //    vector<Edge> edges = updateFeatureGraph(localEdges);
 
+    featureTable.clear();
+
     int count = 0;
     featureTableUpdated = true;
     while (featureTableUpdated) {
         syncFeatureGraph();
-        count++;
-        cerr << count << endl;
+        cout << "[" << my_rank << "] synced " << ++count << " time(s)." << endl;
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
     double t3 = MPI_Wtime();
 
-    ///////////////////////////////////////////
     csv.time_1 = t1 - t0;
     csv.time_2 = t2 - t1;
     csv.time_3 = t3 - t2;
@@ -162,12 +159,12 @@ void MpiController::TrackForward() {  // triggered by host
         FeatureTable::iterator it;
         for (it = featureTable.begin(); it != featureTable.end(); it++) {
             int id = it->first;
-            cerr << id << " ";
+            cerr << id << ": ( ";
             vector<int> value = it->second;
             for (unsigned int i = 0; i < value.size(); i++) {
                 cerr << value[i] << " ";
             }
-            cerr << endl;
+            cerr << ")" << endl;
         }
     }
 
@@ -202,41 +199,60 @@ void MpiController::syncFeatureGraph() {
 
     // add local edges
     adjacentGraph.insert(adjacentGraph.end(), locaEdges.begin(), locaEdges.end());
+
     mergeCorrespondentEdges();
 }
 
 void MpiController::mergeCorrespondentEdges() {
+    featureTableUpdated = false;
+
     for (unsigned int i = 0; i < adjacentGraph.size(); i++) {
         Edge ei = adjacentGraph[i];
         for (unsigned int j = i+1; j < adjacentGraph.size(); j++) {
             Edge ej = adjacentGraph[j];
-            if ((ei.start == ej.start && ei.end == ej.end) ||
-                (ei.start == ej.end && ei.end == ej.start)) {
-                if (ei.centroid.distanceFrom(ej.centroid) <= DIST_THRESHOLD) {
-                    if (ei.id < ej.id) {    // use the smaller id
-                        adjacentGraph[j].id = adjacentGraph[i].id;
-                    } else {
-                        adjacentGraph[i].id = adjacentGraph[j].id;
-                    }
-                    updateFeatureTable(ei);
+
+            // sync the id of feature if two matches
+            if (ei.start == ej.end && ei.end == ej.start &&  // 0->1 | 1->0
+                ei.centroid.distanceFrom(ej.centroid) <= DIST_THRESHOLD) {
+                if (ei.id < ej.id) {    // use the smaller id
+                    adjacentGraph[j].id = ei.id;
+                } else {
+                    adjacentGraph[i].id = ej.id;
                 }
+                updateFeatureTable(ei);
+            }
+        }
+    }
+
+    // if either start or end equals to my_rank, add to featureTable
+    for (unsigned int i = 0; i < adjacentGraph.size(); i++) {
+        Edge edge = adjacentGraph[i];
+        if (edge.start == my_rank || edge.end == my_rank) {
+            updateFeatureTable(edge);
+        }
+    }
+
+    // if both start and end are not equal to my_rank,
+    // but the id is already in the feature table, update featureTable
+    for (unsigned int i = 0; i < adjacentGraph.size(); i++) {
+        Edge edge = adjacentGraph[i];
+        if (edge.start != my_rank || edge.end != my_rank) {
+            if (featureTable.find(edge.id) != featureTable.end()) {
+                updateFeatureTable(edge);
             }
         }
     }
 }
 
 void MpiController::updateFeatureTable(Edge edge) {
-    featureTableUpdated = false;
-    int key = edge.id;
-
-    if (featureTable.find(key) == featureTable.end()) {
+    if (featureTable.find(edge.id) == featureTable.end()) {
         vector<int> value;
         value.push_back(edge.start);
         value.push_back(edge.end);
-        featureTable[key] = value;
+        featureTable[edge.id] = value;
         featureTableUpdated = true;
     } else {
-        vector<int> value = featureTable[key];
+        vector<int> value = featureTable[edge.id];
         if (find(value.begin(), value.end(), edge.start) == value.end()) {
             value.push_back(edge.start);
             featureTableUpdated = true;
@@ -246,46 +262,10 @@ void MpiController::updateFeatureTable(Edge edge) {
             value.push_back(edge.end);
             featureTableUpdated = true;
         }
-        featureTable[key] = value;
+
+        featureTable[edge.id] = value;
     }
 }
-
-//vector<Edge> MpiController::updateFeatureGraph(vector<Edge> localEdgeVector) {
-//    int localEdgeCount = localEdgeVector.size();
-
-//    vector<Edge> adjacentEdgeVector;    // resize later
-
-//    for (unsigned int i = 0; i < adjacentBlocks.size(); i++) {
-//        int dest = adjacentBlocks[i];
-//        int edgeCount = 0;
-
-//        MPI_Irecv(&edgeCount, 1, MPI_INT, dest, 100, MPI_COMM_WORLD, &request);
-//        MPI_Send(&localEdgeCount, 1, MPI_INT, dest, 100, MPI_COMM_WORLD);
-//        MPI_Wait(&request, &status);
-
-//        if (edgeCount == 0) {
-//            continue;
-//        }
-
-//        Edge *adjacentEdges = new Edge[edgeCount];
-//        MPI_Irecv(adjacentEdges, edgeCount, MPI_TYPE_EDGE, dest, 101, MPI_COMM_WORLD, &request);
-//        MPI_Send(&localEdgeVector.front(), localEdgeCount, MPI_TYPE_EDGE, dest, 101, MPI_COMM_WORLD);
-//        MPI_Wait(&request, &status);
-
-//        for (int i = 0; i < edgeCount; i++) {
-//            adjacentEdgeVector.push_back(adjacentEdges[i]);
-//        }
-
-//        delete [] adjacentEdges;
-//    }
-
-//    adjacentEdgeVector.insert(adjacentEdgeVector.end(), localEdgeVector.begin(),
-//                              localEdgeVector.end());
-
-//    mergeCorrespondentEdges(adjacentEdgeVector);
-
-//    return adjacentEdgeVector;
-//}
 
 vector<Edge> MpiController::updateGlobalGraph(vector<Edge> localEdgeVector) {
     int localEdgeCount = localEdgeVector.size();

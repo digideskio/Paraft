@@ -40,9 +40,10 @@ private:
     // for feature graph
     vector<int> adjacentBlocks;
     vector<Edge> adjacentGraph;
-//    vector<Edge> updateFeatureGraph(vector<Edge> localEdgeVector);
 
+    // global feature info
     FeatureTable featureTable;
+    vector<FeatureTable> featureTableVector;    // for time varying data
 
     void initBlockController();
     void initTFParameters();
