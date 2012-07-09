@@ -25,21 +25,23 @@ private:
 
     int my_rank;
     int num_proc;
+    int timestep;
 
     CSVWriter csv;
     DataSet ds;
 
-    Vector3i partition;
-    Vector3i blockCoord;
-    int timestep;
+    Vector3i partition;     // #processes in each dimension (xyz)
+    Vector3i blockCoord;    // xyz coordinate of current processor
 
     // for global graph
     int globalEdgeCount;
-    vector<Edge> updateGlobalGraph(vector<Edge> localEdgeVector);
+    void gatherGlobalGraph();
 
     // for feature graph
     vector<int> adjacentBlocks;
-    vector<Edge> adjacentGraph;
+    void syncFeatureGraph();
+    void updateFeatureTable(Edge edge);
+    bool featureTableUpdated;
 
     // global feature info
     FeatureTable featureTable;
@@ -49,11 +51,7 @@ private:
     void initTFParameters();
     void precalculateT0();
 
-    void syncFeatureGraph();
-    void updateFeatureTable(Edge edge);
-    bool featureTableUpdated;
-
-    void mergeCorrespondentEdges();
+    void mergeCorrespondentEdges(vector<Edge> edges);
 
     void debug(string msg);
 };

@@ -8,8 +8,6 @@
 #include <list>
 #include <map>
 
-const int HOST_NODE = 0;
-
 const int FEATURE_MIN_VOXEL_NUM = 10;
 const int NUM_TRACK_STEPS = 1;
 

@@ -157,7 +157,7 @@ void FeatureTracker::TrackFeature(float* pDataSet, float lowerValue,
     memcpy(pMaskMatrixPrevious, pMaskMatrixCurrent, volumeSize*sizeof(float));
     memset(pMaskMatrixCurrent, 0, volumeSize*sizeof(float));
 
-    for (int i = 0; i < currentFeaturesHolder.size(); i++) {
+    for (unsigned int i = 0; i < currentFeaturesHolder.size(); i++) {
         Feature f = currentFeaturesHolder[i];
 
         resetFeatureBoundaryInfo();
@@ -463,7 +463,7 @@ void FeatureTracker::updateBoundaryMinMax(DataPoint point, int surface) {
 
 void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
     currentFeaturesHolder.clear();
-    for (int i = 0; i < pFeatures->size(); i++) {
+    for (unsigned int i = 0; i < pFeatures->size(); i++) {
         currentFeaturesHolder.push_back(pFeatures->at(i));
     }
 
