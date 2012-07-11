@@ -35,4 +35,5 @@ HEADERS += \
     MpiController.h
 
 OTHER_FILES += \
-    tf_config.dat
+    tf_config.dat \
+    result.csv

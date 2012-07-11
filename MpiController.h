@@ -27,6 +27,8 @@ private:
     int num_proc;
     int timestep;
 
+    int tempCount;
+
     CSVWriter csv;
     DataSet ds;
 

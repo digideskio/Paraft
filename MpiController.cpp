@@ -55,6 +55,8 @@ void MpiController::Start() {
     for (int i = 0; i < NUM_TRACK_STEPS; ++i) {
         TrackForward();
     }
+
+    cout << my_rank << " done." << endl;
 }
 
 void MpiController::initBlockController() {
@@ -115,18 +117,25 @@ void MpiController::TrackForward() {  // triggered by host
     double t2 = MPI_Wtime();
 
     featureTable.clear();
+    tempCount = 0;
 
     // option1: all gather and create a global graph
-    gatherGlobalGraph();
+//    gatherGlobalGraph();
+
+    cout << "***" << my_rank << endl;
 
     // option2: gather adjacent to create feaure graph
-//    featureTableUpdated = true;
-//    while (featureTableUpdated) {
-//        syncFeatureGraph();
-//    } // option2
+    featureTableUpdated = true;
+    while (featureTableUpdated) {
+        syncFeatureGraph();
+    }
+
+    cout << "---" << my_rank << endl;
 
     MPI_Barrier(MPI_COMM_WORLD);
     double t3 = MPI_Wtime();
+
+    cout << "+++" << my_rank << endl;
 
     featureTableVector[timestep] = featureTable;
 
@@ -137,7 +146,7 @@ void MpiController::TrackForward() {  // triggered by host
 
     string result = "result.csv";
     ofstream outf(result.c_str(), ios::out | ios::app);
-    outf << csv.num_proc << "," << csv.num_feature << ","
+    outf << my_rank << "," << csv.num_proc << "," << csv.num_feature << ","
          << csv.partition.x << "," << csv.partition.y << "," << csv.partition.z << ","
          << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
     outf.close();
@@ -153,20 +162,18 @@ void MpiController::TrackForward() {  // triggered by host
 //        }
 //    }
 
-    if (my_rank == 0) {
-        FeatureTable::iterator it;
-        for (it = featureTable.begin(); it != featureTable.end(); it++) {
-            int id = it->first;
-            cerr << id << ": ( ";
-            vector<int> value = it->second;
-            for (unsigned int i = 0; i < value.size(); i++) {
-                cerr << value[i] << " ";
-            }
-            cerr << ")" << endl;
-        }
-    }
-
-    debug("Done ----------------------");
+//    if (my_rank == 0) {
+//        FeatureTable::iterator it;
+//        for (it = featureTable.begin(); it != featureTable.end(); it++) {
+//            int id = it->first;
+//            cerr << id << ": ( ";
+//            vector<int> value = it->second;
+//            for (unsigned int i = 0; i < value.size(); i++) {
+//                cerr << value[i] << " ";
+//            }
+//            cerr << ")" << endl;
+//        }
+//    }
 }
 
 void MpiController::gatherGlobalGraph() {
@@ -195,16 +202,14 @@ void MpiController::gatherGlobalGraph() {
                    &globalEdges.front(), &globalEdgeCountVector.front(),
                    displs, MPI_TYPE_EDGE, MPI_COMM_WORLD);
 
-    for (int i = 0; i < localEdgeCount; i++) {
-        cerr << localEdges[i].id << endl;
-    }
-
     mergeCorrespondentEdges(globalEdges);
 }
 
 void MpiController::syncFeatureGraph() {
     vector<Edge> localEdges = pBlockController->GetLocalGraph();
     int localEdgeCount = localEdges.size();
+
+    cout << my_rank << " : " << tempCount++ << endl;
 
     vector<Edge> adjacentGraph;
 
@@ -232,8 +237,10 @@ void MpiController::syncFeatureGraph() {
 
     // add local edges
     adjacentGraph.insert(adjacentGraph.end(), localEdges.begin(), localEdges.end());
-
     mergeCorrespondentEdges(adjacentGraph);
+    pBlockController->SetLocalGraph(adjacentGraph);
+
+    cout << my_rank << " !" << endl;
 }
 
 void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
@@ -246,6 +253,7 @@ void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
 
             // sync the id of feature if two matches
             if (ei.start == ej.end && ei.end == ej.start &&  // 0->1 | 1->0
+                (ei.start == my_rank || ei.end == my_rank) &&
                 ei.centroid.distanceFrom(ej.centroid) <= DIST_THRESHOLD) {
                 if (ei.id < ej.id) {    // use the smaller id
                     edges[j].id = ei.id;
@@ -275,9 +283,31 @@ void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
             }
         }
     }
+
+    if (my_rank == 1) {
+        cerr << "++++++++++++++++++++++++++++++" << endl;
+        FeatureTable::iterator it;
+        for (it = featureTable.begin(); it != featureTable.end(); it++) {
+            int id = it->first;
+            cerr << id << ": ( ";
+            vector<int> value = it->second;
+            for (unsigned int i = 0; i < value.size(); i++) {
+                cerr << value[i] << " ";
+            }
+            cerr << ")" << endl;
+        }
+        cerr << "------------------------------" << endl;
+    }
+
 }
 
 void MpiController::updateFeatureTable(Edge edge) {
+//    if (my_rank == 1) {
+//        cout << my_rank << " " << edge.start << " > " << edge.end
+//             << " (" << edge.centroid.x << "," << edge.centroid.y << "," << edge.centroid.z << ")"
+//             << endl;
+//    }
+
     if (featureTable.find(edge.id) == featureTable.end()) {
         vector<int> value;
         value.push_back(edge.start);

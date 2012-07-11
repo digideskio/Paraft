@@ -29,6 +29,7 @@ public:
     // Feature Connectivity Graph
     vector<int> GetAdjacentBlocks();
     vector<Edge> GetLocalGraph() { return localGraph; }
+    void SetLocalGraph(vector<Edge> graph) { localGraph = graph; }
 
     // Accessor - FeatureTracker
     void SetVolumeDataPointerByIndex(int index) { pFeatureTracker->SetVolumeDataPointer(pDataManager->GetVolumeDataPointer(index));}
