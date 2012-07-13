@@ -46,6 +46,7 @@ typedef struct { float x; float y; } Vector2f;
 typedef hash_map<int, int> IntMap;
 typedef hash_map<int, float> IndexValueMap;
 typedef hash_map<int, vector<int> > FeatureTable;
+typedef unsigned int uint;
 
 class MinMax {
 public:
@@ -98,12 +99,25 @@ public:
     Vector3f& operator/=(float scale) { x/=scale, y/=scale, z/=scale; return *this; }
 }; typedef Vector3f FloatPoint;
 
-struct Edge {
-    int id;
-    int start;
-    int end;
+class Edge {
+public:
+    int id, start, end;
     Vector3i centroid;
+
+    bool operator ==(Edge const& rhs) const {
+        Edge lhs(*this);
+        if (lhs.id==rhs.id && lhs.start==rhs.start && lhs.end==rhs.end) {
+            return true;
+        } else return false;
+    }
 };    // start ---id---> end @ centroid
+
+//struct Edge {
+//    int id;
+//    int start;
+//    int end;
+//    Vector3i centroid;
+//};    // start ---id---> end @ centroid
 
 struct DataSet {
     int     index_start;
