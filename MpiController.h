@@ -43,8 +43,8 @@ private:
     vector<int> adjacentBlocks;
     void syncFeatureGraph();
     void updateFeatureTable(Edge edge);
-    bool need_to_sync;
-//    int req_sync;
+    bool need_to_send;
+    bool need_to_recv;
 
     // global feature info
     FeatureTable featureTable;
