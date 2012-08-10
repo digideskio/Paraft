@@ -1,8 +1,8 @@
 #ifndef DATAMANAGER_H
 #define DATAMANAGER_H
 
+#include <mpi.h>
 #include "Consts.h"
-#include "mpi.h"
 
 class DataManager {
 

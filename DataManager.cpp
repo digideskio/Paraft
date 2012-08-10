@@ -10,7 +10,6 @@ DataManager::DataManager() {
 
 DataManager::~DataManager() {
     if (pDataVector.size() != 0) {
-        std::cout << "Clean data vector" << std::endl;
         for (unsigned int i = 0; i < pDataVector.size(); i++) {
             delete [] pDataVector.at(i);
         }

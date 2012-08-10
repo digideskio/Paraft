@@ -7,7 +7,7 @@ MpiController::~MpiController() {
     pBlockController->~BlockController();
 }
 
-void MpiController::Init(int argc, char **argv) {
+void MpiController::InitWith(int argc, char **argv) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &num_proc);
@@ -199,6 +199,27 @@ void MpiController::syncFeatureGraph() {
                      blocksToSync.begin(), blocksToSync.end(),
                      back_inserter(adjacentBlocksToSync));
 
+    if (my_rank == 0) {
+        cout << "\n+ adjacentBlocks: ";
+        for (uint i = 0; i < adjacentBlocks.size(); i++) {
+            cout << adjacentBlocks[i] << " ";
+        }
+        cout << endl;
+
+        cout << "+ blocksToSync: ";
+        for (uint i = 0; i < blocksToSync.size(); i++) {
+            cout << blocksToSync[i] << " ";
+        }
+        cout << endl;
+
+        cout << "+ adjacentBlocksToSync: ";
+        for (uint i = 0; i < adjacentBlocksToSync.size(); i++) {
+            cout << adjacentBlocksToSync[i] << " ";
+        }
+        cout << endl;
+    }
+
+
     vector<Edge> adjacentGraph;
 
     for (uint i = 0; i < adjacentBlocksToSync.size(); i++) {
@@ -260,11 +281,6 @@ void MpiController::syncFeatureGraph() {
 
     mergeCorrespondentEdges(adjacentGraph);
     pBlockController->SetLocalGraph(adjacentGraph);
-
-    cout << "[" << my_rank << "]";
-    cout << " need to send? "; need_to_send? cout << "yes" : cout << "no";
-    cout << " need to recv? "; need_to_recv? cout << "yes" : cout << "no";
-    cout << endl;
 }
 
 void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
@@ -309,7 +325,7 @@ void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
     }
 
     if (my_rank == 0) {
-        cerr << tempCount << "++++++++++++++++++++++++++++++" << endl;
+        cerr << "-----------------------------------" << endl;
         FeatureTable::iterator it;
         for (it = featureTable.begin(); it != featureTable.end(); it++) {
             int id = it->first;
@@ -320,9 +336,7 @@ void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
             }
             cerr << ")" << endl;
         }
-        cerr << tempCount << "------------------------------" << endl;
     }
-
 }
 
 void MpiController::updateFeatureTable(Edge edge) {

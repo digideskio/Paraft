@@ -2,9 +2,8 @@
 #define MULTICORECONTROLLER_H
 
 #include <fstream>
-#include <numeric>
+#include <mpi.h>
 #include "BlockController.h"
-#include "mpi.h"
 
 class MpiController {
 
@@ -12,7 +11,7 @@ public:
     MpiController();
     ~MpiController();
 
-    void Init(int argc, char** argv);
+    void InitWith(int argc, char** argv);
     void Start();
     void TrackForward();
 
