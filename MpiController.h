@@ -51,7 +51,7 @@ private:
 
     void initBlockController();
     void initTFParameters();
-    void precalculateT0();
+    void precalculateTimestep1();
 
     void mergeCorrespondentEdges(vector<Edge> edges);
 

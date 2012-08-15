@@ -479,7 +479,7 @@ void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
         cout << "Set TF pointer first." << endl;
         return -1;
     }
-    int factor = (int)(tfResolution * value);
+    int factor = (int)((float)(tfResolution-1) * value);
     return pTFColorMap[4*factor+3];
  }
 

@@ -72,7 +72,10 @@ bool DataManager::readOneDataFile(Vector3i blockCoord, Vector3i partition,
     filename[filePath.size()] = '\0';
 
     MPI_File file;
-    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
+    int not_exist = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY,
+                                  MPI_INFO_NULL, &file);
+    if (not_exist) printf("%s not exist.\n", filename);
+
     MPI_File_set_view(file, 0, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
     MPI_File_read_all(file, pBuffer, volumeSize, MPI_FLOAT, MPI_STATUS_IGNORE);
 

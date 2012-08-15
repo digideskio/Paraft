@@ -20,24 +20,15 @@ void MpiController::InitWith(int argc, char **argv) {
     partition.y = atoi(argv[2]);
     partition.z = atoi(argv[3]);
 
-    int datasetID = atoi(argv[4]);
-    if (datasetID == 0) {
-        ds.index_start = 0;
-        ds.index_end   = 10;
-        ds.prefix      = "vorts";
-        ds.surfix      = "data";
-        ds.data_path   = "../Data/vorts";
-    } else if (datasetID == 1) {
-        ds.index_start = 0;
-        ds.index_end   = 7;
-        ds.prefix      = "large_vorts_";
-        ds.surfix      = "dat";
-        ds.data_path   = "../Data/vorts1";
-    }
-
     blockCoord.z = my_rank/(partition.x*partition.y);
     blockCoord.y = (my_rank-blockCoord.z*partition.x*partition.y)/partition.x;
     blockCoord.x = my_rank%partition.x;
+
+    ds.index_start = 1;
+    ds.index_end   = 10;
+    ds.prefix      = "vorts";
+    ds.surfix      = "data";
+    ds.data_path   = "../Data/vorts";
 
     csv.partition = partition;
     csv.num_proc = num_proc;
@@ -50,7 +41,7 @@ void MpiController::InitWith(int argc, char **argv) {
 void MpiController::Start() {
     initBlockController();
     initTFParameters();
-    precalculateT0();
+    precalculateTimestep1();
 
     for (int i = 0; i < NUM_TRACK_STEPS; ++i) {
         TrackForward();
@@ -85,8 +76,7 @@ void MpiController::initTFParameters() {
 //    debug("initTFParameters ready");
 }
 
-void MpiController::precalculateT0() {
-    timestep++; // all nodes++
+void MpiController::precalculateTimestep1() {
     pBlockController->ExtractAllFeatures();
     pBlockController->SetCurrentTimestep(timestep);
     pBlockController->TrackForward();

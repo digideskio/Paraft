@@ -68,14 +68,14 @@ public:
     Vector3i operator-(Vector3i const& rhs) const { Vector3i t(*this); t-=rhs; return t; }
     Vector3i operator*(Vector3i const& rhs) const { Vector3i t(*this); t*=rhs; return t; }
     Vector3i operator/(Vector3i const& rhs) const { Vector3i t(*this); t/=rhs; return t; }
-    Vector3i operator*(float scale) const { Vector3i t(*this); t*=scale; return t; }
-    Vector3i operator/(float scale) const { Vector3i t(*this); t/=scale; return t; }
+    Vector3i operator*(int scale) const { Vector3i t(*this); t*=scale; return t; }
+    Vector3i operator/(int scale) const { Vector3i t(*this); t/=scale; return t; }
     Vector3i& operator+=(Vector3i const& rhs) { x+=rhs.x, y+=rhs.y, z+=rhs.z; return *this; }
     Vector3i& operator-=(Vector3i const& rhs) { x-=rhs.x, y-=rhs.y, z-=rhs.z; return *this; }
     Vector3i& operator*=(Vector3i const& rhs) { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
     Vector3i& operator/=(Vector3i const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
-    Vector3i& operator*=(float scale) { x*=scale, y*=scale, z*=scale; return *this; }
-    Vector3i& operator/=(float scale) { x/=scale, y/=scale, z/=scale; return *this; }
+    Vector3i& operator*=(int scale) { x*=scale, y*=scale, z*=scale; return *this; }
+    Vector3i& operator/=(int scale) { x/=scale, y/=scale, z/=scale; return *this; }
 }; typedef Vector3i DataPoint;
 
 class Vector3f {
@@ -111,13 +111,6 @@ public:
         } else return false;
     }
 };    // start ---id---> end @ centroid
-
-//struct Edge {
-//    int id;
-//    int start;
-//    int end;
-//    Vector3i centroid;
-//};    // start ---id---> end @ centroid
 
 struct DataSet {
     int     index_start;

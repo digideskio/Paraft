@@ -37,15 +37,15 @@ void BlockController::TrackForward() {
 void BlockController::ExtractAllFeatures() {
     int tfRes = pFeatureTracker->GetTFResolution();
 
-    for (int z = 0; z < blockSize.z; ++z) {
-        for (int y = 0; y < blockSize.y; ++y ) {
-            for (int x = 0; x < blockSize.x; ++x) {
+    for (int z = 0; z < blockSize.z; z++) {
+        for (int y = 0; y < blockSize.y; y++) {
+            for (int x = 0; x < blockSize.x; x++) {
                 int index = z * blockSize.y * blockSize.x + y * blockSize.x + x;
                 if (pFeatureTracker->GetMaskMatrixPointer()[index] != 0) {
                     continue;
                 }
                 float *pVolume = pDataManager->GetVolumeDataPointer(currentTimestep);
-                int tfIndex = (int)(pVolume[index] * tfRes);
+                int tfIndex = (int)(pVolume[index] * (float)(tfRes-1));
                 float opacity = pFeatureTracker->GetTFColorMap()[tfIndex*4+3];
                 if (opacity >= LOW_THRESHOLD && opacity <= HIGH_THRESHOLD) {
                     pFeatureTracker->FindNewFeature(x, y, z, LOW_THRESHOLD, HIGH_THRESHOLD);
