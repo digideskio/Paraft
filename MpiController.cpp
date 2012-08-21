@@ -189,25 +189,25 @@ void MpiController::syncFeatureGraph() {
                      blocksToSync.begin(), blocksToSync.end(),
                      back_inserter(adjacentBlocksToSync));
 
-    if (my_rank == 0) {
-        cout << "\n+ adjacentBlocks: ";
-        for (uint i = 0; i < adjacentBlocks.size(); i++) {
-            cout << adjacentBlocks[i] << " ";
-        }
-        cout << endl;
+//    if (my_rank == 0) {
+//        cout << "\n+ adjacentBlocks: ";
+//        for (uint i = 0; i < adjacentBlocks.size(); i++) {
+//            cout << adjacentBlocks[i] << " ";
+//        }
+//        cout << endl;
 
-        cout << "+ blocksToSync: ";
-        for (uint i = 0; i < blocksToSync.size(); i++) {
-            cout << blocksToSync[i] << " ";
-        }
-        cout << endl;
+//        cout << "+ blocksToSync: ";
+//        for (uint i = 0; i < blocksToSync.size(); i++) {
+//            cout << blocksToSync[i] << " ";
+//        }
+//        cout << endl;
 
-        cout << "+ adjacentBlocksToSync: ";
-        for (uint i = 0; i < adjacentBlocksToSync.size(); i++) {
-            cout << adjacentBlocksToSync[i] << " ";
-        }
-        cout << endl;
-    }
+//        cout << "+ adjacentBlocksToSync: ";
+//        for (uint i = 0; i < adjacentBlocksToSync.size(); i++) {
+//            cout << adjacentBlocksToSync[i] << " ";
+//        }
+//        cout << endl;
+//    }
 
 
     vector<Edge> adjacentGraph;

@@ -82,7 +82,7 @@ class Vector3f {
 public:
     float x, y, z;
     float *toArray() { return &x; }
-    int volume() { return x*y*z; }
+    float volume() { return x*y*z; }
     Vector3f(float x_ = .0f, float y_ = .0f, float z_ = .0f) : x(x_), y(y_), z(z_) {}
     Vector3f operator-() { return Vector3f(-x, -y, -z); }
     Vector3f operator+(Vector3f const& rhs) const { Vector3f t(*this); t+=rhs; return t; }
