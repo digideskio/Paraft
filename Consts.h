@@ -9,7 +9,7 @@
 #include <map>
 
 const int FEATURE_MIN_VOXEL_NUM = 10;
-const int NUM_TRACK_STEPS = 1;
+const int NUM_TRACK_STEPS = 5;
 
 const int INT_SIZE = 1;
 const int FLOAT_SIZE = sizeof(float);

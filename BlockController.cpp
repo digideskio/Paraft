@@ -20,7 +20,8 @@ void BlockController::InitData(Vector3i partition, Vector3i blockCoord, DataSet 
     initAdjacentBlocks(partition, blockCoord);
 
     pDataManager = new DataManager();
-    pDataManager->ReadDataSequence(blockCoord, partition, dataDim, ds);
+//    pDataManager->MpiReadDataSequence(blockCoord, partition, dataDim, ds);
+    pDataManager->ReadSphDataSequence(ds);
     pDataManager->CreateNewMaskMatrix();
 
     blockSize = pDataManager->GetVolumeDimension();

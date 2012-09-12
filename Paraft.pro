@@ -5,10 +5,10 @@
 TEMPLATE = subdirs
 
 #### MPI ################
-QMAKE_CC = /usr/local/Cellar/open-mpi/1.4.5/bin/mpicc
-QMAKE_CXX = /usr/local/Cellar/open-mpi/1.4.5/bin/mpic++
-INCLUDEPATH += /usr/local/Cellar/open-mpi/1.4.5/include
-LIBS += -L/usr/local/Cellar/open-mpi/1.4.5/lib -lmpi_cxx -lmpi -lopen-rte -lopen-pal -lutil
+QMAKE_CC = /usr/local/bin/mpicc
+QMAKE_CXX = /usr/local/bin/mpic++
+INCLUDEPATH += /usr/local/include
+LIBS += -L/usr/local/lib -lmpi_cxx -lmpi -lopen-rte -lopen-pal -lutil
 #########################
 
 CONFIG -= app_bundle
@@ -25,14 +25,16 @@ SOURCES += \
     DataManager.cpp \
     FeatureTracker.cpp \
     BlockController.cpp \
-    MpiController.cpp
+    MpiController.cpp \
+    Sphreader.cpp
 
 HEADERS += \
     Consts.h \
     DataManager.h \
     FeatureTracker.h \
     BlockController.h \
-    MpiController.h
+    MpiController.h \
+    Sphreader.h
 
 OTHER_FILES += \
     tf_config.dat \

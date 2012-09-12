@@ -24,11 +24,17 @@ void MpiController::InitWith(int argc, char **argv) {
     blockCoord.y = (my_rank-blockCoord.z*partition.x*partition.y)/partition.x;
     blockCoord.x = my_rank%partition.x;
 
+//    ds.index_start = 1;
+//    ds.index_end   = 10;
+//    ds.prefix      = "vorts";
+//    ds.surfix      = ".data";
+//    ds.data_path   = "../Data/vorts/";
+
     ds.index_start = 1;
-    ds.index_end   = 10;
-    ds.prefix      = "vorts";
-    ds.surfix      = "data";
-    ds.data_path   = "../Data/vorts";
+    ds.index_end   = 9;
+    ds.prefix      = "prs_0000000";
+    ds.surfix      = "00_id000000.sph";
+    ds.data_path   = "/Users/Yang/Develop/Data/Sim_128_128_128/";
 
     csv.partition = partition;
     csv.num_proc = num_proc;

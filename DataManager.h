@@ -3,6 +3,7 @@
 
 #include <mpi.h>
 #include "Consts.h"
+#include "Sphreader.h"
 
 class DataManager {
 
@@ -20,10 +21,13 @@ public:
 
     Vector3i GetVolumeDimension() { return volumeDim; }
 
-    void ReadDataSequence(Vector3i blockCoord, Vector3i partition,
+    void ReadSphDataSequence(DataSet ds);
+
+    void MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
                           Vector3i origVolumeDim, DataSet ds);
 
-    bool readOneDataFile(Vector3i blockCoord, Vector3i partition, string filePath);
+    bool mpiReadOneDataFile(Vector3i blockCoord, Vector3i partition, string filePath);
+
 
     vector<Feature> *GetFeatureVector(int iTime) { return &(pFeatureVectors.at(iTime)); }
     Feature *GetFeature(int iTime, int index) { return &(pFeatureVectors.at(iTime).at(index)); }

@@ -36,7 +36,32 @@ void DataManager::CreateNewMaskMatrix() {
     memset(pMaskMatrix, 0, sizeof(float)*volumeSize);
 }
 
-void DataManager::ReadDataSequence(Vector3i blockCoord, Vector3i partition,
+void DataManager::ReadSphDataSequence(DataSet ds) {
+    SphReader *sph = new SphReader;
+
+    for (int i = 0; i <= 9; i++) {
+        string filePath;
+        char numstr[21]; // enough to hold all numbers up to 64-bits
+        sprintf(numstr, "%d", i);
+
+        // prs_0000001500_id000000.sph
+        // ds.index_start = 1;
+        // ds.index_end   = 9;
+        // ds.prefix      = "prs_0000000";
+        // ds.surfix      = "00_id000000.sph";
+        // ds.data_path   = "/Users/Yang/Develop/Data/Sim_128_128_128";
+        filePath = ds.data_path + ds.prefix + numstr + ds.surfix;
+
+        pAllocatedBuffer = sph->loadData(filePath);
+        pDataVector.push_back(pAllocatedBuffer);
+
+        volumeSize = sph->getVolumeSize();
+        calculateLocalMinMax();
+    }
+    normalizeData();    // need check
+}
+
+void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
                                    Vector3i origVolumeDim, DataSet ds) {
 
     volumeDim = origVolumeDim / partition;
@@ -46,14 +71,15 @@ void DataManager::ReadDataSequence(Vector3i blockCoord, Vector3i partition,
         string fileName;
         char numstr[21]; // enough to hold all numbers up to 64-bits
         sprintf(numstr, "%d", i);
-        fileName = ds.data_path + "/" + ds.prefix + numstr + "." + ds.surfix;
-        readOneDataFile(blockCoord, partition, fileName);
+        fileName = ds.data_path + "/" + ds.prefix + numstr + ds.surfix;
+
+        mpiReadOneDataFile(blockCoord, partition, fileName);
     }
     normalizeData();
 }
 
 // Read one file from disk and save it to the end of the data vector
-bool DataManager::readOneDataFile(Vector3i blockCoord, Vector3i partition,
+bool DataManager::mpiReadOneDataFile(Vector3i blockCoord, Vector3i partition,
                                   string filePath) {
 
     float *pBuffer = allocateNewDataBuffer(volumeSize);
@@ -90,15 +116,16 @@ bool DataManager::readOneDataFile(Vector3i blockCoord, Vector3i partition,
 
 void DataManager::normalizeData() {
     // Get the first local min and max
+
     float min = pMinMaxVector.at(0).min;
     float max = pMinMaxVector.at(0).max;
 
-    for (unsigned int i = 0 ; i < pDataVector.size(); i++) {
+    for (uint i = 0 ; i < pDataVector.size(); i++) {
         min = min < pMinMaxVector.at(i).min ? min : pMinMaxVector.at(i).min;
         max = max > pMinMaxVector.at(i).max ? max : pMinMaxVector.at(i).max;
     }
 
-    for (unsigned int j = 0; j < pDataVector.size(); j++) {
+    for (uint j = 0; j < pDataVector.size(); j++) {
         for (int i = 0; i < volumeSize; i++) {
             pDataVector.at(j)[i] -= min;
             pDataVector.at(j)[i] /= (max-min);
@@ -125,5 +152,6 @@ void DataManager::calculateLocalMinMax() {
         max = max > pAllocatedBuffer[i] ? max : pAllocatedBuffer[i];
     }
 
+    cout << " min: " << min << " max: " << max << endl;
     pMinMaxVector.push_back(MinMax(min, max));
 }
