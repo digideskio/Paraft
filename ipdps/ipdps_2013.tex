@@ -349,11 +349,8 @@
 
 
 \begin{document}
-%
-% paper title
-% can use linebreaks \\ within to get better formatting as desired
+% use linebreaks \\ within to get better formatting as desired
 \title{Parallel Feature Extraction and Tracking for 3D Vortical Data (TBD)}
-
 
 % author names and affiliations
 % use a multiple column layout for up to two different
@@ -372,37 +369,6 @@ line 3: City, Country\\
 line 4: Email: name@xyz.com}
 }
 
-% conference papers do not typically use \thanks and this command
-% is locked out in conference mode. If really needed, such as for
-% the acknowledgment of grants, issue a \IEEEoverridecommandlockouts
-% after \documentclass
-
-% for over three affiliations, or if they all won't fit within the width
-% of the page, use this alternative format:
-% 
-%\author{\IEEEauthorblockN{Michael Shell\IEEEauthorrefmark{1},
-%Homer Simpson\IEEEauthorrefmark{2},
-%James Kirk\IEEEauthorrefmark{3}, 
-%Montgomery Scott\IEEEauthorrefmark{3} and
-%Eldon Tyrell\IEEEauthorrefmark{4}}
-%\IEEEauthorblockA{\IEEEauthorrefmark{1}School of Electrical and Computer Engineering\\
-%Georgia Institute of Technology,
-%Atlanta, Georgia 30332--0250\\ Email: see http://www.michaelshell.org/contact.html}
-%\IEEEauthorblockA{\IEEEauthorrefmark{2}Twentieth Century Fox, Springfield, USA\\
-%Email: homer@thesimpsons.com}
-%\IEEEauthorblockA{\IEEEauthorrefmark{3}Starfleet Academy, San Francisco, California 96678-2391\\
-%Telephone: (800) 555--1212, Fax: (888) 555--1212}
-%\IEEEauthorblockA{\IEEEauthorrefmark{4}Tyrell Inc., 123 Replicant Street, Los Angeles, California 90210--4321}}
-
-
-
-
-% use for special paper notices
-%\IEEEspecialpapernotice{(Invited Paper)}
-
-
-
-
 % make the title area
 \maketitle
 
@@ -415,7 +381,6 @@ A large-scale time-varying flow data set can take terabytes to petabytes of stor
 component; formatting; style; styling;
 \end{IEEEkeywords}
 
-
 % For peer review papers, you can put extra information on the cover
 % page as needed:
 % \ifCLASSOPTIONpeerreview
@@ -425,8 +390,6 @@ component; formatting; style; styling;
 % For peerreview papers, this IEEEtran command inserts a page break and
 % creates the second title. It will be ignored for other modes.
 \IEEEpeerreviewmaketitle
-
-
 
 \section{Introduction}
 % no \IEEEPARstart
@@ -445,29 +408,31 @@ Most of the above methods extract features from each time step independently and
 
 From the parallel processing side of perspective, most of the existing feature extraction and tracking approaches rely on some form of global feature information, while in distributed environment must be communicated among processors to obtain. Chen and Silver [] introduced a two stage partial-merge strategy, exchanging local connectivity information using Binary-tree merge, then a visualization server correlate local data to create a global data. This approach is not scalable since half of the processors will become idle after each merge. It is also unclear that how the visualization server can efficiently collect local connectivity information from non-server processor, since gathering operation is typically very expensive given a large number of processors. 
 
-The approach proposed in this paper follows a different paradigm. Instead of sending local connective information back to the host, the local connectivity information are computed and preserved only in nodes where correspondent feature resides in. There is no global connectivity information preserved in the host node and it only acts as the interface from where the criterion of feature of interest is broadcasted. By doing this, the computation of merging local connectivity information is distributed to those non-host nodes and hence effectively reduces the potential communication bottleneck on the host node. What's more, there's no need to set a barrier and wait before all connectivity information was send back to the host and thus if there exists features that span over a large number of nodes but was not selected by the user, the potentially long computation time for these features will not block the whole process. This makes it ideal for an interactive system, where users can select the feature of interest and instantly receive the visual feedback as the feature evolves.
+The approach proposed in this paper follows a different paradigm. Instead of sending local connective information back to the host, the local connectivity information are computed and preserved only in nodes where correspondent feature resides in. There is no global connectivity information preserved in the host node and it only acts as the interface from where the criterion of feature of interest is broadcast. By doing this, the computation of merging local connectivity information is distributed to those non-host nodes and hence effectively reduces the potential communication bottleneck on the host node. What's more, there's no need to set a barrier and wait before all connectivity information was send back to the host and thus if there exists features that span over a large number of nodes but was not selected by the user, the potentially long computation time for these features will not block the whole process. This makes it ideal for an interactive system, where users can select the feature of interest and instantly receive the visual feedback as the feature evolves.
 
 \section{Algorithm Design}
-Though features can be extracted using the aforementioned methods within individual processors, some of them may span over multiple data blocks, which is unavoidable as the number of processors increases. 
+Though features can be extracted within individual processors using the aforementioned methods, they might also span over multiple data blocks, which is unavoidable as the number of processors increases. To perform feature extraction and tracking over a distributed volume data set, information like how partial features are located and connected should be recorded and maintained. Feature descriptors such as size, curvature or velocity of partial features are not shared among processors, thus connectivity information makes it possible to gather from each part of the feature resides in different processors these descriptions such that feature tracking or and similarity test could be achieved. 
 
-To perform feature extraction and tracking over a distributed volume dataset, connectivity graphs from either global or local perspective should be constructed. Since meta-info such as feature size, curvature or velocity of partial features are not shared among processors, the connectivity information makes it possible to gather from each part of the feature that resides in different nodes these meta-info so that feature tracking and similarity test could be achieved. 
+However, maintaining such connectivity information requires data exchange among different processors and hence will introduce extra communication cost. To design a proper communication schema for better performance and scalability, the following three factors should be carefully considered:
 
-However, constructing connectivity graphs requires exchanging of local feature information and hence will introduce extra communication cost. To design a proper communication schema for better performance and scalability, the following three factors should be carefully considered:
-1.	How many communications are required to complete the connectivity graph;
-2.	How many processors will be involved in one communication;
-3.	The amount of data being sent and received in one communication.
-In the following sections, we will give a detailed explanation on how to create and maintain the connectivity graph with minimum cost over the above three factors.
+\begin{enumerate}
+\item How many communications are required to complete the connectivity graph;
+\item How many processors will be involved in one communication;
+\item How much data will be sent and received in one communication.
+\end{enumerate}
+
+In the following sections, we will give a detailed description on how to create and maintain such connectivity information using an undirected unweighted graph to achieve minimum cost over the above three factors.
 
 \subsection{Feature Extraction}
-Feature extraction is a process that first detects features, then calculates quantitative attributes describing its characteristics. In general, features can be any interesting pattern, structure, or object that are considered relevant for the investigation of an application and they can be extracted by common technique such as region growing, geometry or topology based clustering method, or other domain specific algorithms [TODO]. 
+Feature extraction is a process that first detects features, then calculates quantitative attributes describing its characteristics. In general, features can be any interesting pattern, structure, or object that are considered relevant for investigation. In our application, features are defined as the collection of voxices that are located within certain isosurface. Such volumetric feature could be extracted by common techniques such as region growing, geometry or topology based clustering, or other domain specific algorithms as described in [] [] [] []. 
 
-In our system, a standard region-growing algorithm [14] is used to partition the original volume data into an initial set of features. This can be done by first spreading a set of seeding points inside the volume in a breath-first fashion, and then categorizing voxels into separate regions, each regarded as a single feature. Usually, scientists prefer to focus on specific features that are meaningful as dictated by their underlying research goal. Potential features detected by the region-growing algorithm, however, are often cluttered and relatively coarse, which might be far from expected. Further, reducing the number of tracked features makes sense from the perspective of computational expense. Therefore, after the potential features set was generated, an iterative process (TODO) of refinement could be applied to refine the result. 
+In our work, a standard region-growing algorithm [14] is used for partitioning the original volume data into an initial set of features. This can be done by first spreading a set of seeding points inside the volume, and then clustering voxices into separate regions, each regarded as a single feature. Usually, scientists prefer to focus on features that are meaningful as dictated by their underlying research goal. Potential features detected by the region-growing algorithm, however, are often cluttered and relatively coarse, which might be far from expected. On the other hand, reducing the number of tracked features makes sense from the perspective of computational expense. Therefore, after the potential features set was generated, an iterative process of refinement could be applied to refine the result. 
 
-Existing research [27] has detailed the applicability and performance of context-based 3D shape descriptors and their corresponding retrieval methods. Based on the discussion in this work, we can characterize our interactive refinement process as primarily concerned with those computationally efficient yet with significant discriminative power and deformation robust descriptors, such as size, location, or skeletal curvature. 
+Existing research [27] has detailed the applicability and performance of context-based 3D shape descriptors and their corresponding retrieval methods. Based on the discussion in this work, we can characterize the interactive refinement process as primarily concerned with those computationally efficient yet with significant discriminating deformation robust descriptors, such as size, location, or skeletal curvature. After specific features have been extracted from a single time step, their evolution can be tracked over time using a prediction-correction approach. The prediction of features' region in space can be made based on the location of features reside in consecutive time steps. Once prediction is made, the actual region could be obtained by adjusting the surface of the predicted region: first shrink the edge surface points to obtain the mutual region between consecutive time steps, then use of a technique based on region-growing to obtain the actual region.
 
-After specific features have been extracted in a single time step, their evolution can be tracked over time using a prediction-correction approach, which was proved effective and efficient [32]. The prediction of feature's region in space can be made based on the location of features reside in consecutive time steps. Once prediction is made, the actual region could be refined adjusting the surface of the predicted region by first shrink the edge surface points to obtain the mutual region between consecutive time steps, then use of a technique based on region-growing to obtain the actual region.
+This prediction-correction approach was proved effective and efficient for single processor based feature tracking [32]. However, as the size of the volume data grows such that the original data cannot fit into one processor, a cluster of multiple processors need to be used to process the data in parallel. One challenge to parallelize the aforementioned approach lies in that, since volumetric features may span over multiple processors, the global feature descriptions could not be obtained unless they can be shared and merged in a efficient way, as partial features reside in different nodes will be operated independently. 
 
-However, as the size of the data grows such that the original volume data cannot fit into one single processor, a cluster of multiple processors need to be used to process the data in parallel. One challenge of the parallelization of the aforementioned approach lies in that, since volumetric features may span over multiple processors, the global feature descriptions cannot be obtained unless they can be shared and merged in a efficient way, as partial features reside in different nodes will be treated independently. An intuitive way of sharing such feature information is to find the connectivity of features span over multiple nodes, and then integrate them per feature.
+An intuitive way of exchanging such feature information is to first, find how features are connected when they span over multiple processors, and then merge feature descriptions according to the connectivity information.
 
 \subsection{Creating Partial connectivity graph}
 If we partition a large volumetric dataset using a regular grid, it is very likely that some of the feature blobs will be cut off on the boundary surface of its residing block. And for two data blocks that are physically adjacent to each other, their boundary surface should match. Leveraging this property, we can connect a feature resides in adjacent data blocks by comparing their correspondent boundary surface. 
