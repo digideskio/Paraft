@@ -39,18 +39,23 @@ void DataManager::CreateNewMaskMatrix() {
 void DataManager::ReadSphDataSequence(DataSet ds) {
     SphReader *sph = new SphReader;
 
-    for (int i = 0; i <= 9; i++) {
+    for (int i = ds.index_start; i <= ds.index_end; i++) {
         string filePath;
-        char numstr[21]; // enough to hold all numbers up to 64-bits
-        sprintf(numstr, "%d", i);
+        char timestep[21]; // hold up to 64 bit integer
+        sprintf(timestep, "%8d", i);
+        for (int i = 0; i < 8; i++) {
+            timestep[i] = timestep[i] == ' ' ? '0' : timestep[i];
+        }
 
         // prs_0000001500_id000000.sph
         // ds.index_start = 1;
         // ds.index_end   = 9;
-        // ds.prefix      = "prs_0000000";
+        // ds.prefix      = "prs_";
         // ds.surfix      = "00_id000000.sph";
         // ds.data_path   = "/Users/Yang/Develop/Data/Sim_128_128_128";
-        filePath = ds.data_path + ds.prefix + numstr + ds.surfix;
+        filePath = ds.data_path + ds.prefix + timestep + ds.surfix;
+
+        cout << filePath << endl;
 
         pAllocatedBuffer = sph->loadData(filePath);
         pDataVector.push_back(pAllocatedBuffer);
@@ -58,7 +63,9 @@ void DataManager::ReadSphDataSequence(DataSet ds) {
         volumeSize = sph->getVolumeSize();
         calculateLocalMinMax();
     }
-    normalizeData();    // need check
+    normalizeData();
+
+    delete sph;
 }
 
 void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
@@ -152,6 +159,5 @@ void DataManager::calculateLocalMinMax() {
         max = max > pAllocatedBuffer[i] ? max : pAllocatedBuffer[i];
     }
 
-    cout << " min: " << min << " max: " << max << endl;
     pMinMaxVector.push_back(MinMax(min, max));
 }

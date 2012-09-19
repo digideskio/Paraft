@@ -30,9 +30,9 @@ void MpiController::InitWith(int argc, char **argv) {
 //    ds.surfix      = ".data";
 //    ds.data_path   = "../Data/vorts/";
 
-    ds.index_start = 1;
-    ds.index_end   = 9;
-    ds.prefix      = "prs_0000000";
+    ds.index_start = 0;
+    ds.index_end   = 50;
+    ds.prefix      = "prs_";
     ds.surfix      = "00_id000000.sph";
     ds.data_path   = "/Users/Yang/Develop/Data/Sim_128_128_128/";
 
@@ -49,7 +49,8 @@ void MpiController::Start() {
     initTFParameters();
     precalculateTimestep1();
 
-    for (int i = 0; i < NUM_TRACK_STEPS; ++i) {
+    for (int i = 0; i < NUM_TRACK_STEPS; i++) {
+        cout << "t_" << timestep << " done." << endl;
         TrackForward();
     }
 
@@ -321,7 +322,6 @@ void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
     }
 
     if (my_rank == 0) {
-        cerr << "-----------------------------------" << endl;
         FeatureTable::iterator it;
         for (it = featureTable.begin(); it != featureTable.end(); it++) {
             int id = it->first;
