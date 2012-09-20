@@ -127,12 +127,12 @@
 % *** GRAPHICS RELATED PACKAGES ***
 %
 \ifCLASSINFOpdf
-  % \usepackage[pdftex]{graphicx}
+   \usepackage[pdftex]{graphicx}
   % declare the path(s) where your graphic files are
-  % \graphicspath{{../pdf/}{../jpeg/}}
+   \graphicspath{{./images/}}
   % and their extensions so you won't have to specify these with
   % every instance of \includegraphics
-  % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
+   \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
 \else
   % or other class option (dvipsone, dvipdf, if not using dvips). graphicx
   % will default to the driver specified in the system graphics.cfg if no
@@ -170,7 +170,7 @@
 
 % *** MATH PACKAGES ***
 %
-%\usepackage[cmex10]{amsmath}
+\usepackage[cmex10]{amsmath}
 % A popular package from the American Mathematical Society that provides
 % many useful and powerful commands for dealing with mathematics. If using
 % it, be sure to load this package with the cmex10 option to ensure that
@@ -193,7 +193,8 @@
 
 % *** SPECIALIZED LIST PACKAGES ***
 %
-%\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{algorithmic}
 % algorithmic.sty was written by Peter Williams and Rogerio Brito.
 % This package provides an algorithmic environment fo describing algorithms.
 % You can use the algorithmic environment in-text or within a figure
@@ -435,18 +436,47 @@ This prediction-correction approach was proved effective and efficient for singl
 An intuitive way of exchanging such feature information is to first, find how features are connected when they span over multiple processors, and then merge feature descriptions according to the connectivity information.
 
 \subsection{Creating Partial connectivity graph}
-If we partition a large volumetric dataset using a regular grid, it is very likely that some of the feature blobs will be cut off on the boundary surface of its residing block. And for two data blocks that are physically adjacent to each other, their boundary surface should match. Leveraging this property, we can connect a feature resides in adjacent data blocks by comparing their correspondent boundary surface. 
+If we try to partition a large volumetric dataset using a regular processor grid, it is very likely that some of the features will be cut off on the boundary surface of its residing block. For these multinational features, the cross-sectional area on the block boundary surface should match. Leveraging this property, we could connect separate parts of a feature resides in adjacent data blocks by comparing their sectional area on the correspondent boundary surface. 
 
-Since the data is distributed, vortex data in adjacent blocks are invisible to the current processor. Though intuitively, exchanging the array of all the voxices on the boundary surface should work for finding the possible matches, we choose to exchange more abstracted data, the min-max coordinate of the boundary box and the geometric centroid of the boundary surface, to reduce the communication load over the network. The min-max coordinates are not optional that they ensure correct connectivity for cases that a sectional surface is surrounded by a concave or hollow surface whose centroid happen to be the same. see figure x. 
+Since data is distributed, vortices in adjacent blocks are invisible to the current processor. Though exchanging all voxices on the sectional area would be sufficient for finding all possible matches, we choose to exchange more abstract data, e.g. the min-max coordinate of and the geometric centroid of the cross-sectional area to reduce the amount of data being sent over the network. The min-max coordinates are not optional because they ensure correct connectivity for some special cases where one cross-sectional area is surrounded by another concave or hollow area whose centroid happen to be the same, as depicted in figure 1.
 
-A voxel-width "ghost surface" that stores boundary surface belonging to neighboring blocks might also help to achieve voxel-wise matching of partial features. However, for non-post-processing cases where dataset are not pre-determined, maintaining such "ghost surface" requires inter-process communication and thus was considered expensive for data generated in real-time. Instead, a ±1-voxel tolerance was given when matching geometric centroids on the boundary surfaces. That is, if the neighboring centroid is within the eight direct neighbor of a domestic centroids, they are considered a match.
+\begin{figure}[htpb]
+\centering
+\includegraphics[width=2.5in]{figure1.png}
+\caption{A special case where two features share a same centroid}
+\label{fig_sim}
+\end{figure}
 
-Some other special cases, though they rarely happen in real world dataset, also need to considered. As shown in Figure x, in certain time steps there might exist features with very sharp edge surface right on the boundary, or even more extreme, parttwo parts of features reside in two adjacent data blocks with an sharp gap in shape on the correspondnet boundary surface (Figure x), this will also be considered as a single feautre as a whole.
+A voxel-width "ghost surface" that stores boundary surface belonging to neighboring blocks might help to achieve voxel-wise matching for partial features. However, for non-post-processing situation where data set are not pre-determined, maintaining such "ghost surface" requires frequent inter-process communication and is considered expensive for data generated in real-time. Instead, a ±1 voxel tolerance was given in our work when trying to match two geometric centroids on the boundary surfaces. That is, if the neighboring centroid is within the eight direct neighbor of the domestic centroid, they are considered a match and the two separated parts were belong to the same feature.
 
-The creation of partial connectivity graph will not introduce extra computational cost as it could be done along with the region growing process. A new edge is appended to the existing graph when a feature touches the block boundary, taking the ID of the target block that shares a same boundary surface as the ending vertex, as well as the global index of the centroids point as edge value.
+The creation of partial connectivity graph will not introduce extra computational cost as it could be done along with the region growing process. A new edge is appended to the existing graph when a local feature touches the block boundary, taking the ID of the target block that shares a same boundary surface as the ending vertex, as well as the global index of the centroids point as edge value.
 
+The detail algorithm of creating local partial connectivity graph is given in Table x.
 
-And the detail algorithm is given in Table x.
+\begin{algorithm}
+\caption{Calculate $y = x^n$}
+\begin{algorithmic} 
+\REQUIRE $n \geq 0 \vee x \neq 0$
+\ENSURE $y = x^n$
+\STATE $y \leftarrow 1$
+\IF{$n < 0$}
+\STATE $X \leftarrow 1 / x$
+\STATE $N \leftarrow -n$
+\ELSE
+\STATE $X \leftarrow x$
+\STATE $N \leftarrow n$
+\ENDIF
+\WHILE{$N \neq 0$}
+\IF{$N$ is even}
+\STATE $X \leftarrow X \times X$
+\STATE $N \leftarrow N / 2$
+\ELSE[$N$ is odd]
+\STATE $y \leftarrow y \times X$
+\STATE $N \leftarrow N - 1$
+\ENDIF
+\ENDWHILE
+\end{algorithmic}
+\end{algorithm}
 
 // TODO
 Memory cost, each feature on boundary will use two INTs, 1 as global centroids coordinate, the other as target node number. even if there's 1000 features on the boundary, it won’t cost more than 1000 * 2 * 4 = 8mb to store this graph, neglectable compare to the volume data itself. (But kind of large if used for communication)
@@ -454,7 +484,8 @@ Memory cost, each feature on boundary will use two INTs, 1 as global centroids c
 \subsection{Creating Global connectivity graph}
 
 \subsubsection{The naive solution}
-To obtain the global descriptions of features, partial connectivity information need to be merged together after they were individually created. A naive solution to gather partial connectivity graphs is to send all edges sharing the same ending vertex to that target processor, and to merge edges sent from other processor with local partial connectivity graph. Two edges are merged if 1. their starting and ending vertices are *reversely matched* and 2. both edge index are located within direct neighbors. Recall that the starting vertex of an edge represents the current processor ID and ending vertex the ID of target processor, whose data block is adjacent to the one that reside in the current processor, and the edge index is encoded by the global coordinate of the geometric centroid on the shared boundary surface. If two edges match to each other, the two partial features share a same boundary surface with the same centroid and bounding region. In other word, these two partial features were cut off when partitioning the original dataset, and should be considered the same feature sharing the same feature ID.
+
+To obtain the global descriptions of features, partial connectivity information need to be merged together after they were individually created. A naive solution to gather partial connectivity graphs is to send all edges sharing the same ending vertex to that target processor, and to merge edges sent from other processor with local partial connectivity graph. Two edges are merged if 1. their starting and ending vertices are *reversely matched* and 2. both edge index are located within direct neighbors. Recall that the starting vertex of an edge represents the current processor ID and ending vertex the ID of target processor, whose data block is adjacent to the one that reside in the current processor, and the edge index is encoded by the global coordinate of the geometric centroid on the shared boundary surface. If two edges match to each other, the two partial features share a same boundary surface with the same centroid and bounding region. In other word, these two partial features were cut off when partitioning the original data set, and should be considered the same feature sharing the same feature ID.
 
 The detail algorithm of this REDUCE process is given in Table x.
 
@@ -498,30 +529,7 @@ Finally, complete content and organizational editing before formatting. Please t
 \subsection{Visualiztion Result}
 
 \section{Conclusion}
-In this paper, we proposed a decentralized approach that all feature connectivity information are created and preserved in distributed processors. Traditional approaches perform connectivity test on each processor and subsequently correspond them in a host processor after gathering all or partially merged connectivity information. Our approach does not follow this paradigm. Rather, instead of sending local connectively information back to the host, they are computed and preserved only in processors where correspondent feature resides in. There is no copy of the global feature information preserved in the host processors and it only acts as the interface from where the criterion of feature of interest is broadcasted. By doing this the computation of merging local connectivity information is distributed to the non-host s and it effectively reduces the potential communication bottleneck on the host processor. What's more, there's no need to set a barrier and wait before all connectivity information was send back to the host, thus if one of the features spans over a large number of processors but was not selected by the user, the potentially long computation time for this feature will not be considered. This makes it ideal for an interactive system, where users can select the feature of interest and instantly receive the visual feedback as the feature evolves.
-
-% An example of a floating figure using the graphicx package.
-% Note that \label must occur AFTER (or within) \caption.
-% For figures, \caption should occur after the \includegraphics.
-% Note that IEEEtran v1.7 and later has special internal code that
-% is designed to preserve the operation of \label within \caption
-% even when the captionsoff option is in effect. However, because
-% of issues like this, it may be the safest practice to put all your
-% \label just after \caption rather than within \caption{}.
-%
-% Reminder: the "draftcls" or "draftclsnofoot", not "draft", class
-% option should be used if it is desired that the figures are to be
-% displayed while in draft mode.
-%
-%\begin{figure}[!t]
-%\centering
-%\includegraphics[width=2.5in]{myfigure}
-% where an .eps filename suffix will be assumed under latex, 
-% and a .pdf suffix will be assumed for pdflatex; or what has been declared
-% via \DeclareGraphicsExtensions.
-%\caption{Simulation Results}
-%\label{fig_sim}
-%\end{figure}
+In this paper, we proposed a decentralized approach that all feature connectivity information are created and preserved in distributed processors. Traditional approaches perform connectivity test on each processor and subsequently correspond them in a host processor after gathering all or partially merged connectivity information. Our approach does not follow this paradigm. Rather, instead of sending local connectivity information back to the host, they are computed and preserved only in processors where correspondent feature resides in. There is no copy of the global feature information preserved in the host processors and it only acts as the interface from where the criterion of feature of interest is broadcast. By doing this the computation of merging local connectivity information is distributed to the non-host s and it effectively reduces the potential communication bottleneck on the host processor. What's more, there's no need to set a barrier and wait before all connectivity information was send back to the host, thus if one of the features spans over a large number of processors but was not selected by the user, the potentially long computation time for this feature will not be considered. This makes it ideal for an interactive system, where users can select the feature of interest and instantly receive the visual feedback as the feature evolves.
 
 % Note that IEEE typically puts floats only at the top, even when this
 % results in a large percentage of a column being occupied by floats.
@@ -556,15 +564,15 @@ In this paper, we proposed a decentralized approach that all feature connectivit
 % The \label must come after \caption as always.
 %
 %\begin{table}[!t]
-%% increase table row spacing, adjust to taste
+% increase table row spacing, adjust to taste
 %\renewcommand{\arraystretch}{1.3}
 % if using array.sty, it might be a good idea to tweak the value of
 % \extrarowheight as needed to properly center the text within the cells
 %\caption{An Example of a Table}
 %\label{table_example}
 %\centering
-%% Some packages, such as MDW tools, offer better commands for making tables
-%% than the plain LaTeX2e tabular which is used here.
+% Some packages, such as MDW tools, offer better commands for making tables
+% than the plain LaTeX2e tabular which is used here.
 %\begin{tabular}{|c||c|}
 %\hline
 %One & Two\\
