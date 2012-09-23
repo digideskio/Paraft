@@ -444,7 +444,6 @@ Since data is distributed, vortices in adjacent blocks are invisible to the curr
 \centering
 \includegraphics[width=2.5in]{figure1@2x.png}
 \caption{A special case where two features share a same centroid}
-\label{fig_sim}
 \end{figure}
 
 A voxel-width "ghost surface" that stores boundary surface belonging to neighboring blocks might help to achieve voxel-wise matching for partial features. However, for non-post-processing situation where data set are not pre-determined, maintaining such "ghost surface" requires frequent inter-process communication and is considered expensive for data generated in real-time. Instead, a ±1 voxel tolerance was given in our work when trying to match two geometric centroids on the boundary surfaces. That is, if the neighboring centroid is within the eight direct neighbor of the domestic centroid, they are considered a match and the two separated parts were belong to the same feature.
@@ -525,19 +524,52 @@ The detailed algorithm of merging matched edges (henceforth referred to as REDUC
 \end{algorithm}
 %------------------------------------------------
 
-This naive solution may work for data set with small sized features, but if we consider the case that there exist a long curly feature inside the volume and was partitioned evenly over the grid. In order to gather and merge the whole feature, the processors need to talk to its neighbor and spread the edge exchange operation one by one like that in the "telephone" game. This takes O(N) times communication to connect a single feature, where N is the number of total number of processors in the grid. And consequently O(nf * N) times communication, where nf is the number of features, for all the features within one time step. Also, since one processor has no idea if it will receive any edges from its adjacent processors, it is hard to schedule the communication process.
+This naive solution may work for data set with small sized features, however, if we consider the case that there exists a long curly feature inside the volume and was partitioned evenly over the grid. In order to gather and merge the whole feature, the processors need to talk to its neighbor and spread the edge exchange operation one by one like that in the "telephone" game. This takes O(N) times communication to connect a single feature, where N is the number of total number of processors in the grid. And consequently O(nf * N) times communication, where nf is the number of features, for all the features within one time step. Also, since one processor has no idea if it will receive any edges from its adjacent processors, it is hard to schedule the communication process.
 
 \subsubsection{The centralized approach}
-A possible solution to reduce the number of times required for merging all edges is to employ the master-slave hierarchy by introducing a separate host processor. When the feature extraction process is done, local connectivity graphs with edges representing how many features have touched the block boundary and where they are located on the surface within each individual processor will be gathered to the host processor. After the GATHER operation is done, i.e. host processor has collected all local connectivity graphs, the REDUCE operation starts to merge edges from all partial graphs to a single global connectivity graph.
+A possible solution to reduce the number of times required for merging all edges is to employ the master-slave hierarchy by introducing a separate host processor. When the feature extraction process is done, local connectivity graphs with edges representing how many features have touched the block boundary as well as where they are located on the surface within each individual processor will be gathered to the host processor. After this GATHER operation is done, i.e. host processor has collected all local connectivity graphs, the REDUCE operation starts to merge edges from each partial graph to a single global connectivity graph.
 
-The merit of this centralized solution is that it only requires sending the data only once. Also, a global graph of feature information could be preserved in the host processor, which made it easy for the host to answer connectivity queries directly without pulling information from slave processors a second time. However the drawback of this approach is also obvious. Since all partial graphs preserved in each processor will be sent to one single processor, there exists potential bottleneck, both communicational and computational, on the host processor.
+The merit of this centralized approach lies in that it requires inter-processor communication only once. What is more, a global graph of feature information could be preserved in the host processor, which makes it easy for the host to response directly without pulling information from slave processors a second time. However the drawback of this approach is also obvious. Since all partial connectivity graphs preserved in each processor will be sent to a single processor, there exists potential bottlenecks, both communication and computational, on the host processor.
 
-\subsubsection{Two decentralized approaches}
-A better solution is to decentralize the merging process from a single host to all processors that are available, as depicted in Figure x. After the feature extraction process is done and so does the creation of local connectivity graph, the ALL-GATHER process starts to exchange all local connectivity graphs within each processor to all the others. This time, each processor will first collect a full copy of all local connectivity graphs followed by the same REDUCE process to merge the edges into the concise graph. 
+\subsubsection{The decentralized approach}
+A better solution is to decentralize from REDUCE on a single host processor to all processors that are available. After the feature extraction process is done and so does the creation of local connectivity graphs, an ALL-GATHER process starts to exchanging all local connectivity graphs within each processor to all the others. Each processor will first collect a full copy of all local connectivity graphs followed by the same REDUCE process to merge the edges into a single concise connectivity graph. 
 
-Though the "redundant" host processor is not required when applying for computation resources, this approach does not actually solve the bottleneck problem since now every processor is act like a host while they still need to gather all the partial graphs and try merging them. For real world dataset, however, it is rarely the case that a single feature will span over every processor. In other word, it is unnecessary to gather edges of feature that are not reside in current processor. To reduce the redundant communications with every other processor in the grid, the decentralized approach could be further improved in that we only consider those processors that are directly adjacent to the current one. That is, we only talk to our neighbors and share information with them regardless what is happening outside the community. 
+\begin{figure}[htpb]
+\centering
+\includegraphics[width=1.5in]{figure3.png}
+\includegraphics[width=1.5in]{figure4.png}
+\caption{Left: each processor gather partial graphs from all the other processors; Right, A special case where two features share a same centroid}
+\end{figure}
 
-For a partitioned volumetric dataset, there are only 6 direct neighbors for each processor (for processor on the “edge” of the grid there are even less). Instead of gathering local connectivity graphs from all processors in the grid, only graphs reside in neighboring processors will be exchanged. This could be regarded as a higher level of region growing, starting from one seeding processor and grows to all adjacent processors, exchange and merge local connectivity graphs in a bread-first fashion until all residing processors of the same feature have been connected. For the worst case that a feature span over all of the processors, it takes O(C∛(|N|)) time to finish the search for connected processors, much faster than the previous O(N) time for all gathering among all processors.
+Though the "redundant" host processor is no more required when applying for computation resources, this approach does not actually solve the bottleneck problem since now every processor is now acting like a host since they still need to gather all partial graphs and try merging them together. For real world data set, however, it is rarely the case that a single feature will span over every processor. In other word, it is unnecessary to gather edges of feature that are not reside in current processor. To reduce the redundant communications with every other processor in the grid, the decentralized approach could be further improved such that we only consider those processors that are directly adjacent to the current one. That is, each processor only talks to its direct neighbors and shares information with them regardless what is happening outside. 
+
+For a regularly partitioned volumetric data set, there are only 6 direct neighbors for each processor (for processor on the "edge" of the grid there are even less). Instead of gathering connectivity information from all processors in the grid, only graphs reside in neighboring processors will be gathered. This could be considered as a higher level of region growing, starting from one seeding processor and then grows from its adjacent processors, exchanging and merging connectivity information in a bread-first fashion until all cross-boundary features are connected. 
+
+The detailed scheduling algorithm is depicted as below.
+%------------------------------------------------
+\begin{algorithm}
+\caption{REDUCE: Level 2 Region Growing}
+\begin{algorithmic}[1]
+\REQUIRE $adjacentProcessors$, $localEdges$
+\FOR {each $ei$ in $localEdges$}
+	\FOR {each $ej$ in $recievedEdges$}
+		\IF{$ei.start$ = $ej.end$ and $ej.start$ = $ei.end$ \textbf{and}
+			$ei.min$ = $ej.min$ and $ei.max$ = $ej.max $ \textbf{and}
+			$ei.centroid \approx ej.centroid$}
+			\IF {$ei.id < ej.id$}
+				\STATE $ej.id \leftarrow ei.id$
+			\ELSE
+				\STATE $ei.id \leftarrow ej.id$
+			\ENDIF
+		\ENDIF
+	\ENDFOR	
+\ENDFOR	
+\end{algorithmic}
+\end{algorithm}
+%------------------------------------------------
+
+
+For the worst case that a feature span over all of the processors, it takes O(C∛(|N|)) time to finish the search for connected processors, much faster than the previous O(N) time for all gathering among all processors.
 
 \subsubsection{The hybrid approach}
 We can still take a step further to optimize the aforementioned decentralized approach. As volume data evolves over time, the internal features may vary but should not change drastically in size and shape nor location if the time interval for sampling is short enough. Thus we can apply the prediction-correction approach to further reduce the number of times required to complete the connectivity graph. 
