@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012) (format=pdflatex 2012.6.30)  22 SEP 2012 18:23
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (TeX Live 2012) (format=pdflatex 2012.6.30)  22 SEP 2012 20:27
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -320,13 +320,13 @@ Missing character: There is no ™ in font ptmr7t!
 File: ./images/figure3.png Graphic file (type png)
 
 <use ./images/figure3.png>
-Package pdftex.def Info: ./images/figure3.png used on input line 539.
+Package pdftex.def Info: ./images/figure3.png used on input line 542.
 (pdftex.def)             Requested size: 108.405pt x 108.40968pt.
  <./images/figure4.png, id=23, 144.54pt x 144.54pt>
 File: ./images/figure4.png Graphic file (type png)
 
 <use ./images/figure4.png>
-Package pdftex.def Info: ./images/figure4.png used on input line 540.
+Package pdftex.def Info: ./images/figure4.png used on input line 543.
 (pdftex.def)             Requested size: 108.405pt x 108.40471pt.
  [4 <./images/figure3.png> <./images/figure4.png>]
 Missing character: There is no â in font ptmr7t!
@@ -335,9 +335,9 @@ Missing character: There is no › in font ptmr7t!
 
 [5]
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <9> on input line 702.
+(Font)              <9> on input line 719.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 702.
+(Font)              <6> on input line 719.
 
 
 ** Conference Paper **
@@ -360,7 +360,7 @@ Here is how much of TeX's memory you used:
  6340 multiletter control sequences out of 15000+200000
  39305 words of font info for 73 fonts, out of 3000000 for 9000
  960 hyphenation exceptions out of 8191
- 38i,8n,23p,1467b,599s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 38i,8n,23p,1467b,597s stack positions out of 5000i,500n,10000p,200000b,50000s
 {/usr/local/texlive/2012/texmf-dist/fonts/enc/dvips/base/
 8r.enc}</usr/local/texlive/2012/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi1
 0.pfb></usr/local/texlive/2012/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.
@@ -369,7 +369,7 @@ fb></usr/local/texlive/2012/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/l
 ocal/texlive/2012/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/local/texl
 ive/2012/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/local/texlive/2012/t
 exmf-dist/fonts/type1/urw/times/utmri8a.pfb>
-Output written on ipdps_2013.pdf (6 pages, 331954 bytes).
+Output written on ipdps_2013.pdf (6 pages, 334435 bytes).
 PDF statistics:
  59 PDF objects out of 1000 (max. 8388607)
  37 compressed objects within 1 object stream

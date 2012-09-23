@@ -467,13 +467,8 @@ The detailed algorithm of creating local partial connectivity graph is given in 
 \ELSE
 	\FOR {each $feture$ in $featureList$}
 		\STATE $feture \leftarrow predictRegion()$
-		\WHILE{$adjustRegion()$}
-			\IF{Voxel $v$ on boundary surface}
-				\STATE $updateMixMaxBoundary()$
-				\STATE $updateBoundaryCentroid()$
-			\ENDIF
 		\STATE $feture \leftarrow adjustRegion()$	
-		\ENDWHILE
+		
 		\STATE $start \leftarrow$ current processor ID
 		\STATE $end \leftarrow$ target neighboring processor ID
 		\STATE $min,max \leftarrow$ min-max boundary coordinate
@@ -482,6 +477,14 @@ The detailed algorithm of creating local partial connectivity graph is given in 
 		\STATE append $e$ to $edgeList$
 	\ENDFOR
 \ENDIF
+\end{algorithmic}
+\begin{algorithmic} \STATE \end{algorithmic}	% line separator
+\begin{algorithmic}[1]
+\STATE $adjustRegion()$
+	\IF{Voxel $v$ on boundary surface}
+		\STATE $updateMixMaxBoundary()$
+		\STATE $updateBoundaryCentroid()$
+	\ENDIF
 \end{algorithmic}
 \end{algorithm}
 %------------------------------------------------
@@ -527,12 +530,12 @@ The detailed algorithm of merging matched edges (henceforth referred to as REDUC
 This naive solution may work for data set with small sized features, however, if we consider the case that there exists a long curly feature inside the volume and was partitioned evenly over the grid. In order to gather and merge the whole feature, the processors need to talk to its neighbor and spread the edge exchange operation one by one like that in the "telephone" game. This takes O(N) times communication to connect a single feature, where N is the number of total number of processors in the grid. And consequently O(nf * N) times communication, where nf is the number of features, for all the features within one time step. Also, since one processor has no idea if it will receive any edges from its adjacent processors, it is hard to schedule the communication process.
 
 \subsubsection{The centralized approach}
-A possible solution to reduce the number of times required for merging all edges is to employ the master-slave hierarchy by introducing a separate host processor. When the feature extraction process is done, local connectivity graphs with edges representing how many features have touched the block boundary as well as where they are located on the surface within each individual processor will be gathered to the host processor. After this GATHER operation is done, i.e. host processor has collected all local connectivity graphs, the REDUCE operation starts to merge edges from each partial graph to a single global connectivity graph.
+A possible solution to reduce the number of times required for merging all edges is to employ the master-slave hierarchy by introducing a separate host processor. When the feature extraction process is done, local connectivity graphs with edges representing how many features have touched the block boundary as well as where they are located on the surface within each individual processor will be gathered to the host processor. After this \textit{Gather} operation is done, i.e. host processor has collected all local connectivity graphs, the REDUCE operation starts to merge edges from each partial graph to a single global connectivity graph.
 
 The merit of this centralized approach lies in that it requires inter-processor communication only once. What is more, a global graph of feature information could be preserved in the host processor, which makes it easy for the host to response directly without pulling information from slave processors a second time. However the drawback of this approach is also obvious. Since all partial connectivity graphs preserved in each processor will be sent to a single processor, there exists potential bottlenecks, both communication and computational, on the host processor.
 
 \subsubsection{The decentralized approach}
-A better solution is to decentralize from REDUCE on a single host processor to all processors that are available. After the feature extraction process is done and so does the creation of local connectivity graphs, an ALL-GATHER process starts to exchanging all local connectivity graphs within each processor to all the others. Each processor will first collect a full copy of all local connectivity graphs followed by the same REDUCE process to merge the edges into a single concise connectivity graph. 
+A better solution is to decentralize from REDUCE on a single host processor to all processors that are available. After the feature extraction process is done and so does the creation of local connectivity graphs, an \textit{Allgather} process starts to exchanging all local connectivity graphs within each processor to all the others. Each processor will first collect a full copy of all local connectivity graphs followed by the same REDUCE process to merge the edges into a single concise connectivity graph. 
 
 \begin{figure}[htpb]
 \centering
@@ -545,25 +548,39 @@ Though the "redundant" host processor is no more required when applying for comp
 
 For a regularly partitioned volumetric data set, there are only 6 direct neighbors for each processor (for processor on the "edge" of the grid there are even less). Instead of gathering connectivity information from all processors in the grid, only graphs reside in neighboring processors will be gathered. This could be considered as a higher level of region growing, starting from one seeding processor and then grows from its adjacent processors, exchanging and merging connectivity information in a bread-first fashion until all cross-boundary features are connected. 
 
-The detailed scheduling algorithm is depicted as below.
+The detailed scheduling algorithm is depicted in Algorithm 3. 
 %------------------------------------------------
 \begin{algorithm}
-\caption{REDUCE: Level 2 Region Growing}
+\caption{Processor Level Region Growing}
 \begin{algorithmic}[1]
 \REQUIRE $adjacentProcessors$, $localEdges$
-\FOR {each $ei$ in $localEdges$}
-	\FOR {each $ej$ in $recievedEdges$}
-		\IF{$ei.start$ = $ej.end$ and $ej.start$ = $ei.end$ \textbf{and}
-			$ei.min$ = $ej.min$ and $ei.max$ = $ej.max $ \textbf{and}
-			$ei.centroid \approx ej.centroid$}
-			\IF {$ei.id < ej.id$}
-				\STATE $ej.id \leftarrow ei.id$
-			\ELSE
-				\STATE $ei.id \leftarrow ej.id$
-			\ENDIF
+\STATE $toSend, toRecv \leftarrow true$	// init scheduling flags
+\STATE $\delta \leftarrow localEdges$	// init data to be sent
+\WHILE {$toSend$ = $true$ or $toRecv$ = $true$}
+	\STATE $target \leftarrow toRecv$ = $true$ ? $myRank$ : null
+	\STATE $procsToSync \leftarrow Allgather(target)$
+	\FOR {each $proc$ in $procsToSync$}
+		\IF {$toSend$ = $true$}
+			\STATE send $\delta$ to $proc$
+		\ENDIF
+		\IF {$toRecv$ = $true$}
+			\STATE receive $\delta\prime$ from $proc$
+		\ENDIF
+	\ENDFOR
+	\STATE $toSend \leftarrow procsToSync$ is empty ? $false$ : $true$
+	\STATE $toRecv \leftarrow false$
+	\STATE $localEdges \leftarrow Reduce(localEdges, \delta\prime)$
+\ENDWHILE
+\end{algorithmic}
+\begin{algorithmic} \STATE \end{algorithmic}	% line separator
+\begin{algorithmic}[1]
+\STATE $Reduce(localEdges, \delta\prime)$
+	\FOR {each $edge$ in $\delta\prime$}
+		\IF {$edge$ is new}
+			\STATE add $edge$ to $\delta$
+			\STATE $toRecv \leftarrow true$
 		\ENDIF
 	\ENDFOR	
-\ENDFOR	
 \end{algorithmic}
 \end{algorithm}
 %------------------------------------------------
@@ -594,7 +611,7 @@ Finally, complete content and organizational editing before formatting. Please t
 
 \section{Result}
 \subsection{Performance Result}
-\subsection{Visualiztion Result}
+\subsection{Visualization Result}
 
 \section{Conclusion}
 In this paper, we proposed a decentralized approach that all feature connectivity information are created and preserved in distributed processors. Traditional approaches perform connectivity test on each processor and subsequently correspond them in a host processor after gathering all or partially merged connectivity information. Our approach does not follow this paradigm. Rather, instead of sending local connectivity information back to the host, they are computed and preserved only in processors where correspondent feature resides in. There is no copy of the global feature information preserved in the host processors and it only acts as the interface from where the criterion of feature of interest is broadcast. By doing this the computation of merging local connectivity information is distributed to the non-host s and it effectively reduces the potential communication bottleneck on the host processor. What's more, there's no need to set a barrier and wait before all connectivity information was send back to the host, thus if one of the features spans over a large number of processors but was not selected by the user, the potentially long computation time for this feature will not be considered. This makes it ideal for an interactive system, where users can select the feature of interest and instantly receive the visual feedback as the feature evolves.
@@ -709,5 +726,3 @@ H.~Kopka and P.~W. Daly, \emph{A Guide to \LaTeX}, 3rd~ed.\hskip 1em plus
 
 % that's all folks
 \end{document}
-
-
