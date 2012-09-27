@@ -9,20 +9,16 @@
 #include <map>
 
 const int FEATURE_MIN_VOXEL_NUM = 10;
-const int NUM_TRACK_STEPS = 20;
+const int NUM_TRACK_STEPS = 10;
 
 const int INT_SIZE = 1;
 const int FLOAT_SIZE = sizeof(float);
 
-const int DATA_DIM_X = 128;
-const int DATA_DIM_Y = 128;
-const int DATA_DIM_Z = 128;
-
 const int TF_RESOLUTION = 1024;
 
 const float LOW_THRESHOLD  = 0.2;
-const float HIGH_THRESHOLD = 1.0;
-const float DIST_THRESHOLD = 9.0;
+const float HIGH_THRESHOLD = 0.8;
+const float DIST_THRESHOLD = 4.0;
 
 const int TRACKING_MODE_DIRECT = 0;
 const int TRACKING_MODE_LINEAR = 1;
@@ -113,11 +109,12 @@ public:
 };    // start ---id---> end @ centroid
 
 struct DataSet {
-    int     index_start;
-    int     index_end;
+    int     start;
+    int     end;
     string  prefix;
     string  surfix;
-    string  data_path;
+    string  path;
+    Vector3i dim;
 };
 
 struct Feature {

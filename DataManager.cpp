@@ -39,7 +39,7 @@ void DataManager::CreateNewMaskMatrix() {
 void DataManager::ReadSphDataSequence(DataSet ds) {
     SphReader *sph = new SphReader;
 
-    for (int i = ds.index_start; i <= ds.index_end; i++) {
+    for (int i = ds.start; i <= ds.end; i++) {
         string filePath;
         char timestep[21]; // hold up to 64 bit integer
         sprintf(timestep, "%8d", i);
@@ -53,7 +53,7 @@ void DataManager::ReadSphDataSequence(DataSet ds) {
         // ds.prefix      = "prs_";
         // ds.surfix      = "00_id000000.sph";
         // ds.data_path   = "/Users/Yang/Develop/Data/Sim_128_128_128";
-        filePath = ds.data_path + ds.prefix + timestep + ds.surfix;
+        filePath = ds.path + ds.prefix + timestep + ds.surfix;
 
         cout << filePath << endl;
 
@@ -68,17 +68,19 @@ void DataManager::ReadSphDataSequence(DataSet ds) {
     delete sph;
 }
 
-void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
-                                   Vector3i origVolumeDim, DataSet ds) {
+void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition, DataSet ds) {
 
-    volumeDim = origVolumeDim / partition;
+    volumeDim = ds.dim / partition;
     volumeSize = volumeDim.volume();
 
-    for (int i = ds.index_start; i <= ds.index_end; i++) {
+    for (int i = ds.start; i <= ds.end; i++) {
         string fileName;
-        char numstr[21]; // enough to hold all numbers up to 64-bits
-        sprintf(numstr, "%d", i);
-        fileName = ds.data_path + "/" + ds.prefix + numstr + ds.surfix;
+        char timestep[21]; // enough to hold all numbers up to 64-bits
+        sprintf(timestep, "%4d", i);
+        for (int i = 0; i < 4; i++) {
+            timestep[i] = timestep[i] == ' ' ? '0' : timestep[i];
+        }
+        fileName = ds.path + "/" + ds.prefix + timestep + ds.surfix;
 
         mpiReadOneDataFile(blockCoord, partition, fileName);
     }

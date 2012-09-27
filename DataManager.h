@@ -23,8 +23,7 @@ public:
 
     void ReadSphDataSequence(DataSet ds);
 
-    void MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
-                          Vector3i origVolumeDim, DataSet ds);
+    void MpiReadDataSequence(Vector3i blockCoord, Vector3i partition, DataSet ds);
 
     bool mpiReadOneDataFile(Vector3i blockCoord, Vector3i partition, string filePath);
 

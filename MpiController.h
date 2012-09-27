@@ -19,6 +19,7 @@ private:
     BlockController *pBlockController;
 
     MPI_Datatype MPI_TYPE_EDGE;
+    MPI_Comm MPI_COMM_LOCAL;
     MPI_Request request;
     MPI_Status status;
 
@@ -44,6 +45,9 @@ private:
     void updateFeatureTable(Edge edge);
     bool need_to_send;
     bool need_to_recv;
+
+    // for adjacent graph
+    void gatherNeighboringGraph();
 
     // global feature info
     FeatureTable featureTable;

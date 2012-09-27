@@ -2,7 +2,7 @@
 
 BlockController::BlockController() {
     blockSize.x = blockSize.y = blockSize.z = 0;
-    for (int surface = 0; surface < 6; ++surface) {
+    for (int surface = 0; surface < 6; surface++) {
         adjacentBlocks[surface] = SURFACE_NULL;
     }
 }
@@ -15,13 +15,11 @@ BlockController::~BlockController() {
 }
 
 void BlockController::InitData(Vector3i partition, Vector3i blockCoord, DataSet ds) {
-    Vector3i dataDim(DATA_DIM_X, DATA_DIM_Y, DATA_DIM_Z);
-
     initAdjacentBlocks(partition, blockCoord);
 
     pDataManager = new DataManager();
-//    pDataManager->MpiReadDataSequence(blockCoord, partition, dataDim, ds);
-    pDataManager->ReadSphDataSequence(ds);
+    pDataManager->MpiReadDataSequence(blockCoord, partition, ds);
+//    pDataManager->ReadSphDataSequence(ds);
     pDataManager->CreateNewMaskMatrix();
 
     blockSize = pDataManager->GetVolumeDimension();

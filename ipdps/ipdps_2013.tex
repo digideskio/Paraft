@@ -351,7 +351,7 @@
 
 \begin{document}
 % use linebreaks \\ within to get better formatting as desired
-\title{Parallel Feature Extraction and Tracking for 3D Vortical Data (TBD)}
+\title{Scalable Parallel Tracking of Time-Varying 3D Flow Features}
 
 % author names and affiliations
 % use a multiple column layout for up to two different
@@ -375,7 +375,8 @@ line 4: Email: name@xyz.com}
 
 
 \begin{abstract}
-Large-scale time-varying volumetric data set can take terabytes to petabytes of memory to process. One promising approach is to process the data in parallel, extracting features of interest and analyze only those features. This requires memory space that is several orders of magnitude smaller. However, extracting volumetric features in parallel is a non-trivial task as features might span over multiple processors, and partial features are visible only within their own processor. In this paper, we discuss how to generate and maintain connectivity information of features reside in different processors. Based on this connectivity information, partial features can be integrated, which makes possible for the large-scale feature extraction and tracking in parallel. We demonstrate the effectiveness and scalability of our approaches by apply it to two volumetric flow data sets, and compare the pros and cons of each approach.
+Large-scale time-varying volumetric data set can take terabytes to petabytes of storage space to store and process. One promising approach is to process the data in parallel in situ or batch, extract features of interest and analyze only those features, to reduce required memory space by several orders of magnitude for the following visualization tasks. However, extracting volumetric features in parallel is a non-trivial task as features might span over multiple processors, and local partial features can be only visible within their own processor. In this paper, we discuss how to generate and maintain connectivity information of features across different processors. Based on this connectivity information, partial features can be integrated, which makes possible for the large-scale feature extraction and tracking in parallel. We demonstrate the effectiveness and scalability of different approaches on two data sets, and discuss the pros and cons of each approach.
+
 \end{abstract}
 
 \begin{IEEEkeywords}
