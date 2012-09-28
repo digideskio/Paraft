@@ -58,7 +58,7 @@ void MpiController::Start() {
     precalculateTimestep1();
 
     for (int i = 0; i < NUM_TRACK_STEPS; i++) {
-        cout << "time step" << timestep << " done." << endl;
+        cout << "[" << my_rank << "] timestep " << timestep << " done." << endl;
         TrackForward();
     }
 
@@ -68,31 +68,6 @@ void MpiController::Start() {
 void MpiController::initBlockController() {
     pBlockController = new BlockController();
     pBlockController->InitData(partition, blockCoord, ds);
-
-    MPI_Group world_group, local_group;
-    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-
-    vector<int> neighbors = pBlockController->GetAdjacentBlocks();
-    neighbors.push_back(my_rank);
-    sort(neighbors.begin(), neighbors.end());
-
-//    cout << "neighbors.size: " << neighbors.size() << endl;
-//    for (uint i = 0; i < neighbors.size(); i++) {
-//        cerr << my_rank << "'s neighbors[" << i << "]: " << neighbors[i] << endl;
-//    }
-
-    MPI_Group_incl(world_group, neighbors.size(), &neighbors.front(), &local_group);
-    MPI_Comm_create(MPI_COMM_WORLD, local_group, &MPI_COMM_LOCAL);
-
-//    int newRank = 0;
-//    int newSize = 0;
-//    MPI_Comm_rank(MPI_COMM_LOCAL, &newRank);
-//    MPI_Comm_size(MPI_COMM_LOCAL, &newSize);
-//    cerr << "rank: " << newRank << "/" << my_rank << endl;
-//    cerr << "size: " << newSize << "/" << num_proc << endl;
-
-    MPI_Group_free(&world_group);
-    MPI_Group_free(&local_group);
 }
 
 void MpiController::initTFParameters() {
@@ -153,15 +128,20 @@ void MpiController::TrackForward() {
     // initially sync with all adjacent blocks, when one finished syncing,
     // delete it from the adjacentBlocks list
     adjacentBlocks = pBlockController->GetAdjacentBlocks();
-    need_to_send = true;
-    need_to_recv = true;
+    need_to_send = 1;
+    need_to_recv = 1;
+    any_send = 1;
+    any_recv = 1;
 
-    while (need_to_send || need_to_recv) {
+    while (any_send || any_recv) {
         syncFeatureGraph();
+        if (my_rank == 0) cout << "-----------" << endl;
     }
 
     // option3: gather adjacent to create feaure graph;
 //    gatherNeighboringGraph();
+
+    cout << "[" << my_rank << "] @ " << timestep << " @" << endl;
 
     MPI_Barrier(MPI_COMM_WORLD);
     double t3 = MPI_Wtime();
@@ -179,6 +159,162 @@ void MpiController::TrackForward() {
          << csv.partition.x<<"," << csv.partition.y<<"," << csv.partition.z<<","
          << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
     outf.close();
+}
+
+void MpiController::syncFeatureGraph() {
+    vector<Edge> localEdges = pBlockController->GetLocalGraph();
+    int localEdgeCount = localEdges.size();
+
+    vector<int> blocksNeedRecv(num_proc);
+    for (uint i = 0; i < num_proc; i++) {
+        blocksNeedRecv.at(i) = -1;
+    }
+
+    int recv_id = need_to_recv ? my_rank : -1;
+
+    MPI_Allgather(&recv_id, 1, MPI_INT, &blocksNeedRecv.front(), 1, MPI_INT, MPI_COMM_WORLD);
+
+    vector<int> adjacentBlocksNeedRecv;
+
+    sort(adjacentBlocks.begin(), adjacentBlocks.end());
+    sort(blocksNeedRecv.begin(), blocksNeedRecv.end());
+
+    set_intersection(adjacentBlocks.begin(), adjacentBlocks.end(),
+                     blocksNeedRecv.begin(), blocksNeedRecv.end(),
+                     back_inserter(adjacentBlocksNeedRecv));
+
+
+    // -- debug ---------
+    cout << "\n+[" << my_rank << "] adjacentBlocks: ";
+    for (uint i = 0; i < adjacentBlocks.size(); i++) {
+        cout << adjacentBlocks[i] << " ";
+    } cout << endl;
+
+    cout << "+[" << my_rank << "] blocksNeedRecv: ";
+    for (uint i = 0; i < blocksNeedRecv.size(); i++) {
+        cout << blocksNeedRecv[i] << " ";
+    } cout << endl;
+
+    cout << "+[" << my_rank << "] adjacentBlocksNeedRecv: ";
+    for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
+        cout << adjacentBlocksNeedRecv[i] << " ";
+    } cout << endl;
+    // -- debug ---------
+
+    need_to_send = adjacentBlocksNeedRecv.size() > 0 ? 1 : 0;
+
+    if (need_to_send) {
+        cout << "[" << my_rank << "] need_to_send yes ";
+        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
+            cout << adjacentBlocksNeedRecv.at(i) << " ";
+        }
+        cout << endl;
+    } else {
+        debug("need_to_send no");
+    }
+
+    if (need_to_recv) {
+        cout << "[" << my_rank << "] need_to_recv yes " << endl;
+    } else {
+        debug("need_to_recv no");
+    }
+
+    vector<Edge> adjacentGraph;
+
+    if (need_to_send) {
+        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
+            int dest = adjacentBlocksNeedRecv.at(i);
+            // 1. send count
+            MPI_Send(&localEdgeCount, 1, MPI_INT, dest, 100, MPI_COMM_WORLD);
+            // 2. send content
+            if (localEdgeCount != 0) {
+                MPI_Send(&localEdges.front(), localEdgeCount, MPI_TYPE_EDGE, dest, 101, MPI_COMM_WORLD);
+            }
+        }
+    }
+
+    if (need_to_recv) {
+        for (uint i = 0; i < adjacentBlocks.size(); i++) {
+            int src = adjacentBlocks.at(i);
+            int srcEdgeCount = 0;
+            // 1. recv count
+            MPI_Recv(&srcEdgeCount, 1, MPI_INT, src, 100, MPI_COMM_WORLD, &status);
+            // 2. recv content
+            if (srcEdgeCount != 0) {
+                vector<Edge> srcEdges(srcEdgeCount);
+                MPI_Recv(&srcEdges.front(), srcEdgeCount, MPI_TYPE_EDGE, src, 101, MPI_COMM_WORLD, &status);
+
+                for (int i = 0; i < srcEdgeCount; i++) {
+                    bool isNew = true;
+                    for (uint j = 0; j < adjacentGraph.size(); j++) {
+                        if (srcEdges[i] == adjacentGraph[j]) {
+                            isNew = false; break;
+                        }
+                    }
+                    if (isNew) {
+                        adjacentGraph.push_back(srcEdges[i]);
+                    }
+                }
+            }
+        }
+        need_to_recv = 0;
+    }
+
+    // add local edges
+    for (uint i = 0; i < localEdges.size(); i++) {
+        bool isNew = true;
+        for (uint j = 0; j < adjacentGraph.size(); j++) {
+            if (localEdges[i] == adjacentGraph[j]) {
+                isNew = false; break;
+            }
+        }
+        if (isNew) {
+            adjacentGraph.push_back(localEdges[i]);
+        }
+    }
+
+    mergeCorrespondentEdges(adjacentGraph);
+    pBlockController->SetLocalGraph(adjacentGraph);
+
+    any_send = -1;
+    any_recv = -1;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Allreduce(&need_to_send, &any_send, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&need_to_recv, &any_recv, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+
+    if (need_to_send) {
+        cout << "[" << my_rank << "] need_to_send yes ";
+        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
+            cout << adjacentBlocksNeedRecv.at(i) << " ";
+        }
+        cout << endl;
+    } else {
+        debug("need_to_send no");
+    }
+
+    if (need_to_recv) {
+        cout << "[" << my_rank << "] need_to_recv yes " << endl;
+    } else {
+        debug("need_to_recv no");
+    }
+
+
+    if (need_to_send) {
+        cout << "[" << my_rank << "] need_to_send yes ";
+        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
+            cout << adjacentBlocksNeedRecv.at(i) << " ";
+        }
+        cout << endl;
+    } else {
+        debug("need_to_send no");
+    }
+
+    if (need_to_recv) {
+        cout << "[" << my_rank << "] need_to_recv yes " << endl;
+    } else {
+        debug("need_to_recv no");
+    }
 }
 
 void MpiController::gatherNeighboringGraph() {
@@ -235,207 +371,8 @@ void MpiController::gatherGlobalGraph() {
     mergeCorrespondentEdges(globalEdges);
 }
 
-void MpiController::syncFeatureGraph() {
-    vector<Edge> localEdges = pBlockController->GetLocalGraph();
-    int localEdgeCount = localEdges.size();
-
-    vector<int> blocksNeedSend(num_proc);
-    vector<int> blocksNeedRecv(num_proc);
-
-    int send_id = need_to_send ? my_rank : -1;
-    int recv_id = need_to_recv ? my_rank : -1;
-
-    MPI_Allgather(&send_id, 1, MPI_INT, &blocksNeedSend.front(), 1, MPI_INT, MPI_COMM_WORLD);
-    MPI_Allgather(&recv_id, 1, MPI_INT, &blocksNeedRecv.front(), 1, MPI_INT, MPI_COMM_WORLD);
-
-    vector<int> adjacentBlocksNeedSend;
-    vector<int> adjacentBlocksNeedRecv;
-
-    sort(adjacentBlocks.begin(), adjacentBlocks.end());
-    sort(blocksNeedSend.begin(), blocksNeedSend.end());
-    sort(blocksNeedRecv.begin(), blocksNeedRecv.end());
-
-    set_intersection(adjacentBlocks.begin(), adjacentBlocks.end(),
-                     blocksNeedSend.begin(), blocksNeedSend.end(),
-                     back_inserter(adjacentBlocksNeedSend));
-
-    set_intersection(adjacentBlocks.begin(), adjacentBlocks.end(),
-                     blocksNeedRecv.begin(), blocksNeedRecv.end(),
-                     back_inserter(adjacentBlocksNeedRecv));
-
-    vector<Edge> adjacentGraph;
-
-    if (my_rank == 0) {
-        cout << "\n+ adjacentBlocks: ";
-        for (uint i = 0; i < adjacentBlocks.size(); i++) {
-            cout << adjacentBlocks[i] << " ";
-        }
-        cout << endl;
-
-        cout << "+ blocksNeedSend: ";
-        for (uint i = 0; i < blocksNeedSend.size(); i++) {
-            cout << blocksNeedSend[i] << " ";
-        }
-        cout << endl;
-
-        cout << "+ blocksNeedRecv: ";
-        for (uint i = 0; i < blocksNeedRecv.size(); i++) {
-            cout << blocksNeedRecv[i] << " ";
-        }
-        cout << endl;
-
-        cout << "+ adjacentBlocksNeedSend: ";
-        for (uint i = 0; i < adjacentBlocksNeedSend.size(); i++) {
-            cout << adjacentBlocksNeedSend[i] << " ";
-        }
-        cout << endl;
-
-        cout << "+ adjacentBlocksNeedRecv: ";
-        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
-            cout << adjacentBlocksNeedRecv[i] << " ";
-        }
-        cout << endl;
-    }
-
-    if (need_to_send) {
-        debug("need_to_send yes");
-    } else {
-        debug("need_to_send no");
-    }
-
-    if (need_to_recv) {
-        debug("need_to_recv yes");
-    } else {
-        debug("need_to_recv no");
-    }
-
-    if (need_to_send) {
-        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
-            int dest = adjacentBlocksNeedRecv[i];
-
-            // 1. send count
-            cerr << "+ send count:" << my_rank << " -> " << dest << ": " << localEdgeCount;
-            MPI_Send(&localEdgeCount, 1, MPI_INT, dest, 100, MPI_COMM_WORLD);
-            cerr << " -" << endl;
-
-            // 2. send content
-            if (localEdgeCount != 0) {
-                cerr << "+ send data :" << my_rank << " -> " << dest;
-                MPI_Send(&localEdges.front(), localEdgeCount, MPI_TYPE_EDGE, dest, 101, MPI_COMM_WORLD);
-                cerr << " -" << endl;
-            }
-        }
-    }
-
-    if (need_to_recv) {
-        for (uint i = 0; i < adjacentBlocksNeedSend.size(); i++) {
-            int src = adjacentBlocksNeedSend[i];
-
-            // int recv count
-            int srcEdgeCount = 0;
-
-            cerr << "+ recv count:" << my_rank << " <- " << src << ": " << srcEdgeCount;
-            MPI_Recv(&srcEdgeCount, 1, MPI_INT, src, 100, MPI_COMM_WORLD, &status);
-            cerr << " -" << endl;
-
-            // 2. recv content
-            if (srcEdgeCount != 0) {
-                vector<Edge> srcEdges(srcEdgeCount);
-
-                cerr << "+ recv data :" << my_rank << " <- " << src;
-                MPI_Recv(&srcEdges.front(), srcEdgeCount, MPI_TYPE_EDGE, src, 101, MPI_COMM_WORLD, &status);
-                cerr << " -" << endl;
-
-                for (int i = 0; i < srcEdgeCount; i++) {
-                    bool isNew = true;
-                    for (uint j = 0; j < adjacentGraph.size(); j++) {
-                        if (srcEdges[i] == adjacentGraph[j]) {
-                            isNew = false; break;
-                        }
-                    }
-                    if (isNew) {
-                        adjacentGraph.push_back(srcEdges[i]);
-                    }
-                }
-            }
-        }
-    }
-
-//    for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
-//        int dest = adjacentBlocksNeedRecv[i];
-
-//        if (need_to_send) {
-//            // 1. send count
-//            cerr << "+ send count:" << my_rank << " -> " << dest << ": " << localEdgeCount;
-//            MPI_Send(&localEdgeCount, 1, MPI_INT, dest, 100, MPI_COMM_WORLD);
-//            cerr << " -" << endl;
-
-//            // 2. send content
-//            if (localEdgeCount != 0) {
-//                cerr << "+ send data :" << my_rank << " -> " << dest;
-//                MPI_Send(&localEdges.front(), localEdgeCount, MPI_TYPE_EDGE, dest, 101, MPI_COMM_WORLD);
-//                cerr << " -" << endl;
-//            }
-//        }
-
-//        if (need_to_recv) {
-//            // 1. recv count
-//            int destEdgeCount = 0;
-
-//            cerr << "+ recv count:" << my_rank << " <- " << dest << ": " << destEdgeCount;
-//            MPI_Recv(&destEdgeCount, 1, MPI_INT, dest, 100, MPI_COMM_WORLD, &status);
-//            cerr << " -" << endl;
-
-//            // 2. recv content
-//            if (destEdgeCount != 0) {
-//                vector<Edge> destEdges(destEdgeCount);
-
-//                cerr << "+ recv data :" << my_rank << " <- " << dest;
-//                MPI_Recv(&destEdges.front(), destEdgeCount, MPI_TYPE_EDGE, dest, 101, MPI_COMM_WORLD, &status);
-//                cerr << " -" << endl;
-
-//                for (int i = 0; i < destEdgeCount; i++) {
-//                    bool isNew = true;
-//                    for (uint j = 0; j < adjacentGraph.size(); j++) {
-//                        if (destEdges[i] == adjacentGraph[j]) {
-//                            isNew = false; break;
-//                        }
-//                    }
-//                    if (isNew) {
-//                        adjacentGraph.push_back(destEdges[i]);
-//                    }
-//                }
-//            }
-//        }
-//    }
-
-    adjacentBlocks = adjacentBlocksNeedSend;
-
-    // add local edges
-    for (uint i = 0; i < localEdges.size(); i++) {
-        bool isNew = true;
-        for (uint j = 0; j < adjacentGraph.size(); j++) {
-            if (localEdges[i] == adjacentGraph[j]) {
-                isNew = false; break;
-            }
-        }
-        if (isNew) {
-            adjacentGraph.push_back(localEdges[i]);
-        }
-    }
-
-    mergeCorrespondentEdges(adjacentGraph);
-    pBlockController->SetLocalGraph(adjacentGraph);
-
-    if (adjacentBlocksNeedRecv.size() > 1 && localEdges.size() > 0) {
-        need_to_send = true;
-    } else {
-        need_to_send = false;
-    }
-}
-
 void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
-    need_to_recv = false;
+//    need_to_recv = false;
 
     for (uint i = 0; i < edges.size(); i++) {
         Edge ei = edges[i];
@@ -479,12 +416,12 @@ void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
         FeatureTable::iterator it;
         for (it = featureTable.begin(); it != featureTable.end(); it++) {
             int id = it->first;
-            cerr << id << ": ( ";
+            cout << "[" << my_rank << "]" << id << ": ( ";
             vector<int> value = it->second;
             for (uint i = 0; i < value.size(); i++) {
-                cerr << value[i] << " ";
+                cout << value[i] << " ";
             }
-            cerr << ")" << endl;
+            cout << ")" << endl;
         }
     }
 }
@@ -495,17 +432,17 @@ void MpiController::updateFeatureTable(Edge edge) {
         value.push_back(edge.start);
         value.push_back(edge.end);
         featureTable[edge.id] = value;
-        need_to_recv = true;
+        need_to_recv = 1;
     } else {
         vector<int> value = featureTable[edge.id];
         if (find(value.begin(), value.end(), edge.start) == value.end()) {
             value.push_back(edge.start);
-            need_to_recv = true;
+            need_to_recv = 1;
         }
 
         if (find(value.begin(), value.end(), edge.end) == value.end()) {
             value.push_back(edge.end);
-            need_to_recv = true;
+            need_to_recv = 1;
         }
 
         featureTable[edge.id] = value;

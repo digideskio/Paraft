@@ -43,8 +43,9 @@ private:
     vector<int> adjacentBlocks;
     void syncFeatureGraph();
     void updateFeatureTable(Edge edge);
-    bool need_to_send;
-    bool need_to_recv;
+    int need_to_send;
+    int need_to_recv;
+    int any_send, any_recv;
 
     // for adjacent graph
     void gatherNeighboringGraph();
