@@ -20,7 +20,7 @@
 %% Legal Notice:
 %% This code is offered as-is without any warranty either expressed or
 %% implied; without even the implied warranty of MERCHANTABILITY or
-%% FITNESS FOR A PARTICULAR PURPOSE! 
+%% FITNESS FOR A PARTICULAR PURPOSE!
 %% User assumes all risk.
 %% In no event shall IEEE or any contributor to this code be liable for
 %% any damages or losses, including, but not limited to, incidental,
@@ -147,7 +147,7 @@
 % graphicx was written by David Carlisle and Sebastian Rahtz. It is
 % required if you want graphics, photos, etc. graphicx.sty is already
 % installed on most LaTeX systems. The latest version and documentation can
-% be obtained at: 
+% be obtained at:
 % http://www.ctan.org/tex-archive/macros/latex/required/graphics/
 % Another good source of documentation is "Using Imported Graphics in
 % LaTeX2e" by Keith Reckdahl which can be found as epslatex.ps or
@@ -273,7 +273,7 @@
 % IEEEtran.cls handling of captions and this will result in nonIEEE style
 % figure/table captions. To prevent this problem, be sure and preload
 % caption.sty with its "caption=false" package option. This is will preserve
-% IEEEtran.cls handing of captions. Version 1.3 (2005/06/28) and later 
+% IEEEtran.cls handing of captions. Version 1.3 (2005/06/28) and later
 % (recommended due to many improvements over 1.2) of subfig.sty supports
 % the caption=false option directly:
 %\usepackage[caption=false,font=footnotesize]{subfig}
@@ -334,6 +334,7 @@
 % Read the url.sty source comments for usage information. Basically,
 % \url{my_url_here}.
 
+\usepackage{color}
 
 
 
@@ -395,68 +396,81 @@ feature tracking; parallel graph;
 
 \section{Introduction}
 % no \IEEEPARstart
-The increasing computational power and accessibility to supercomputers have brought scientists the capability to simulate physical phenomena of unprecedented complexity at high spatial and temporal resolution. However, these large-scale time-varying data sets can take gigabyte or even terabytes of space to preserve. One promising solution to the problem is to introduce feature extraction and tracking techniques. Instead of duplicating raw data along the exploring process, dealing with features of interest requires memory space that is several orders of magnitude smaller than the raw data would take.
-However, extracting and tracking features in distributed vortical datasets is a non-trivial task. Existing researches on feature-based data visualization have been done mostly focusing on decomposing features using quantitative measures such as size, location, shape or topology information, etc. These measures cannot be applied to distribute volume data directly since vortical features are consist of certain amount of voxels and are very likely to span over blocks as they evolve over time. Therefore existing quantitative measures of partial data scattered in different data blocks cannot be used to describe an integrated feature, unless the distribution of partial features can be obtained beforehand. 
+The accessibility to supercomputers with increasing computing power has enabled scientists to simulate physical phenomena of unprecedented complexity and resolution. However, these large-scale time-varying data sets can take giga- or even tera-bytes of space to preserve. One promising solution to the problem is to introduce feature extraction and tracking techniques. Instead of duplicating raw data along the exploring process, dealing with features of interest typically requires memory space that is several orders of magnitude smaller than the raw data.
+However, large vortical data sets are typically presented and processed in a distributed fashion simply because of the shear size. Extracting and tracking features embedded in a distributed vortical data set is a non-trivial task. Existing researches on feature-based data visualization have been done mostly focusing on decomposing features using quantitative measures such as size, location, shape or topology information, and so on. These measures cannot be applied to distributed volume data directly since vortical features consist of certain amount of voxels and are very likely to span over distributed data blocks as they evolve over time. Therefore existing quantitative measures of partial data scattered across different data blocks cannot be used to describe an integrated feature, unless the distribution of partial features can be obtained beforehand.
 
-To obtain the feature distribution, a connectivity map of each feature should be generated and maintained. In this paper, we proposed an approach for creating and maintaining feature residual, as well as connectivity information utilizing parallel graphs. Comparing to previous approaches, which generates and maintains the global features information in a single host node, our approach can be done locally that only involves residual data blocks of target features. This requires least communication overhead and avoids the potential bottleneck on the host node. We demonstrate the effectiveness of this method with three vortical flow datasets and the scalability of our system in a distributed environment.
+To obtain the distribution information of features, a connectivity map of each feature should be generated and maintained. In this paper, we propose an approach to creating and maintaining feature residual information as well as connectivity information using parallel graphs. Comparing to the existing approaches, which generate and maintain the global feature information in a single host node, our approach can be done locally that only involves residual data blocks of target features. This requires least communication overhead and avoids the potential link contention. We demonstrate the effectiveness of this method with three vortical flow data sets and the scalability of our system in a distributed environment.
 
 % You must have at least 2 lines in the paragraph with the drop letter
 % (should never be an issue)
 
 \section{Related Work}
-Extraction and tracking are two closely related problems in feature-based visualization. Although many feature tracking algorithms have been introduced, most of them extract features from single time steps and then try to associate them between consecutive time steps. Silver and Wang [26] considered threshold connected components as their features, and tracked overlapped features between successive time steps by calculating their differences. Octree was employed in their method to speed up the performance and the criteria they used were domain dependent. Reinders et al. [24] introduced a prediction verification tracking technique that calculates a prediction by linear extrapolation based on the previous feature path, an candidate will be added to the path if it corresponds to that prediction. Ji and Shen [17] introduced a method to track local features from time-varying data by using higher-dimensional isosurfacing. They also used a global optimization correspondence algorithm to improve the robustness of feature tracking [16]. Caban et al. [3] estimated  a tracking window and then tried to find the best match between that window and different sub-volumes of subsequence frames by comparing their distance of textural properties.  Also, Bremer et al. [1] described two topological feature tracking methods, one employs Jacobi sets to track critical points while another uses distance measures on graphs to track channel structures. 
+Extraction and tracking are two closely related problems in feature-based visualization. Although many feature tracking algorithms have been introduced, most of them extract features from individual time steps and then try to associate them between consecutive time steps. Silver and Wang [26] defined threshold connected components as their features, and tracked overlapped features between successive time steps by calculating their differences. Octree was employed in their method to speed up the performance and the criteria they used were domain dependent. Reinders et al. [24] introduced a prediction verification tracking technique that calculates a prediction by linear extrapolation based on the previous feature path, and a candidate will be added to the path if it corresponds to that prediction. Ji and Shen [17] introduced a method to track local features from time-varying data by using higher-dimensional iso-surfacing. They also used a global optimization correspondence algorithm to improve the robustness of feature tracking [16]. Caban et al. [3] estimated a tracking window and then tried to find the best match between that window and different sub-volumes of subsequence frames by comparing their distance of textural properties.  Also, Bremer et al. [1] described two topological feature tracking methods, one employs Jacobi sets to track critical points while another uses distance measures on graphs to track channel structures.
 
-Most of the above methods extract features from each time step independently and then apply the correspondence calculation. This could be very slow especially when the size of dataset becomes large. Muelder and Ma [19] introduced a prediction-correction approach that first predicts feature region based on the centroid location of previous time steps, then correcting the predicted region by adjusting the surface boundaries via region growing and shrinking. This approach is appealing because of its computing efficiency and the reliability in an interactive system.
+Most of the aforementioned methods extract features from each time step independently and then apply the correspondence calculation. This could become very slow when the size of data becomes large. Muelder and Ma [19] introduced a prediction-correction approach that first predicts feature region based on the centroid location of previous time steps, and then corrects the predicted region by adjusting the surface boundaries via region growing and shrinking. This approach is appealing because of its computing efficiency and the reliability in an interactive system.
 
-From the parallel processing side of perspective, most of the existing feature extraction and tracking approaches rely on some form of global feature information, while in distributed environment must be communicated among processors to obtain. Chen and Silver [] introduced a two stage partial-merge strategy, exchanging local connectivity information using Binary-tree merge, then a visualization server correlate local data to create a global data. This approach is not scalable since half of the processors will become idle after each merge. It is also unclear that how the visualization server can efficiently collect local connectivity information from non-server processor, since gathering operation is typically very expensive given a large number of processors. 
+From the perspective of parallel processing, most of the existing feature extraction and tracking approaches rely on certain forms of global feature information which, however, must be obtained via communication in a distributed environment. Chen and Silver [] introduced a two stage partial-merge strategy using the master-slave paradigm. The slaves first exchange local connectivity information using Binary-tree merge, and then a visualization host collects and correlates the local information to generate the global connectivity. This approach is not scalable since half of the processors will become idle after each merge. It is also unclear how the visualization host can efficiently collect local connectivity information from non-server processors, since gathering operation is typically very expensive given a large number of processors.
 
-The approach proposed in this paper follows a different paradigm. Instead of sending local connective information back to the host, the local connectivity information are computed and preserved only in nodes where correspondent feature resides in. There is no global connectivity information preserved in the host node and it only acts as the interface from where the criterion of feature of interest is broadcast. By doing this, the computation of merging local connectivity information is distributed to those non-host nodes and hence effectively reduces the potential communication bottleneck on the host node. What's more, there's no need to set a barrier and wait before all connectivity information was send back to the host and thus if there exists features that span over a large number of nodes but was not selected by the user, the potentially long computation time for these features will not block the whole process. This makes it ideal for an interactive system, where users can select the feature of interest and instantly receive the visual feedback as the feature evolves.
+The approach proposed in this paper follows a different strategy. Instead of sending local connective information back to the host, the local connectivity information is computed and preserved only in the nodes where correspondent features reside. There is no global connectivity information preserved in the host, and the host only serves as an interface to broadcast the criterion of feature of interest to the other nodes. In this way, the computation of merging local connectivity information is distributed to the slaves and hence effectively reduces the potential communication bottleneck on the host.
+Moreover, our approach does not need a global synchronization for gathering all local connectivity information at the host, and thus avoid potentially long computation time caused by features spanning over a large number of nodes. 
+%In addition, there are no needs to set a barrier to wait for all connectivity information being sent back to the host and thus if there exists features that span over a large number of nodes but was not selected by the user, the potentially long computation time for these features will not block the whole process.
+This makes it ideal for an interactive system, where users can select the features of interest and instantly receive the visual feedback as the features evolves.
 
-\textbf{[TODO] Add related work for parallel graph algorithms and data structures. (half page)}
+\textcolor{red}{[TODO] Add related work for parallel graph algorithms and data structures. (half page)}
 
 \section{Algorithm Design}
-Though features can be extracted within individual processors using the aforementioned methods, they might also span over multiple data blocks, which is unavoidable as the number of processors increases. To perform feature extraction and tracking over a distributed volume data set, information like how partial features are located and connected should be recorded and maintained. Feature descriptors such as size, curvature or velocity of partial features are not shared among processors, thus connectivity information makes it possible to gather from each part of the feature resides in different processors these descriptions such that feature tracking or and similarity test could be achieved. 
+Though features can be extracted within individual processors using the conventional methods, they might also span over multiple data blocks, which is unavoidable as the number of processors increases. To extract and trace a feature over a distributed volume data set, we need to build and maintain the connectivity information of the feature across multiple nodes. As feature descriptors, such as size, curvature, and velocity, are distributed among processors, connectivity information can facilitate us to obtain the description of a feature from neighboring processors, and enable more advanced operations such as similarity evaluation.
+%makes it possible to gather from each part of the feature resides in different processors these descriptions such that feature tracking or and similarity test could be achieved.
+However, it typically requires data exchanges among processors to build and maintain the connectivity information, and thus incurs extra communication cost. To design a proper communication scheme for better performance and scalability, we carefully consider the following three factors in our design:
 
-However, maintaining such connectivity information requires data exchange among different processors and hence will introduce extra communication cost. To design a proper communication schema for better performance and scalability, the following three factors should be carefully considered:
-
-\begin{enumerate}
+\begin{itemize}
 \item How many communications are required to complete the connectivity graph;
 \item How many processors will be involved in one communication;
 \item How much data will be sent and received in one communication.
-\end{enumerate}
+\end{itemize}
 
-In the following sections, we will give a detailed description on how to create and maintain such connectivity information using an undirected unweighted graph to achieve minimum cost over the above three factors.
+In the following sections, we will give a detailed description on how to build and maintain such connectivity information using an undirected unweighted graph to minimize the cost over the above three factors.
 
 \subsection{Feature Extraction}
-Feature extraction is a process that first detects features, then calculates quantitative attributes describing its characteristics. In general, features can be any interesting pattern, structure, or object that are considered relevant for investigation. In our application, features are defined as the collection of voxices that are located within certain isosurface. Such volumetric feature could be extracted by common techniques such as region growing, geometry or topology based clustering, or other domain specific algorithms as described in [] [] [] []. 
+Feature extraction is a process that first detects a feature, and then calculates quantitative attributes characterizing the feature. In general, a feature can be any interesting pattern, structure, or object that is considered relevant for investigation. In our application, a feature is defined as the collection of voxices encompassed by a certain iso-surface. Such a volumetric feature could be extracted by conventional techniques such as region growing, geometry or topology based clustering, or other domain specific algorithms as described in [] [] [] [].
 
-In our work, a standard region-growing algorithm [14] is used for partitioning the original volume data into an initial set of features. This can be done by first spreading a set of seeding points inside the volume, and then clustering voxices into separate regions, each regarded as a single feature. Usually, scientists prefer to focus on features that are meaningful as dictated by their underlying research goal. Potential features detected by the region-growing algorithm, however, are often cluttered and relatively coarse, which might be far from expected. On the other hand, reducing the number of tracked features makes sense from the perspective of computational expense. Therefore, after the potential features set was generated, an iterative process of refinement could be applied to refine the result. 
+In our work, we use a standard region-growing algorithm [14] to partition the original volume data into an initial set of features. This can be done by first spreading a set of seeding points inside the volume, and then clustering voxices into separate regions. Each region is regarded as a single feature. Usually, scientists prefer to focus on features that are meaningful as dictated by their underlying research studies. Potential features detected by the region-growing algorithm, however, are often cluttered and contain noise, which might be far from expected. Therefore, an iterative refinement process is conventionally applied to improve the results after the potential feature set being generated. On the other hand, we note that the refinement process can typically reduce the number of features, which also can lower computational cost of tracking.
 
-Existing research [27] has detailed the applicability and performance of context-based 3D shape descriptors and their corresponding retrieval methods. Based on the discussion in this work, we can characterize the interactive refinement process as primarily concerned with those computationally efficient yet with significant discriminating deformation robust descriptors, such as size, location, or skeletal curvature. After specific features have been extracted from a single time step, their evolution can be tracked over time using a prediction-correction approach. The prediction of features' region in space can be made based on the location of features reside in consecutive time steps. Once prediction is made, the actual region could be obtained by adjusting the surface of the predicted region: first shrink the edge surface points to obtain the mutual region between consecutive time steps, then use of a technique based on region-growing to obtain the actual region.
+Tangelder and Veltkamp [27] presented the applicability and performance of context-based 3D shape descriptors and the corresponding retrieval methods. Their work suggested that when designing an interactive refinement process, we need to carefully select a set of feature descriptors, which should be deformation robust, such as size, location, or skeletal curvature. In addition, we also need to consider computational efficient in our design. 
+%Based on the discussion in their work, we can characterize the interactive refinement process as primarily concerned with those computationally efficient yet with significant discriminating deformation robust descriptors, such as size, location, or skeletal curvature. 
+After specific features have been identified from a single time step, we can track their evolution over time using a prediction-correction approach~\cite{}. The feature locations in a future time step can be predicted from the location of features in the previous time steps. Once prediction is made, the actual region can be obtained by adjusting the surface of the predicted region: first shrink the edge surface points to obtain the mutual region between consecutive time steps, and then use of a region-growing method to generate the refined region.
 
-This prediction-correction approach was proved effective and efficient for single processor based feature tracking [32]. However, as the size of the volume data grows such that the original data cannot fit into one processor, a cluster of multiple processors need to be used to process the data in parallel. One challenge to parallelize the aforementioned approach lies in that, since volumetric features may span over multiple processors, the global feature descriptions could not be obtained unless they can be shared and merged in a efficient way, as partial features reside in different nodes will be operated independently. 
+This prediction-correction approach was proved effective and efficient for tracking feature on a single processor [32]. However, when the size of the volume data becomes too large to be fit into one processor, a cluster of multiple processors are often needed to process the data in parallel. One challenge to parallelize the tracking approach lies in that it can be difficult to obtain the global feature descriptions unless they can be shared and merged in an efficient way. This is because volumetric features may span over multiple processors and partial features on different nodes are operated independently.
 
-An intuitive way of exchanging such feature information is to first, find how features are connected when they span over multiple processors, and then merge feature descriptions according to the connectivity information.
+An intuitive way of exchanging such feature information is first to find how features span over multiple processors, and then to merge feature descriptions according to the connectivity information.
 
-\subsection{Creating Partial connectivity graph}
-If we try to partition a large volumetric dataset using a regular processor grid, it is very likely that some of the features will be cut off on the boundary surface of its residing block. For these multinational features, the cross-sectional area on the block boundary surface should match. Leveraging this property, we could connect separate parts of a feature resides in adjacent data blocks by comparing their sectional area on the correspondent boundary surface. 
+\subsection{Creating Partial Connectivity Graph}
+If we partition a volumetric data set into the blocks across a regular processor grid, it is very likely that some features can cross multiple processors and blocks. We note that the cross-section of such a feature on the boundary of two adjacent blocks should match. Leveraging this property, we could connect separate parts of a feature on the adjacent data blocks by comparing their sections on the correspondent boundary surface.
 
-Since data is distributed, vortices in adjacent blocks are invisible to the current processor. Though exchanging all voxices on the sectional area would be sufficient for finding all possible matches, we choose to exchange more abstract data, e.g. the min-max coordinate of and the geometric centroid of the cross-sectional area to reduce the amount of data being sent over the network. The min-max coordinates are not optional because they ensure correct connectivity for some special cases where one cross-sectional area is surrounded by another concave or hollow area whose centroid happen to be the same, as depicted in figure 1.
+Since data is distributed, each processor is not aware of the partial features identified on the other processors. Exchanging the voxels on the sectional area between two adjacent processors would be sufficient for finding the possible matches of partial features between these two processors. However, we choose to exchange more abstract data, that is the minimal and maximal (min-max) coordinate values and the geometric centroid of the cross-sectional area, to reduce the amount of data exchanged over network. The min-max coordinate values are not optional because they ensure correct connectivity for some special cases where one cross-sectional area is surrounded by another concave or hollow area whose centroid points happen to be the same, as depicted in Figure~\ref{fig:special}.
 
-\begin{figure}[htpb]
+\begin{figure}[ht]
 \centering
-\includegraphics[width=2.5in]{figure1@2x.png}
-\caption{A special case where two features share a same centroid}
+\includegraphics[width=0.9\linewidth]{figure1@2x.png}
+\caption{A special case where two features share a same centroid on the section.}
+\label{fig:special}
 \end{figure}
 
-A voxel-width "ghost surface" that stores boundary surface belonging to neighboring blocks might help to achieve voxel-wise matching for partial features. However, for non-post-processing situation where data set are not pre-determined, maintaining such "ghost surface" requires frequent inter-process communication and is considered expensive for data generated in real-time. Instead, a ±1 voxel tolerance was given in our work when trying to match two geometric centroids on the boundary surfaces. That is, if the neighboring centroid is within the eight direct neighbor of the domestic centroid, they are considered a match and the two separated parts were belong to the same feature.
+A voxel-width ``ghost surface" that stores boundary surface belonging to neighboring blocks might help to achieve voxel-wise matching for partial features. However, 
+%for non-post-processing situation where data set are not pre-determined, 
+maintaining such ghost surfaces requires frequent inter-process communication and is considerably expensive for data generated in real-time. 
+%Instead, a ±1 voxel tolerance was given in our work when trying to match two geometric centroid points on the boundary surfaces. That is, if the neighboring centroid is within the eight direct neighbor of the domestic centroid, they are considered a match and the two separated parts were belong to the same feature.
+Instead, we use a simplified approach which requires much less communication cost. That is, if the spatial distance between two centroid points of two neighboring partial features is less than two voxels, the two features are considered a match and belong to the same feature.
 
-The creation of partial connectivity graph will not introduce extra computational cost as it could be done along with the region growing process. A new edge is appended to the existing graph when a local feature touches the block boundary, taking the ID of the target block that shares a same boundary surface as the ending vertex, as well as the global index of the centroids point as edge value.
+The creation of partial connectivity graph will not introduce extra computation cost as it can be done along with the direction of region growing. A new edge is appended to the existing graph when a local feature touches the block boundary.
+%taking the ID of the target block that shares a same boundary surface as the ending vertex, as well as the global index of the centroid points as edge value.
+In the graph, the new edge connects one existing block with the new detected block of a feature. The ending vertices of an edge is denoted using the block indices. Thus the ID of the new detected block is assigned as one ending vertex of the new edge. In addition, the global index of the centroid point is assigned as the edge value. 
 
-The detailed algorithm of creating local partial connectivity graph is given in Algorithm 1.
+Algorithm~\ref{alg:local} shows the detailed algorithm of creating local partial connectivity graph.
 %------------------------------------------------
 \begin{algorithm}
 \caption{Creating Partial Connectivity Graph}
+\label{alg:local}
 \begin{algorithmic}[1]
 \STATE $edgeList \leftarrow new List()$
 \STATE $featureList \leftarrow new List()$
@@ -492,25 +506,30 @@ The detailed algorithm of creating local partial connectivity graph is given in 
 \end{algorithm}
 %------------------------------------------------
 
+\textcolor{red}{
 // TODO (put to result, performance analyze)
-Memory cost, each feature on boundary will use two INTs, 1 as global centroids coordinate, the other as target node number. even if there's 1000 features on the boundary, it won’t cost more than 1000 * 5 * 4 = 20mb to store this graph, neglectable compare to the volume data itself. (But kind of large if used for communication)
+Memory cost, each feature on boundary will use two INTs, 1 as global centroids coordinate, the other as target node number. even if there's 1000 features on the boundary, it would cost more than 1000 * 5 * 4 = 20mb to store this graph, neglectable compare to the volume data itself. (But kind of large if used for communication)
+}
 
 \subsection{Creating Global Connectivity Graph}
 \subsubsection{The naive solution}
-To obtain the global description of a partitioned feature, local connectivity graph need to be merged with those derived from their neighboring processors, after they were individually created. A naive approach to gather local connectivity graphs is to send all edges sharing the same ending vertex to that target processor, and to merge edges sent from neighboring processor. Two edges are merged if they suffice the following three condition:
+%To construct the global description of a partitioned feature, local connectivity graphs need to be merged with those derived from their neighboring processors, after they were individually created. A naive approach to gather local connectivity graphs is to send all edges sharing the same ending vertex to that target processor, and to merge edges sent from neighboring processor. Two edges are merged if they suffice the following three condition:
 
-\begin{enumerate}
+Local connectivity graphs need to be merged to construct the global description of a partitioned feature. A naive approach to gathering local connectivity graphs is to let each processor exchanges the shared edges with its neighbors. After exchanges, two edges are merged at a processor if they satisfy the following three conditions:
+
+\begin{itemize}
 \item The starting and ending vertices are reversely matched;
 \item The min-max boundary coordinate do match;
-\item Edge centroid located within direct neighbors.
-\end{enumerate}
+\item Edge centroid is located within direct neighbors.
+\end{itemize}
 
-Recall that the starting vertex of an edge represents the current processor ID and ending vertex the ID of target processor, whose data block is adjacent to the one that reside in the current processor, and the edge value is encoded by the global coordinate of the geometric centroid and min-max boundary on the shared boundary surface and. If two edges match to each other, the two partial features must share a same boundary surface with the same centroid and bounding region. In other word, these two partial features were cut off when partitioning the original data set, and should be considered the same feature sharing a same feature ID.
+Recall that the starting vertex of an edge represents the current processor ID, and the ending vertex represents the ID of a neighboring processor whose partial feature is adjacent to the local one. The edge value represents the global coordinate of the geometric centroid and the min-max boundary on the shared boundary surface. If two edges match to each other, the two partial features must share a same boundary section with the same centroid and section region. In other word, these two partial features are resulted by partitioning a original feature, and should be considered the same feature sharing a same feature ID.
 
-The detailed algorithm of merging matched edges (henceforth referred to as REDUCE) is given in Algorithm 2.
+Algorithm~\ref{alg:merge} shows the detailed process to merge matched edges (henceforth referred to as \emph{REDUCE}).
 %------------------------------------------------
 \begin{algorithm}
 \caption{REDUCE: Merging Matched Edges}
+\label{alg:merge}
 \begin{algorithmic}[1]
 \REQUIRE $localEdges$, $recievedEdges$
 \FOR {each $ei$ in $localEdges$}
@@ -530,31 +549,44 @@ The detailed algorithm of merging matched edges (henceforth referred to as REDUC
 \end{algorithm}
 %------------------------------------------------
 
-This naive solution may work for data set with small sized features, however, if we consider the case that there exists a long curly feature inside the volume and was partitioned evenly over the grid. In order to gather and merge the whole feature, the processors need to talk to its neighbor and spread the edge exchange operation one by one like that in the "telephone" game. This takes O(N) times communication to connect a single feature, where N is the number of total number of processors in the grid. And consequently O(nf * N) times communication, where nf is the number of features, for all the features within one time step. Also, since one processor has no idea if it will receive any edges from its adjacent processors, it is hard to schedule the communication process.
+This naive solution may work for data sets with small features. However, if there are long curly features partitioned evenly over the process grid,
+%In order to gather and merge the whole feature, each processor needs to talk to its neighbors and spread the edge exchange operation one by one like that in the "telephone" game.
+each processor needs to consecutively communicate with its neighbors to inclemently gather and merge a global feature. 
+This requires O(${N_p}$) communications to connect a single feature, where ${N_p}$ is the number of processors in the grid. Consequently, the total communication cost is O(${N_f \times N_p}$) times communication, where ${N_f}$ is the number of features within one time step. In addition, since one processor cannot predict how many edges it will receive from its adjacent processors, it is hard to schedule the communication process.
 
 \subsubsection{The centralized approach}
-A possible solution to reduce the number of times required for merging all edges is to employ the master-slave hierarchy by introducing a separate host processor. When the feature extraction process is done, local connectivity graphs with edges representing how many features have touched the block boundary as well as where they are located on the surface within each individual processor will be gathered to the host processor. After this \textit{Gather} operation is done, i.e. host processor has collected all local connectivity graphs, the REDUCE operation starts to merge edges from each partial graph to a single global connectivity graph.
+A possible solution is to use a master-slave hierarchy to reduce the number of communication required for merging all edges. The master-slave hierarchy can be constructed using a separate host processor. %When the feature extraction process is done, local connectivity graphs with edges representing how many features have touched the block boundary as well as where they are located on the surface within each individual processor will be gathered to the host processor. 
+When the feature extraction process is done, the edges of a local graph represents the number of features across the block boundary, and also encodes the location information of each local feature. All local graphs are then gathered to the host processor. 
+After this \emph{Gather} operation is done, that is the host processor has collected all local graphs, the REDUCE operation starts to merge the edges from each partial graph to construct a single global connectivity graph.
 
-The merit of this centralized approach lies in that it requires inter-processor communication only once. What is more, a global graph of feature information could be preserved in the host processor, which makes it easy for the host to response directly without pulling information from slave processors a second time. However the drawback of this approach is also obvious. Since all partial connectivity graphs preserved in each processor will be sent to a single processor, there exists potential bottlenecks, both communication and computational, on the host processor.
+The merit of this centralized approach lies in that it requires inter-processor communication only once. 
+%What is more, a global graph of feature information could be preserved in the host processor, which makes it easy for the host to response directly without pulling information from slave processors a second time. 
+Moreover, the global graph of feature information can be preserved in the host, and the host can response feature queries directly without pulling information the slaves again. 
+%However the drawback of this approach is also obvious. Since all partial connectivity graphs preserved in each processor will be sent to a single processor, there exists potential bottlenecks, both communication and computational, on the host processor.
+However, this approach has an obvious drawback. Since all partial graphs are sent to the host, there exists potential bottlenecks, both in communication and computation, on the host.  
 
 \subsubsection{The decentralized approach}
-A better solution is to decentralize from REDUCE on a single host processor to all processors that are available. After the feature extraction process is done and so does the creation of local connectivity graphs, an \textit{Allgather} process starts to exchanging all local connectivity graphs within each processor to all the others. Each processor will first collect a full copy of all local connectivity graphs followed by the same REDUCE process to merge the edges into a single concise connectivity graph. 
+A better solution is to decentralize from REDUCE on a single host processor to all processors that are available. After the feature extraction process is done and so does the creation of local connectivity graphs, an \emph{Allgather} process starts to exchange all local connectivity graphs within each processor to all the others. Each processor will first collect a full copy of all local connectivity graphs followed by the same REDUCE process to merge the edges into a single concise connectivity graph.
 
-\begin{figure}[htpb]
+\begin{figure}[ht]
 \centering
-\includegraphics[width=1.5in]{figure3.png}
-\includegraphics[width=1.5in]{figure4.png}
-\caption{Left: each processor gather partial graphs from all the other processors; Right, A special case where two features share a same centroid}
+\includegraphics[width=0.45\linewidth]{figure3.png}
+\includegraphics[width=0.45\linewidth]{figure4.png}
+\caption{Left: each processor gather partial graphs from all the other processors; Right: a special case where two features share a same centroid.}
+\label{fig:decent}
 \end{figure}
 
-Though the "redundant" host processor is no more required when applying for computation resources, this approach does not actually solve the bottleneck problem since now every processor is now acting like a host since they still need to gather all partial graphs and try merging them together. For real world data set, however, it is rarely the case that a single feature will span over every processor. In other word, it is unnecessary to gather edges of feature that are not reside in current processor. To reduce the redundant communications with every other processor in the grid, the decentralized approach could be further improved such that we only consider those processors that are directly adjacent to the current one. That is, each processor only talks to its direct neighbors and shares information with them regardless what is happening outside. 
+\marginpar{\textcolor{red}{where is the figure~\ref{fig:decent} referred?}}
 
-For a regularly partitioned volumetric data set, there are only 6 direct neighbors for each processor (for processor on the "edge" of the grid there are even less). Instead of gathering connectivity information from all processors in the grid, only graphs reside in neighboring processors will be gathered. This could be considered as a higher level of region growing, starting from one seeding processor and then grows from its adjacent processors, exchanging and merging connectivity information in a bread-first fashion until all cross-boundary features are connected. 
+Though the ``redundant" host processor is no more required when applying for computation resources, this approach does not actually solve the bottleneck problem since now every processor is now acting like a host since they still need to gather all partial graphs and try merging them together. For real world data set, however, it is rarely the case that a single feature will span over every processor. In other word, it is unnecessary for a processor to gather edges of features that are not local. To reduce the redundant communications with every other processor in the grid, the decentralized approach could be further improved such that we only consider those processors that are directly adjacent to the current one. That is, each processor only talks to its direct neighbors and shares information with them regardless what is happening outside.
 
-The detailed scheduling algorithm is depicted in Algorithm 3. 
+For a regularly partitioned volumetric data set, there are at most six direct neighbors for each processor. Instead of gathering connectivity information from all other processors in the grid, each processor only gathers local graphs of neighboring processors. This could be considered as a higher level of region growing, which starts from one seeding processor and then grows to its adjacent processors by exchanging and merging connectivity information in a bread-first fashion until all cross-boundary features are connected.
+
+The detailed scheduling algorithm is depicted in Algorithm~\ref{alg:schedule}.
 %------------------------------------------------
 \begin{algorithm}
 \caption{Processor Level Region Growing}
+\label{alg:schedule}
 \begin{algorithmic}[1]
 \REQUIRE $adjacentProcessors$, $localEdges$
 \STATE $toSend, toRecv \leftarrow true$	// init scheduling flags
@@ -588,25 +620,49 @@ The detailed scheduling algorithm is depicted in Algorithm 3.
 \end{algorithm}
 %------------------------------------------------
 
-For the worst case that a feature spans over all of the processors, it takes O(C∛(|N|)) time to finish the search for connected processors, much faster than the previous O(N) time for all gathering among all processors.
+For the worst case that a feature spans over all of the processors, it takes O(C∛(|N|)) time \marginpar{\textcolor{red}{what is this?}} to finish the search for connected processors, much faster than the previous O(N) time for all gathering among all processors.
 
 \subsubsection{The hybrid approach}
-We can still take a step further to optimize the aforementioned decentralized approach. As volume data evolves over time, the internal features may vary but should not change drastically in size and shape nor location if the time interval for sampling is short enough. Thus we can apply the prediction-correction approach to further reduce the number of times required to complete the connectivity graph. 
+We can still take a step further to optimize the aforementioned decentralized approach. As volume data evolves over time, the internal features may vary but should not change drastically in size and shape nor location if the time interval for sampling is sufficiently small. Thus we can apply the prediction-correction approach to further reduce the number of times required to complete the connectivity graph.
 
-Every time (say, ti) when the global connectivity graph is completed, new local communicators will be updated for the next time step (ti+1), with the union of processors that share a same edge with the current processor, as shown in figure x. Edges from these processors are required to complete the global connectivity graph anyway, no matter which approach is used. Hence, for these must-involve processors, we apply the Decentralize-I approach, allowing the minimum one-time synchronization to finish gathering all edges necessary for updating the connectivity graph based on the graph created at previous time step (t). Then, the processor-level region growing explained in 3.3.3 is applied to extend the "boundary" of processes, obtaining newly connected processors caused by the evolution of the original volume. Beside, only those edges that are changed and not synchronized will be sent. This makes sure we keep the amount of data being sent over network to the minimum necessity.
-The detail algorithm of the hybrid approach is given in Table x.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\linewidth]{blank.png}
+\caption{}
+\label{fig:improve}
+\end{figure}
+
+For every time step, $t_i$, when the global connectivity graph is completed, new local communicators will be updated for the next time step, $t_{i+1}$, with the union of processors that share a same edge with the current processor, as shown in Figure~\ref{fig:improve}. However,the edges from these processors are required to complete the global connectivity graph, no matter which approach is used. Hence, for these must-involve processors, we apply the Decentralize-I approach, allowing the minimum one-time synchronization to finish gathering all edges that are necessary for updating the connectivity graph based on the graph created at the previous time step, $t$. Then, the processor-level region growing explained in 3.3.3 is applied to extend the ``boundary" of processes, obtaining newly connected processors caused by the evolution of the original volume. In addition, only those edges that are changed and not synchronized will be sent. This ensure that we minimize the amount of data being sent over network.
+The detail algorithm of the hybrid approach is given in Algorithm~\ref{alg:improve}.
+
+%------------------------------------------------
+\begin{algorithm}
+\caption{TBA}
+\label{alg:improve}
+\begin{algorithmic}[1]
+\STATE	
+\end{algorithmic}
+\end{algorithm}
+%------------------------------------------------
 
 \section{Application}
 
-\subsection{Feature selection and refinement}
-Since the feature extraction are done independently within each PE, one of the potential function need to be addressed is that how do they know if their adjacent processor was has the feature to be highlighted and whether it has the other part of the features. Intuitively, sending a message to the adjacent PE whenever a feature was detected touching the surface boundary can do this. But if the target feature spans over multiple PEs, this sending/receiving procedure would take several rounds to end. This is potentially a big problem when the PE/Volume ratio is relatively high such that each feature spans over a lot of PEs. Another problem is that, if a PEs has two selected features whose connectivity info arrives in different rounds, it requestes to calculate twice, which again, will become a problem when PE/Volume ratio is large.
+\subsection{Feature Selection and Refinement}
+To allow a user to select or highlight certain features is commonly required in various applications. 
+Since the feature extraction is performed independently within each PE, 
+%one of the potential function need to be addressed is that how do they know if their adjacent processor was has the feature to be highlighted and whether it has the other part of the features. 
+we need to design a method to let each processor know if the features on its adjacent processor are selected or not.  
+Intuitively, we can implement this by sending a message to the adjacent PE whenever a feature was detected to touch the surface boundary. But if the target feature spans over multiple PEs, this sending/receiving procedure would take several rounds to end. This is potentially a big problem when the PE/Volume ratio is relatively high such that each feature spans over a lot of PEs. Another problem is that, if a PE has two selected features whose connectivity information arrive in different rounds, it requests to compute twice, which again, will become a problem when PE/Volume ratio is large.
 
-By introducing the global connectivity graph in our approach, whenever part of the feature was selected, the unique feature id will be sent back to host processor and then broadcast to all PEs contains it, and only in one rounds, the selection can be finished.
+By introducing the global connectivity graph in our approach, whenever part of the feature was selected, the unique feature id will be sent back to the host processor and then be broadcasted to all PEs containing it. Thus, the selection can be finished only in one round.
 
-Based on the coordinate user specified or clicked on the volume rendering result, the residual processor as well as the feature, if the point was included by, could be obtains. Then the host processor can simply broadcast the selected feature id to all those processors who has the partial feature such that they can be highlighted.
+Based on the coordinates user specified or clicked on the volume rendering result, 
+%the residual processor as well as the feature, if the point was included by, could be obtains. 
+we can identify the user selected processor and feature.
+Then the host processor imply broadcasts the selected feature id to all those processors who has the partial feature to be highlighted.
 
 
-\subsection{Feature tracking}
+\subsection{Feature Tracking}
 Before you begin to format your paper, first write and save the content as a separate text file. Keep your text and graphic files separate until after the text has been formatted and styled. Do not use hard tabs, and limit use of hard returns to only one return at the end of a paragraph. Do not add any kind of pagination anywhere in the paper. Do not number text heads-the template will do that for you.
 
 Finally, complete content and organizational editing before formatting. Please take note of the following items when proofreading spelling and grammar:
@@ -616,9 +672,12 @@ Finally, complete content and organizational editing before formatting. Please t
 \subsection{Visualization Result}
 
 \section{Conclusion}
-In this paper, we proposed a decentralized approach that all feature connectivity information are created and preserved in distributed processors. Traditional approaches perform connectivity test on each processor and subsequently correspond them in a host processor after gathering all or partially merged connectivity information. Our approach does not follow this paradigm. Rather, instead of sending local connectivity information back to the host, they are computed and preserved only in processors where correspondent feature resides in. There is no copy of the global feature information preserved in the host processors and it only acts as the interface from where the criterion of feature of interest is broadcast. By doing this the computation of merging local connectivity information is distributed to the non-host s and it effectively reduces the potential communication bottleneck on the host processor. What's more, there's no need to set a barrier and wait before all connectivity information was send back to the host, thus if one of the features spans over a large number of processors but was not selected by the user, the potentially long computation time for this feature will not be considered. This makes it ideal for an interactive system, where users can select the feature of interest and instantly receive the visual feedback as the feature evolves.
+In this paper, we proposed a decentralized approach that all feature connectivity information are created and preserved among distributed processors. Traditional approaches perform connectivity test on each processor and subsequently correspond them in a host processor after gathering all or partially merged connectivity information. Our approach does not follow this paradigm. Rather, %instead of sending local connectivity information back to the host, they are computed and preserved only in processors where correspondent feature resides in. 
+instead being sent back to the host, the local connectivity information are computed and preserved only in the local processor. 
+There is no copy of the global feature information preserved in the host, and the host only acts as the interface from where the criterion of feature of interest is broadcast. In this way, the computation of merging local connectivity information is distributed to the slaves, which can effectively remove the potential communication bottleneck on the host processor. 
+Moreover, there's no need to set a barrier and wait for all connectivity information being sent back to the host, thus if one of the features spans over a large number of processors but was not selected by the user, the potentially long computation time for this feature will not be considered. This makes it ideal for an interactive system, where users can select the feature of interest and instantly receive the visual feedback as the feature evolves. \marginpar{\textcolor{red}{unreadable. it seems to repeat the previous sentences.}}
 
-% An example of a floating table. Note that, for IEEE style tables, the 
+% An example of a floating table. Note that, for IEEE style tables, the
 % \caption command should come BEFORE the table. Table text will default to
 % \footnotesize as IEEE normally uses this smaller font for tables.
 % The \label must come after \caption as always.
@@ -753,7 +812,7 @@ A. Pobitzer, R. Peikert, R. Fuchs, B. Schindler, A. Kuhn, H. Theisel, K. Matkovi
 F. H. Post, B. Vrolijk, H. Hauser, R. S. Laramee, and H. Doleisch. The state of the art in flow visualization: Feature extraction and tracking. Comput. Graph. Forum, 22(4):775–792, 2003.
 
 \bibitem{}
-K. F. Reinders, K. Frederik, and J. Reinders. Feature-Based Visualization of Time-Dependent Data. PhD thesis, 2001. 
+K. F. Reinders, K. Frederik, and J. Reinders. Feature-Based Visualization of Time-Dependent Data. PhD thesis, 2001.
 
 \bibitem{}
 M. Schlemmer, M. Heringer, F. Morr, I. Hotz, M. Hering-Bertram, C. Garth, W. Kollmann, B. Hamann, and H. Hagen. Moment invariants for the analysis of 2d flow fields. IEEE Transactions on Visualization and Computer Graphics, 13(6):1743–1750, 2007.
@@ -768,9 +827,9 @@ J. W. H. Tangelder and R. C. Veltkamp. A survey of content based 3d shape retrie
 O. Amoros, S. Escalera, and A. uig. Adaboost GPU-based Classifier for Direct Volume Rendering. GRAPPSciTePress (2011), p. 215-219.
 
 \bibitem{}
-The State of the Art of Flow Visualization: Feature Extraction and Tracking. 
+The State of the Art of Flow Visualization: Feature Extraction and Tracking.
 
 \end{thebibliography}
 
 % that's all folks
-\end{document}
+\end{document} 
