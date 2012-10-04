@@ -1,0 +1,29 @@
+EXE_NAME = Paraft
+
+CPPFLAGS = -g -c -O3
+CC = mpicc
+CXX = mpicxx
+	
+OBJ_DIR = .
+CPPFILES = Main.cpp \
+           DataManager.cpp \
+           FeatureTracker.cpp \
+           BlockController.cpp \
+           MpiController.cpp \
+           Sphreader.cpp
+
+OBJECT_FILES = $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(CPPFILES))
+
+all: $(OBJECT_FILES)	
+	$(CXX) -g -o ${EXE_NAME} $(OBJECT_FILES) $(LIB) $(LDFLAGS)
+
+$(OBJ_DIR)/%.o: %.cpp
+	$(CXX) $(CPPFLAGS) $(INCLUDE) $(ENV) -o $@ $<
+
+include .depend
+
+.depend:
+	g++ -MM -E $(CPPFLAGS) $(INCLUDE) $(CPPFILES) > .depend	
+
+clean:
+	rm -f core.* $(OBJ_DIR)/*.o $(EXE_NAME) .depend
