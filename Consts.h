@@ -9,7 +9,6 @@
 #include <map>
 
 const int FEATURE_MIN_VOXEL_NUM = 10;
-const int NUM_TRACK_STEPS = 10;
 
 const int INT_SIZE = 1;
 const int FLOAT_SIZE = sizeof(float);
@@ -17,8 +16,8 @@ const int FLOAT_SIZE = sizeof(float);
 const int TF_RESOLUTION = 1024;
 
 const float LOW_THRESHOLD  = 0.2;
-const float HIGH_THRESHOLD = 0.8;
-const float DIST_THRESHOLD = 4.0;
+const float HIGH_THRESHOLD = 1.0;
+const float DIST_THRESHOLD = 9.0;
 
 const int TRACKING_MODE_DIRECT = 0;
 const int TRACKING_MODE_LINEAR = 1;
@@ -37,12 +36,6 @@ const int SURFACE_FRONT  = 4;   // z = 0
 const int SURFACE_BACK   = 5;   // z = zs
 
 using namespace std;
-
-typedef struct { float x; float y; } Vector2f;
-typedef hash_map<int, int> IntMap;
-typedef hash_map<int, float> IndexValueMap;
-typedef hash_map<int, vector<int> > FeatureTable;
-typedef unsigned int uint;
 
 class MinMax {
 public:
@@ -140,5 +133,13 @@ typedef struct {
     double      time_2;
     double      time_3;
 } CSVWriter;
+
+typedef struct { float x; float y; } Vector2f;
+typedef hash_map<int, int> IntMap;
+typedef hash_map<int, float> IndexValueMap;
+typedef hash_map<int, vector<int> > FeatureTable;
+typedef vector<float*> DataVector;
+typedef vector<MinMax> MinMaxVector;
+typedef unsigned int uint;
 
 #endif // CONSTS_H

@@ -4,6 +4,7 @@
 using namespace std;
 
 int main (int argc, char** argv) {
+
     if (argc != 4) {
         cout << "argv[0]: " << argv[0] << endl;
         cout << "argv[1]: " << argv[1] << endl;
@@ -17,5 +18,17 @@ int main (int argc, char** argv) {
     mc->InitWith(argc, argv);
     mc->Start();
     delete mc;
+
+//    ifstream inf("/Users/Yang/Develop/Data/jet_vort/jet_vort_0001.dat");
+//    if (!inf) cout << "file not found;" << endl;
+
+//    float value;
+//    for (int i = 0; i < 10000; i++) {
+//        inf.read(reinterpret_cast<char*>(&value), sizeof(float));
+//        if (i % 100 == 0)
+//            cout << value << "\t";
+//        } cout << endl;
+//    inf.close();
+
     return 0;
 }

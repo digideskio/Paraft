@@ -27,8 +27,6 @@ private:
     int num_proc;
     int timestep;
 
-    int tempCount;
-
     CSVWriter csv;
     DataSet ds;
 
@@ -55,7 +53,7 @@ private:
     hash_map<int, FeatureTable> featureTableVector;    // for time varying data
 
     void initBlockController();
-    void initTFParameters();
+    void initParameters();
     void precalculateTimestep1();
 
     void mergeCorrespondentEdges(vector<Edge> edges);

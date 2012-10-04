@@ -1,27 +1,28 @@
 #include "DataManager.h"
 
 DataManager::DataManager() {
-    pAllocatedBuffer = NULL;
+    pDataBuffer = NULL;
     pMaskMatrix = NULL;
-    pDataVector.clear();
-    pMinMaxVector.clear();
-    pFeatureVectors.clear();
+    dataSequence.clear();;
+    minMaxSequence.clear();
+    featureVectors.clear();
 }
 
 DataManager::~DataManager() {
-    if (pDataVector.size() != 0) {
-        for (unsigned int i = 0; i < pDataVector.size(); i++) {
-            delete [] pDataVector.at(i);
+    if (!dataSequence.empty()) {
+        for (uint i = 0; i < dataSequence.size(); i++) {
+            delete [] dataSequence.at(i);
         }
     }
-    pMinMaxVector.clear();
 
-    if (pFeatureVectors.size() != 0) {
-        for (unsigned int i = 0; i < pFeatureVectors.size(); i++) {
-            for (unsigned int j = 0; j < pFeatureVectors.at(i).size(); j++) {
-                pFeatureVectors.at(i).at(j).SurfacePoints.clear();
-                pFeatureVectors.at(i).at(j).InnerPoints.clear();
-                pFeatureVectors.at(i).at(j).Uncertainty.clear();
+    minMaxSequence.clear();
+
+    if (featureVectors.size() != 0) {
+        for (uint i = 0; i < featureVectors.size(); i++) {
+            for (uint j = 0; j < featureVectors.at(i).size(); j++) {
+                featureVectors.at(i).at(j).SurfacePoints.clear();
+                featureVectors.at(i).at(j).InnerPoints.clear();
+                featureVectors.at(i).at(j).Uncertainty.clear();
             }
         }
     }
@@ -36,130 +37,94 @@ void DataManager::CreateNewMaskMatrix() {
     memset(pMaskMatrix, 0, sizeof(float)*volumeSize);
 }
 
-void DataManager::ReadSphDataSequence(DataSet ds) {
-    SphReader *sph = new SphReader;
-
-    for (int i = ds.start; i <= ds.end; i++) {
-        string filePath;
-        char timestep[21]; // hold up to 64 bit integer
-        sprintf(timestep, "%8d", i);
-        for (int i = 0; i < 8; i++) {
-            timestep[i] = timestep[i] == ' ' ? '0' : timestep[i];
-        }
-
-        // prs_0000001500_id000000.sph
-        // ds.index_start = 1;
-        // ds.index_end   = 9;
-        // ds.prefix      = "prs_";
-        // ds.surfix      = "00_id000000.sph";
-        // ds.data_path   = "/Users/Yang/Develop/Data/Sim_128_128_128";
-        filePath = ds.path + ds.prefix + timestep + ds.surfix;
-
-        cout << filePath << endl;
-
-        pAllocatedBuffer = sph->loadData(filePath);
-        pDataVector.push_back(pAllocatedBuffer);
-
-        volumeSize = sph->getVolumeSize();
-        calculateLocalMinMax();
-    }
-    normalizeData();
-
-    delete sph;
-}
-
-void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition, DataSet ds) {
-
+void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
+                                      DataSet ds) {
     volumeDim = ds.dim / partition;
     volumeSize = volumeDim.volume();
 
-    for (int i = ds.start; i <= ds.end; i++) {
-        string fileName;
-        char timestep[21]; // enough to hold all numbers up to 64-bits
-        sprintf(timestep, "%4d", i);
+    for (int time = ds.start; time < ds.end; time++) {
+        // 1. allocate new data buffer then add pointer to map
+        pDataBuffer = new float[volumeSize];
+        if (pDataBuffer == NULL) {
+            cerr << "Allocate memory failed" << endl; exit(1);
+        }
+        dataSequence.push_back(pDataBuffer); // index offset = ds.start
+
+        // 2. get file name from time index
+        string filePath;
+        char timestep[21]; // hold up to 64-bits
+        sprintf(timestep, "%4d", time);
         for (int i = 0; i < 4; i++) {
             timestep[i] = timestep[i] == ' ' ? '0' : timestep[i];
         }
-        fileName = ds.path + "/" + ds.prefix + timestep + ds.surfix;
+        filePath = ds.path + ds.prefix + timestep + ds.surfix;
 
-        mpiReadOneDataFile(blockCoord, partition, fileName);
-    }
-    normalizeData();
-}
+        char *filename = new char[filePath.size() + 1];
+        copy(filePath.begin(), filePath.end(), filename);
+        filename[filePath.size()] = '\0';
 
-// Read one file from disk and save it to the end of the data vector
-bool DataManager::mpiReadOneDataFile(Vector3i blockCoord, Vector3i partition,
-                                  string filePath) {
+        // 3. read corresponding file using mpi collective io
+        int *gsizes = (volumeDim * partition).toArray();
+        int *subsizes = volumeDim.toArray();
+        int *starts = (volumeDim * blockCoord).toArray();
 
-    float *pBuffer = allocateNewDataBuffer(volumeSize);
+        MPI_Datatype filetype;
+        MPI_Type_create_subarray(3, gsizes, subsizes, starts, MPI_ORDER_FORTRAN,
+                                 MPI_FLOAT, &filetype);
+        MPI_Type_commit(&filetype);
 
-    int *gsizes = (volumeDim * partition).toArray();
-    int *subsizes = volumeDim.toArray();
-    int *starts = (volumeDim * blockCoord).toArray();
+        MPI_File file;
+        int not_exist = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY,
+                                      MPI_INFO_NULL, &file);
+        if (not_exist) printf("%s not exist.\n", filename);
 
-    MPI_Datatype filetype;
-    MPI_Type_create_subarray(3, gsizes, subsizes, starts,
-                             MPI_ORDER_FORTRAN, MPI_FLOAT, &filetype);
-    MPI_Type_commit(&filetype);
+        MPI_File_set_view(file, 0, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
+        MPI_File_read_all(file, pDataBuffer, volumeSize, MPI_FLOAT,
+                          MPI_STATUS_IGNORE);
 
-    char *filename = new char[filePath.size() + 1];
-    copy(filePath.begin(), filePath.end(), filename);
-    filename[filePath.size()] = '\0';
+        MPI_File_close(&file);
+        MPI_Type_free(&filetype);
+        delete[] filename;
 
-    MPI_File file;
-    int not_exist = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY,
-                                  MPI_INFO_NULL, &file);
-    if (not_exist) printf("%s not exist.\n", filename);
-
-    MPI_File_set_view(file, 0, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
-    MPI_File_read_all(file, pBuffer, volumeSize, MPI_FLOAT, MPI_STATUS_IGNORE);
-
-    MPI_File_close(&file);
-    MPI_Type_free(&filetype);
-
-    calculateLocalMinMax();
-
-    delete[] filename;
-    return true;
-}
-
-void DataManager::normalizeData() {
-    // Get the first local min and max
-
-    float min = pMinMaxVector.at(0).min;
-    float max = pMinMaxVector.at(0).max;
-
-    for (uint i = 0 ; i < pDataVector.size(); i++) {
-        min = min < pMinMaxVector.at(i).min ? min : pMinMaxVector.at(i).min;
-        max = max > pMinMaxVector.at(i).max ? max : pMinMaxVector.at(i).max;
+        calculateLocalMinMax();
     }
 
-    for (uint j = 0; j < pDataVector.size(); j++) {
-        for (int i = 0; i < volumeSize; i++) {
-            pDataVector.at(j)[i] -= min;
-            pDataVector.at(j)[i] /= (max-min);
-        }
-    }
-}
-
-float* DataManager::allocateNewDataBuffer(int bufferSize) {
-    pAllocatedBuffer = new float[bufferSize];
-    if (pAllocatedBuffer == NULL) {
-        cerr << "Allocate memory failed" << endl;
-        return pAllocatedBuffer;
-    }
-    pDataVector.push_back(pAllocatedBuffer);
-    return pAllocatedBuffer;
+    normalizeData(ds);
 }
 
 void DataManager::calculateLocalMinMax() {
-    float min = pAllocatedBuffer[0];
-    float max = pAllocatedBuffer[1];
+    float min = std::numeric_limits<float>::max();
+    float max = std::numeric_limits<float>::min();
 
-    for (int i = 1; i < volumeSize; i++) {
-        min = min < pAllocatedBuffer[i] ? min : pAllocatedBuffer[i];
-        max = max > pAllocatedBuffer[i] ? max : pAllocatedBuffer[i];
+    for (int i = 0; i < volumeSize; i++) {
+        min = min < pDataBuffer[i] ? min : pDataBuffer[i];
+        max = max > pDataBuffer[i] ? max : pDataBuffer[i];
     }
 
-    pMinMaxVector.push_back(MinMax(min, max));
+    minMaxSequence.push_back(MinMax(min, max));
+}
+
+void DataManager::normalizeData(DataSet ds) {
+    float min = std::numeric_limits<float>::max();
+    float max = std::numeric_limits<float>::min();
+
+    // 1. get local min-max for the whole data sequence
+    for (int i = 0; i < ds.end-ds.start; i++) {
+        min = min < minMaxSequence.at(i).min ? min : minMaxSequence.at(i).min;
+        max = max > minMaxSequence.at(i).max ? max : minMaxSequence.at(i).max;
+    }
+
+    // 2. get global min-max for the whole data sequence
+    MPI_Allreduce(&min, &min, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
+    MPI_Allreduce(&max, &max, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
+
+    cout << "global min: " << min << " max: " << max << endl;
+
+    // 2. normalize data sequence
+    for (int i = 0; i < ds.end-ds.start; i++) {
+        for (int j = 0; j < volumeSize; j++) {
+            dataSequence.at(i)[j] -= min;          // global min -> 0
+            dataSequence.at(i)[j] /= (max-min);    // global max -> 1
+        }
+    }
 }

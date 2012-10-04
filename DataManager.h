@@ -3,7 +3,6 @@
 
 #include <mpi.h>
 #include "Consts.h"
-#include "Sphreader.h"
 
 class DataManager {
 
@@ -13,39 +12,33 @@ public:
 
     void CreateNewMaskMatrix();
 
-    float* GetVolumeDataPointer(int index) { return pDataVector.at(index); }
+    float* GetVolumeDataPointer(int index) { return dataSequence.at(index); }
     float* GetMaskMatrixPointer() { return pMaskMatrix; }
 
     int GetVolumeSize() { return volumeSize; }
-    int GetFeatureVectorLength() { return pFeatureVectors.size(); }
+    int GetFeatureVectorLength() { return featureVectors.size(); }
 
     Vector3i GetVolumeDimension() { return volumeDim; }
 
-    void ReadSphDataSequence(DataSet ds);
-
     void MpiReadDataSequence(Vector3i blockCoord, Vector3i partition, DataSet ds);
 
-    bool mpiReadOneDataFile(Vector3i blockCoord, Vector3i partition, string filePath);
-
-
-    vector<Feature> *GetFeatureVector(int iTime) { return &(pFeatureVectors.at(iTime)); }
-    Feature *GetFeature(int iTime, int index) { return &(pFeatureVectors.at(iTime).at(index)); }
-    void SaveExtractedFeatures(vector<Feature> f) { pFeatureVectors.push_back(f); }
+    vector<Feature> *GetFeatureVector(int iTime) { return &(featureVectors.at(iTime)); }
+    Feature *GetFeature(int iTime, int index) { return &(featureVectors.at(iTime).at(index)); }
+    void SaveExtractedFeatures(vector<Feature> f) { featureVectors.push_back(f); }
 
 private:
     Vector3i volumeDim;
     int volumeSize;
 
-    vector<float*> pDataVector;
-    vector<MinMax> pMinMaxVector;
-    vector< vector<Feature> > pFeatureVectors;
+    DataVector dataSequence;
+    MinMaxVector minMaxSequence;
+    vector< vector<Feature> > featureVectors;
 
-    float* pAllocatedBuffer;
+    float* pDataBuffer;
     float* pMaskMatrix;
 
-    void normalizeData();
+    void normalizeData(DataSet ds);
     void calculateLocalMinMax();
-    float* allocateNewDataBuffer(int bufferSize);
 };
 
 #endif // DATAMANAGER_H

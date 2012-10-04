@@ -1,4 +1,4 @@
-#include "sphreader.h"
+#include "Sphreader.h"
 
 SphReader::SphReader() {
     // DataProperty

@@ -24,21 +24,8 @@ void MpiController::InitWith(int argc, char **argv) {
     blockCoord.y = (my_rank-blockCoord.z*partition.x*partition.y)/partition.x;
     blockCoord.x = my_rank%partition.x;
 
-//    ds.index_start = 1;
-//    ds.index_end   = 10;
-//    ds.prefix      = "vorts";
-//    ds.surfix      = ".data";
-//    ds.data_path   = "../Data/vorts/";
-
-//    ds.start    = 0;
-//    ds.end      = 50;
-//    ds.prefix   = "prs_";
-//    ds.surfix   = "00_id000000.sph";
-//    ds.path     = "/Users/Yang/Develop/Data/Sim_128_128_128/";
-//    ds.dim      = new Vector3i(480, 720, 120);
-
-    ds.start    = 1;
-    ds.end      = 15;
+    ds.start    = 51;
+    ds.end      = 63;
     ds.prefix   = "jet_vort_";
     ds.surfix   = ".dat";
     ds.path     = "/Users/Yang/Develop/Data/jet_vort/";
@@ -54,15 +41,14 @@ void MpiController::InitWith(int argc, char **argv) {
 
 void MpiController::Start() {
     initBlockController();
-    initTFParameters();
-    precalculateTimestep1();
+    initParameters();
 
-    for (int i = 0; i < NUM_TRACK_STEPS; i++) {
-        cout << "[" << my_rank << "] timestep " << timestep << " done." << endl;
+    for (int i = 1; i < ds.end-ds.start; i++) {
         TrackForward();
+        cout << "["<<my_rank<<"] T" << ds.start+timestep+1 << " done." << endl;
     }
 
-    cout << my_rank << " done." << endl;
+    cout << my_rank << " over." << endl;
 }
 
 void MpiController::initBlockController() {
@@ -70,12 +56,12 @@ void MpiController::initBlockController() {
     pBlockController->InitData(partition, blockCoord, ds);
 }
 
-void MpiController::initTFParameters() {
+void MpiController::initParameters() {
     int tfSize = TF_RESOLUTION * 4;         // float*rgba
     int bufSize = tfSize * FLOAT_SIZE;      // file size
 
     float* pTFColorMap = new float[tfSize];
-    timestep = ds.start;
+    timestep = 0;   // actually ds.start
 
     string configFile = "tf_config.dat";
     ifstream inf(configFile.c_str(), ios::binary);
@@ -87,19 +73,11 @@ void MpiController::initTFParameters() {
     pBlockController->SetCurrentTimestep(timestep);
     pBlockController->SetTFResolution(TF_RESOLUTION);
     pBlockController->SetTFColorMap(pTFColorMap);
-    debug("initTFParameters ready");
-}
-
-void MpiController::precalculateTimestep1() {
     pBlockController->ExtractAllFeatures();
-    pBlockController->SetCurrentTimestep(timestep);
-    pBlockController->TrackForward();
-    debug("Pre-calculate timestep 1 ready");
+    debug("init parameters ready");
 }
 
 void MpiController::TrackForward() {
-//    debug("TrackForward() start");
-
     timestep++;
     if (timestep > ds.end) {
         timestep = ds.end;
@@ -141,23 +119,39 @@ void MpiController::TrackForward() {
     // option3: gather adjacent to create feaure graph;
 //    gatherNeighboringGraph();
 
-    cout << "[" << my_rank << "] @ " << timestep << " @" << endl;
-
     MPI_Barrier(MPI_COMM_WORLD);
     double t3 = MPI_Wtime();
 
     featureTableVector[timestep] = featureTable;
 
-    csv.time_1 = t1 - t0;
-    csv.time_2 = t2 - t1;
-    csv.time_3 = t3 - t2;
-    csv.num_feature = globalEdgeCount / 2;
+    double delta = t1 - t0;
+    MPI_Allreduce(&delta, &csv.time_1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-    string result = "result.csv";
+    delta = t2 - t1;
+    MPI_Allreduce(&delta, &csv.time_2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+    delta = t3 - t2;
+    MPI_Allreduce(&delta, &csv.time_3, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+    csv.time_1 /= (double)num_proc;
+    csv.time_2 /= (double)num_proc;
+    csv.time_3 /= (double)num_proc;
+
+    csv.num_feature = featureTable.size() / 2;
+
+    char np[21];
+    sprintf(np, "%d", num_proc);
+    string fpath = "";
+    string prefix = "result_";
+    string surfix = ".csv";
+    string result = fpath.append(prefix).append(np).append(surfix);
     ofstream outf(result.c_str(), ios::out | ios::app);
-    outf << my_rank << "," << csv.num_proc << "," << csv.num_feature << ","
-         << csv.partition.x<<"," << csv.partition.y<<"," << csv.partition.z<<","
-         << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
+
+    if (my_rank == 0) {
+        outf << csv.num_proc << "," << csv.num_feature << "," << timestep << ","
+             << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
+    }
+
     outf.close();
 }
 
@@ -183,41 +177,40 @@ void MpiController::syncFeatureGraph() {
                      blocksNeedRecv.begin(), blocksNeedRecv.end(),
                      back_inserter(adjacentBlocksNeedRecv));
 
-
     // -- debug ---------
-    cout << "\n+[" << my_rank << "] adjacentBlocks: ";
-    for (uint i = 0; i < adjacentBlocks.size(); i++) {
-        cout << adjacentBlocks[i] << " ";
-    } cout << endl;
+//    cout << "\n+[" << my_rank << "] adjacentBlocks: ";
+//    for (uint i = 0; i < adjacentBlocks.size(); i++) {
+//        cout << adjacentBlocks[i] << " ";
+//    } cout << endl;
 
-    cout << "+[" << my_rank << "] blocksNeedRecv: ";
-    for (uint i = 0; i < blocksNeedRecv.size(); i++) {
-        cout << blocksNeedRecv[i] << " ";
-    } cout << endl;
+//    cout << "+[" << my_rank << "] blocksNeedRecv: ";
+//    for (uint i = 0; i < blocksNeedRecv.size(); i++) {
+//        cout << blocksNeedRecv[i] << " ";
+//    } cout << endl;
 
-    cout << "+[" << my_rank << "] adjacentBlocksNeedRecv: ";
-    for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
-        cout << adjacentBlocksNeedRecv[i] << " ";
-    } cout << endl;
+//    cout << "+[" << my_rank << "] adjacentBlocksNeedRecv: ";
+//    for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
+//        cout << adjacentBlocksNeedRecv[i] << " ";
+//    } cout << endl;
     // -- debug ---------
 
     need_to_send = adjacentBlocksNeedRecv.size() > 0 ? 1 : 0;
 
-    if (need_to_send) {
-        cout << "[" << my_rank << "] need_to_send yes ";
-        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
-            cout << adjacentBlocksNeedRecv.at(i) << " ";
-        }
-        cout << endl;
-    } else {
-        debug("need_to_send no");
-    }
+//    if (need_to_send) {
+//        cout << "[" << my_rank << "] need_to_send yes ";
+//        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
+//            cout << adjacentBlocksNeedRecv.at(i) << " ";
+//        }
+//        cout << endl;
+//    } else {
+//        debug("need_to_send no");
+//    }
 
-    if (need_to_recv) {
-        cout << "[" << my_rank << "] need_to_recv yes " << endl;
-    } else {
-        debug("need_to_recv no");
-    }
+//    if (need_to_recv) {
+//        cout << "[" << my_rank << "] need_to_recv yes " << endl;
+//    } else {
+//        debug("need_to_recv no");
+//    }
 
     vector<Edge> adjacentGraph;
 
@@ -283,38 +276,21 @@ void MpiController::syncFeatureGraph() {
     MPI_Allreduce(&need_to_send, &any_send, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     MPI_Allreduce(&need_to_recv, &any_recv, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
 
-    if (need_to_send) {
-        cout << "[" << my_rank << "] need_to_send yes ";
-        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
-            cout << adjacentBlocksNeedRecv.at(i) << " ";
-        }
-        cout << endl;
-    } else {
-        debug("need_to_send no");
-    }
+//    if (need_to_send) {
+//        cout << "[" << my_rank << "] need_to_send yes ";
+//        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
+//            cout << adjacentBlocksNeedRecv.at(i) << " ";
+//        }
+//        cout << endl;
+//    } else {
+//        debug("need_to_send no");
+//    }
 
-    if (need_to_recv) {
-        cout << "[" << my_rank << "] need_to_recv yes " << endl;
-    } else {
-        debug("need_to_recv no");
-    }
-
-
-    if (need_to_send) {
-        cout << "[" << my_rank << "] need_to_send yes ";
-        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
-            cout << adjacentBlocksNeedRecv.at(i) << " ";
-        }
-        cout << endl;
-    } else {
-        debug("need_to_send no");
-    }
-
-    if (need_to_recv) {
-        cout << "[" << my_rank << "] need_to_recv yes " << endl;
-    } else {
-        debug("need_to_recv no");
-    }
+//    if (need_to_recv) {
+//        cout << "[" << my_rank << "] need_to_recv yes " << endl;
+//    } else {
+//        debug("need_to_recv no");
+//    }
 }
 
 void MpiController::gatherNeighboringGraph() {
