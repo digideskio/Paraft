@@ -1,4 +1,3 @@
-
 %% bare_conf.tex
 %% V1.3
 %% 2007/01/11
@@ -50,8 +49,6 @@
 % The testflow support page is at:
 % http://www.michaelshell.org/tex/testflow/
 
-
-
 % Note that the a4paper option is mainly intended so that authors in
 % countries using A4 can easily print to A4 and see how their papers will
 % look in print - the typesetting of the document will not typically be
@@ -70,13 +67,8 @@
 % manually specify the path to it like:
 % \documentclass[conference]{../sty/IEEEtran}
 
-
-
-
-
 % Some very useful LaTeX packages include:
 % (uncomment the ones you want to load)
-
 
 % *** MISC UTILITY PACKAGES ***
 %
@@ -96,14 +88,9 @@
 % When switching from latex to pdflatex and vice-versa, the compiler may
 % have to be run twice to clear warning/error messages.
 
-
-
-
-
-
 % *** CITATION PACKAGES ***
 %
-%\usepackage{cite}
+\usepackage{cite}
 % cite.sty was written by Donald Arseneau
 % V1.6 and later of IEEEtran pre-defines the format of the cite.sty package
 % \cite{} output to follow that of IEEE. Loading the cite package will
@@ -118,11 +105,6 @@
 % The latest version can be obtained at:
 % http://www.ctan.org/tex-archive/macros/latex/contrib/cite/
 % The documentation is contained in the cite.sty file itself.
-
-
-
-
-
 
 % *** GRAPHICS RELATED PACKAGES ***
 %
@@ -164,10 +146,6 @@
 % You can find documentation about the pdfTeX application at:
 % http://www.tug.org/applications/pdftex
 
-
-
-
-
 % *** MATH PACKAGES ***
 %
 \usepackage[cmex10]{amsmath}
@@ -186,10 +164,6 @@
 % does. amsmath.sty is already installed on most LaTeX systems. The latest
 % version and documentation can be obtained at:
 % http://www.ctan.org/tex-archive/macros/latex/required/amslatex/math/
-
-
-
-
 
 % *** SPECIALIZED LIST PACKAGES ***
 %
@@ -211,9 +185,6 @@
 % algorithmicx.sty package by Szasz Janos:
 % http://www.ctan.org/tex-archive/macros/latex/contrib/algorithmicx/
 
-
-
-
 % *** ALIGNMENT PACKAGES ***
 %
 %\usepackage{array}
@@ -227,7 +198,6 @@
 % latest version and documentation can be obtained at:
 % http://www.ctan.org/tex-archive/macros/latex/required/tools/
 
-
 %\usepackage{mdwmath}
 %\usepackage{mdwtab}
 % Also highly recommended is Mark Wooding's extremely powerful MDW tools,
@@ -236,21 +206,15 @@
 % LaTeX systems. The lastest version and documentation is available at:
 % http://www.ctan.org/tex-archive/macros/latex/contrib/mdwtools/
 
-
 % IEEEtran contains the IEEEeqnarray family of commands that can be used to
 % generate multiline equations as well as matrices, tables, etc., of high
 % quality.
-
 
 %\usepackage{eqparbox}
 % Also of notable interest is Scott Pakin's eqparbox package for creating
 % (automatically sized) equal width boxes - aka "natural width parboxes".
 % Available at:
 % http://www.ctan.org/tex-archive/macros/latex/contrib/eqparbox/
-
-
-
-
 
 % *** SUBFIGURE PACKAGES ***
 %\usepackage[tight,footnotesize]{subfigure}
@@ -262,8 +226,6 @@
 % be obtained at:
 % http://www.ctan.org/tex-archive/obsolete/macros/latex/contrib/subfigure/
 % subfigure.sty has been superceeded by subfig.sty.
-
-
 
 %\usepackage[caption=false]{caption}
 %\usepackage[font=footnotesize]{subfig}
@@ -283,9 +245,6 @@
 % The latest version and documentation of caption.sty can be obtained at:
 % http://www.ctan.org/tex-archive/macros/latex/contrib/caption/
 
-
-
-
 % *** FLOAT PACKAGES ***
 %
 %\usepackage{fixltx2e}
@@ -297,8 +256,6 @@
 % single column figure to be placed prior to an earlier double column
 % figure. The latest version and documentation can be found at:
 % http://www.ctan.org/tex-archive/macros/latex/base/
-
-
 
 %\usepackage{stfloats}
 % stfloats.sty was written by Sigitas Tolusis. This package gives LaTeX2e
@@ -320,10 +277,6 @@
 % cuted.sty or midfloat.sty packages (also by Sigitas Tolusis) as IEEE does
 % not format its papers in such ways.
 
-
-
-
-
 % *** PDF, URL AND HYPERLINK PACKAGES ***
 %
 %\usepackage{url}
@@ -336,9 +289,6 @@
 
 \usepackage{color}
 
-
-
-
 % *** Do not adjust lengths that control margins, column widths, etc. ***
 % *** Do not use packages that alter fonts (such as pslatex).         ***
 % There should be no need to do such things with IEEEtran.cls V1.6 and later.
@@ -349,7 +299,6 @@
 % correct bad hyphenation here
 \hyphenation{op-tical net-works semi-conduc-tor}
 
-
 \begin{document}
 % use linebreaks \\ within to get better formatting as desired
 \title{Scalable Parallel Tracking of Time-Varying 3D Flow Features}
@@ -358,7 +307,8 @@
 % use a multiple column layout for up to two different
 % affiliations
 
-\author{\IEEEauthorblockN{Authors Name/s per 1st Affiliation (Author)}
+\author {
+\IEEEauthorblockN{Authors Name/s per 2nd Affiliation (Author)}
 \IEEEauthorblockA{line 1 (of Affiliation): dept. name of organization\\
 line 2: name of organization, acronyms acceptable\\
 line 3: City, Country\\
@@ -373,7 +323,6 @@ line 4: Email: name@xyz.com}
 
 % make the title area
 \maketitle
-
 
 \begin{abstract}
 Large-scale time-varying volumetric data set can take terabytes to petabytes of storage space to store and process. One promising approach is to process the data in parallel in situ or batch, extract features of interest and analyze only those features, to reduce required memory space by several orders of magnitude for the following visualization tasks. However, extracting volumetric features in parallel is a non-trivial task as features might span over multiple processors, and local partial features can be only visible within their own processor. In this paper, we discuss how to generate and maintain connectivity information of features across different processors. Based on this connectivity information, partial features can be integrated, which makes possible for the large-scale feature extraction and tracking in parallel. We demonstrate the effectiveness and scalability of different approaches on two data sets, and discuss the pros and cons of each approach.
@@ -395,28 +344,28 @@ feature tracking; parallel graph;
 \IEEEpeerreviewmaketitle
 
 \section{Introduction}
-% no \IEEEPARstart
 The accessibility to supercomputers with increasing computing power has enabled scientists to simulate physical phenomena of unprecedented complexity and resolution. However, these large-scale time-varying data sets can take giga- or even tera-bytes of space to preserve. One promising solution to the problem is to introduce feature extraction and tracking techniques. Instead of duplicating raw data along the exploring process, dealing with features of interest typically requires memory space that is several orders of magnitude smaller than the raw data.
+
 However, large vortical data sets are typically presented and processed in a distributed fashion simply because of the shear size. Extracting and tracking features embedded in a distributed vortical data set is a non-trivial task. Existing researches on feature-based data visualization have been done mostly focusing on decomposing features using quantitative measures such as size, location, shape or topology information, and so on. These measures cannot be applied to distributed volume data directly since vortical features consist of certain amount of voxels and are very likely to span over distributed data blocks as they evolve over time. Therefore existing quantitative measures of partial data scattered across different data blocks cannot be used to describe an integrated feature, unless the distribution of partial features can be obtained beforehand.
 
 To obtain the distribution information of features, a connectivity map of each feature should be generated and maintained. In this paper, we propose an approach to creating and maintaining feature residual information as well as connectivity information using parallel graphs. Comparing to the existing approaches, which generate and maintain the global feature information in a single host node, our approach can be done locally that only involves residual data blocks of target features. This requires least communication overhead and avoids the potential link contention. We demonstrate the effectiveness of this method with three vortical flow data sets and the scalability of our system in a distributed environment.
 
-% You must have at least 2 lines in the paragraph with the drop letter
-% (should never be an issue)
-
 \section{Related Work}
-Extraction and tracking are two closely related problems in feature-based visualization. Although many feature tracking algorithms have been introduced, most of them extract features from individual time steps and then try to associate them between consecutive time steps. Silver and Wang [26] defined threshold connected components as their features, and tracked overlapped features between successive time steps by calculating their differences. Octree was employed in their method to speed up the performance and the criteria they used were domain dependent. Reinders et al. [24] introduced a prediction verification tracking technique that calculates a prediction by linear extrapolation based on the previous feature path, and a candidate will be added to the path if it corresponds to that prediction. Ji and Shen [17] introduced a method to track local features from time-varying data by using higher-dimensional iso-surfacing. They also used a global optimization correspondence algorithm to improve the robustness of feature tracking [16]. Caban et al. [3] estimated a tracking window and then tried to find the best match between that window and different sub-volumes of subsequence frames by comparing their distance of textural properties.  Also, Bremer et al. [1] described two topological feature tracking methods, one employs Jacobi sets to track critical points while another uses distance measures on graphs to track channel structures.
+\subsection{Parallel Feature Extraction and Tracking}
+Extraction and tracking are two closely related problems in feature-based visualization. Although many feature tracking algorithms have been introduced, most of them extract features from individual time steps and then try to associate them between consecutive time steps. Silver and Wang \cite{Silver1997} defined threshold connected components as their features, and tracked overlapped features between successive time steps by calculating their differences. Octree was employed in their method to speed up the performance and the criteria they used were domain dependent. Reinders et al. \cite{Reinders2001} introduced a prediction verification tracking technique that calculates a prediction by linear extrapolation based on the previous feature path, and a candidate will be added to the path if it corresponds to that prediction. Ji and Shen \cite{Ji2003} introduced a method to track local features from time-varying data by using higher-dimensional iso-surfacing. They also used a global optimization correspondence algorithm to improve the robustness of feature tracking \cite{Ji2006}. Caban et al. \cite{Caban2007} estimated a tracking window and then tried to find the best match between that window and different sub-volumes of subsequence frames by comparing their distance of textural properties. Also, Bremer et al. \cite{Bremer2007} described two topological feature tracking methods, one employs Jacobi sets to track critical points while the other uses distance measures on graphs to track channel structures.
 
-Most of the aforementioned methods extract features from each time step independently and then apply the correspondence calculation. This could become very slow when the size of data becomes large. Muelder and Ma [19] introduced a prediction-correction approach that first predicts feature region based on the centroid location of previous time steps, and then corrects the predicted region by adjusting the surface boundaries via region growing and shrinking. This approach is appealing because of its computing efficiency and the reliability in an interactive system.
+Most of the aforementioned methods extract features from each time step independently and then apply correspondence calculations. This could become very slow when the data size become relatively large. Muelder and Ma \cite{Muelder2009} proposed a prediction-correction approach that first predicts feature region based on the centroid location of that in previous time steps, and then corrects the predicted region by adjusting the surface boundaries via region growing and shrinking. This approach is appealing because of its computing efficiency and the reliability in an interactive system.
 
-From the perspective of parallel processing, most of the existing feature extraction and tracking approaches rely on certain forms of global feature information which, however, must be obtained via communication in a distributed environment. Chen and Silver [] introduced a two stage partial-merge strategy using the master-slave paradigm. The slaves first exchange local connectivity information using Binary-tree merge, and then a visualization host collects and correlates the local information to generate the global connectivity. This approach is not scalable since half of the processors will become idle after each merge. It is also unclear how the visualization host can efficiently collect local connectivity information from non-server processors, since gathering operation is typically very expensive given a large number of processors.
+To boost up the speed for feature tracking in data-distributed applications, Chen and Silver \cite{Chen2003} introduced a two stage partial-merge strategy using master-slave paradigm. The slaves first exchange local connectivity information using Binary-tree merge, and then a visualization host collects and correlates the local information to generate the global connectivity. This approach is not scalable since half of the processors will become idle after each merge. It is also unclear how the visualization host can efficiently collect local connectivity information from non-server processors, since gathering operation is typically very expensive given a large number of processors. 
 
-The approach proposed in this paper follows a different strategy. Instead of sending local connective information back to the host, the local connectivity information is computed and preserved only in the nodes where correspondent features reside. There is no global connectivity information preserved in the host, and the host only serves as an interface to broadcast the criterion of feature of interest to the other nodes. In this way, the computation of merging local connectivity information is distributed to the slaves and hence effectively reduces the potential communication bottleneck on the host.
-Moreover, our approach does not need a global synchronization for gathering all local connectivity information at the host, and thus avoid potentially long computation time caused by features spanning over a large number of nodes. 
-%In addition, there are no needs to set a barrier to wait for all connectivity information being sent back to the host and thus if there exists features that span over a large number of nodes but was not selected by the user, the potentially long computation time for these features will not block the whole process.
-This makes it ideal for an interactive system, where users can select the features of interest and instantly receive the visual feedback as the features evolves.
+The approach proposed in this paper follows a different strategy. Instead of being sent back to a host, the local connective information is computed and preserved only in the nodes where correspondent features reside. Hence there is no global connectivity information preserved in the host, and the host only serves as an interface to broadcast the criterion of feature of interest to the other nodes. In this way, the computation of merging local connectivity information is distributed to the slaves and thus effectively reduces the potential communication bottleneck on the host.
 
-\textcolor{red}{[TODO] Add related work for parallel graph algorithms and data structures. (half page)}
+Moreover, our approach does not need a global synchronization for gathering all local connectivity information at the host, hence avoids potentially long computation time caused by features spanning over a large number of nodes. In addition, there are no needs to set a barrier to wait for all connectivity information being sent back to the host and thus if there exists features that span over a large number of nodes but was not selected by the user, the potentially long computation time for these features will not block the whole process. This makes it ideal for an interactive system, where users can select the features of interest and instantly receive the visual feedback as the features evolves.
+
+\subsection{Parallel Graph Algorithm and Applications}
+Graph-based algorithms have long been studied and used for a wide range of applications, typically along the line of divide-and-conquer approaches. Researches have been done on 
+
+Grundmann et al. \cite{Grundmann2010} recently proposed a hierarchical graph-based approach for video segmentation, a closely related research topic to 3D flow feature extraction as video can be treated as a space-time volume of image data \cite{Klein2002}. In their work, a connected sequence of time-axis-aligned subsets of cubic image volumes are assigned to a set of corresponding processors, and incident regions are merged only if they are inside the volumes window. Incident regions on window boundary, however, are first marked as ambiguous and later connected by merging neighboring window to a larger one that consists of the unresolved regions form both window on their common boundary. This approach is not applicable if the utilization the memory space of each processing unit is the main concern such that the allocated volume size before merging already reaches the capacity. Same restriction applies to the parallelized BK algorithm \cite{Boykov2004} proposed by Liu and Sun \cite{Liu2010}, in which data are uniformly partitioned and then adaptively merged to achieve fast graph-cuts. These approaches are suitable for shared-memory but not message-passing parallelization as for their frequent shifting on data ranges.
 
 \section{Algorithm Design}
 Though features can be extracted within individual processors using the conventional methods, they might also span over multiple data blocks, which is unavoidable as the number of processors increases. To extract and trace a feature over a distributed volume data set, we need to build and maintain the connectivity information of the feature across multiple nodes. As feature descriptors, such as size, curvature, and velocity, are distributed among processors, connectivity information can facilitate us to obtain the description of a feature from neighboring processors, and enable more advanced operations such as similarity evaluation.
@@ -438,7 +387,7 @@ In our work, we use a standard region-growing algorithm [14] to partition the or
 
 Tangelder and Veltkamp [27] presented the applicability and performance of context-based 3D shape descriptors and the corresponding retrieval methods. Their work suggested that when designing an interactive refinement process, we need to carefully select a set of feature descriptors, which should be deformation robust, such as size, location, or skeletal curvature. In addition, we also need to consider computational efficient in our design. 
 %Based on the discussion in their work, we can characterize the interactive refinement process as primarily concerned with those computationally efficient yet with significant discriminating deformation robust descriptors, such as size, location, or skeletal curvature. 
-After specific features have been identified from a single time step, we can track their evolution over time using a prediction-correction approach~\cite{}. The feature locations in a future time step can be predicted from the location of features in the previous time steps. Once prediction is made, the actual region can be obtained by adjusting the surface of the predicted region: first shrink the edge surface points to obtain the mutual region between consecutive time steps, and then use of a region-growing method to generate the refined region.
+After specific features have been identified from a single time step, we can track their evolution over time using a prediction-correction approach. The feature locations in a future time step can be predicted from the location of features in the previous time steps. Once prediction is made, the actual region can be obtained by adjusting the surface of the predicted region: first shrink the edge surface points to obtain the mutual region between consecutive time steps, and then use of a region-growing method to generate the refined region.
 
 This prediction-correction approach was proved effective and efficient for tracking feature on a single processor [32]. However, when the size of the volume data becomes too large to be fit into one processor, a cluster of multiple processors are often needed to process the data in parallel. One challenge to parallelize the tracking approach lies in that it can be difficult to obtain the global feature descriptions unless they can be shared and merged in an efficient way. This is because volumetric features may span over multiple processors and partial features on different nodes are operated independently.
 
@@ -677,46 +626,10 @@ instead being sent back to the host, the local connectivity information are comp
 There is no copy of the global feature information preserved in the host, and the host only acts as the interface from where the criterion of feature of interest is broadcast. In this way, the computation of merging local connectivity information is distributed to the slaves, which can effectively remove the potential communication bottleneck on the host processor. 
 Moreover, there's no need to set a barrier and wait for all connectivity information being sent back to the host, thus if one of the features spans over a large number of processors but was not selected by the user, the potentially long computation time for this feature will not be considered. This makes it ideal for an interactive system, where users can select the feature of interest and instantly receive the visual feedback as the feature evolves. \marginpar{\textcolor{red}{unreadable. it seems to repeat the previous sentences.}}
 
-% An example of a floating table. Note that, for IEEE style tables, the
-% \caption command should come BEFORE the table. Table text will default to
-% \footnotesize as IEEE normally uses this smaller font for tables.
-% The \label must come after \caption as always.
-%
-%\begin{table}[!t]
-% increase table row spacing, adjust to taste
-%\renewcommand{\arraystretch}{1.3}
-% if using array.sty, it might be a good idea to tweak the value of
-% \extrarowheight as needed to properly center the text within the cells
-%\caption{An Example of a Table}
-%\label{table_example}
-%\centering
-% Some packages, such as MDW tools, offer better commands for making tables
-% than the plain LaTeX2e tabular which is used here.
-%\begin{tabular}{|c||c|}
-%\hline
-%One & Two\\
-%\hline
-%Three & Four\\
-%\hline
-%\end{tabular}
-%\end{table}
-
-
-% Note that IEEE does not put floats in the very first column - or typically
-% anywhere on the first page for that matter. Also, in-text middle ("here")
-% positioning is not used. Most IEEE journals/conferences use top floats
-% exclusively. Note that, LaTeX2e, unlike IEEE journals/conferences, places
-% footnotes above bottom floats. This can be corrected via the \fnbelowfloat
-% command of the stfloats package.
-
-
 % use section* for acknowledgement
 \section*{Acknowledgment}
-
-
 The authors would like to thank...
 more thanks here
-
 
 % trigger a \newpage just before the given reference
 % number - used to balance the columns on the last page
@@ -728,108 +641,13 @@ more thanks here
 
 % references section
 
-% can use a bibliography generated by BibTeX as a .bbl file
-% BibTeX documentation can be easily obtained at:
-% http://www.ctan.org/tex-archive/biblio/bibtex/contrib/doc/
-% The IEEEtran BibTeX style support page is at:
-% http://www.michaelshell.org/tex/ieeetran/bibtex/
-%\bibliographystyle{IEEEtran}
-% argument is your BibTeX string definitions and bibliography database(s)
-%\bibliography{IEEEabrv,../bib/paper}
-%
+\bibliographystyle{IEEEtran}
+\bibliography{ipdps_2013}
+
 % <OR> manually copy in the resultant .bbl file
 % set second argument of \begin to the number of references
 % (used to reserve space for the reference number labels box)
-\begin{thebibliography}{1}
+%\begin{thebibliography}{1}
+%\end{thebibliography}
 
-\bibitem{}
-P.-T. Bremer, E.M. Bringa,M. A. Duchaineau, A. G. Gyulassy, D. Laney, A. Mascarenhas, and V. Pascucci. Topological feature extraction and tracking. Journal of Physics: Conference Series, 78(1):7–12, 2007.
-
-\bibitem{}
-X. T. C. Garth. Topology- and feature-based flow visualization: Methods and applications. SIAM Conference on Geometric Design and Computing, 2005.
-
-\bibitem{}
-J. Caban, A. Joshi, and P. Rheingans. Texture-based feature tracking for effective time-varying data visualization. IEEE Transactions on Visualization and Computer Graphics, 13(6):1472–1479, 2007.
-
-\bibitem{}
-N. D. Cornea, D. Silver, and P. Min. Curve-skeleton applications. In Proceedings of the IEEE Visualization Conference, pages 13–21, 2005.
-
-\bibitem{}
-N. D. Cornea, D. Silver, and P. Min. Curve-skeleton properties, applications, and algorithms. IEEE Transactions on Visualization and Computer Graphics, 13(3):530–548, 2007.
-
-\bibitem{}
-J. Ebling and G. Scheuermann. Clifford convolution and pattern matching on vector fields. In VIS ’03: Proceedings of the 14th IEEE Visualization 2003 (VIS’03), page 26, 2003.
-
-\bibitem{}
-J. Ebling and G. Scheuermann. Clifford fourier transform on vector fields. IEEE Transactions on Visualization and Computer Graphics, 11(4):469–479, 2005.
-
-\bibitem{}
-J. Ebling and G. Scheuermann. Clifford Convolution and Pattern Matching on Irregular Grids. Springer Berlin Heidelberg, 2006.
-
-\bibitem{}
-H. Hauser, H. Hagen, and H. Theisel. Topology-based Methods in Visualization. Springer Publishing Company, Incorporated, 2007.
-
-\bibitem{}
-H.-C. Hege, K. Polthier, and G. Scheuermann. Topology-Based Methods in Visualization II. Springer Publishing Company, Incorporated, 2008.
-
-\bibitem{}
-E. Heiberg, T. Ebbers, L. Wigstr, and M. Karlsson. Three-dimensional flow characterization using vector pattern matching. IEEE Transactions on Visualization and Computer Graphics, 9:313–319, 2003.
-
-\bibitem{}
-J. L. Helman and L. Hesselink. Representation and display of vector field topology in fluid flow data sets. Computer, 22(8):27–36, 1989.
-
-\bibitem{}
-H. Helwig. Visual analysis of deferential information. In Proceedings of the International Conference of Applied Mathematics, 2006.
-
-\bibitem{}
-R. Huang and K.-L. Ma. Rgvis: Region growing based techniques for volume visualization. In Proceedings of Pacific Graphics 2003 Conference, pages 355–363, October 2003.
-
-\bibitem{}
-J. Jeong and F. Hussain. On the identification of a vortex. Journal of Fluid Mechanics, pages 69–94, June 1995.
-
-\bibitem{}
-G. Ji and H.-W. Shen. Feature tracking using earth mover’s distance and global optimization. In Pacific Graphics, 2006.
-
-\bibitem{}
-G. Ji, H.-W. Shen, and R. Wenger. Volume tracking using higher dimensional isosurfacing. In Proceedings of the IEEE Visualization Conference, pages 209–216, 2003.
-
-\bibitem{}
-M. Jiang, R. Machiraju, and D. Thompson. Detection and visualization of vortices. In The Visualization Handbook, pages 295–309, 2005.
-
-\bibitem{}
-C. Muelder and K.-L. Ma. Interactive feature extraction and tracking by utilizing region coherency. In Proceedings of IEEE Pacific Visualization 2009 Symposium, April 2009.
-
-\bibitem{}
-K. Pal´agyi and A. Kuba. A parallel 3d 12-subiteration thinning algorithm. Graph. Models Image Process., 61(4):199–221, 1999.
-
-\bibitem{}
-S. W. Park, B. Budge, L. Linsen, B. Hamann, and K. I. Joy. Multidimensional transfer functions for interactive 3d flow visualization. In PG ’04: Proceedings of the Computer Graphics and Applications, 12th Pacific Conference, pages 177–185, 2004.
-
-\bibitem{}
-A. Pobitzer, R. Peikert, R. Fuchs, B. Schindler, A. Kuhn, H. Theisel, K. Matkovic, and H. Hauser. On the way towards topology-based visualization of unsteady flow – the state of the art. In accepted for Eurographics 2010 - State of the Art Reports, April 2010.
-
-\bibitem{}
-F. H. Post, B. Vrolijk, H. Hauser, R. S. Laramee, and H. Doleisch. The state of the art in flow visualization: Feature extraction and tracking. Comput. Graph. Forum, 22(4):775–792, 2003.
-
-\bibitem{}
-K. F. Reinders, K. Frederik, and J. Reinders. Feature-Based Visualization of Time-Dependent Data. PhD thesis, 2001.
-
-\bibitem{}
-M. Schlemmer, M. Heringer, F. Morr, I. Hotz, M. Hering-Bertram, C. Garth, W. Kollmann, B. Hamann, and H. Hagen. Moment invariants for the analysis of 2d flow fields. IEEE Transactions on Visualization and Computer Graphics, 13(6):1743–1750, 2007.
-
-\bibitem{}
-D. Silver and X. Wang. Tracking and visualizing turbulent 3d features. IEEE Transactions on Visualization and Computer Graphics, 3(2):129– 141, 1997.
-
-\bibitem{}
-J. W. H. Tangelder and R. C. Veltkamp. A survey of content based 3d shape retrieval methods. In SMI ’04: Proceedings of the Shape Modeling International 2004, pages 145–156, 2004.
-
-\bibitem{}
-O. Amoros, S. Escalera, and A. uig. Adaboost GPU-based Classifier for Direct Volume Rendering. GRAPPSciTePress (2011), p. 215-219.
-
-\bibitem{}
-The State of the Art of Flow Visualization: Feature Extraction and Tracking.
-
-\end{thebibliography}
-
-% that's all folks
-\end{document} 
+\end{document}
