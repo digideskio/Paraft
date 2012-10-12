@@ -20,9 +20,12 @@ void BlockController::InitData(Vector3i partition, Vector3i blockCoord, DataSet 
     pDataManager = new DataManager();
     pDataManager->MpiReadDataSequence(blockCoord, partition, ds);
     pDataManager->CreateNewMaskMatrix();
+    pDataManager->InitTFSettings(ds.tf);
 
     blockSize = pDataManager->GetVolumeDimension();
     pFeatureTracker = new FeatureTracker(blockSize.x, blockSize.y, blockSize.z);
+    pFeatureTracker->SetTFResolution(pDataManager->GetTFResolution());
+    pFeatureTracker->SetTFOpacityMap(pDataManager->GetTFOpacityMap());
 }
 
 void BlockController::TrackForward() {
@@ -44,7 +47,7 @@ void BlockController::ExtractAllFeatures() {
                 }
                 float *pVolume = pDataManager->GetVolumeDataPointer(currentTimestep);
                 int tfIndex = (int)(pVolume[index] * (float)(tfRes-1));
-                float opacity = pFeatureTracker->GetTFColorMap()[tfIndex*4+3];
+                float opacity = pFeatureTracker->GetTFOpacityMap()[tfIndex];
                 if (opacity >= LOW_THRESHOLD && opacity <= HIGH_THRESHOLD) {
                     pFeatureTracker->FindNewFeature(x, y, z, LOW_THRESHOLD, HIGH_THRESHOLD);
                 }

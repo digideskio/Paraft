@@ -24,12 +24,13 @@ void MpiController::InitWith(int argc, char **argv) {
     blockCoord.y = (my_rank-blockCoord.z*partition.x*partition.y)/partition.x;
     blockCoord.x = my_rank%partition.x;
 
-    ds.start    = 51;
-    ds.end      = 63;
-    ds.prefix   = "jet_vort_";
-    ds.surfix   = ".dat";
-    ds.path     = "/Users/Yang/Develop/Data/jet_vort/";
-    ds.dim      = Vector3i(480, 720, 120);
+    ds.start    = 201;
+    ds.end      = 220;
+    ds.prefix   = "vort_";
+    ds.surfix   = ".raw";
+    ds.path     = "/Users/Yang/Develop/Data/yubo_new/";
+    ds.tf       = "config.tfe";
+    ds.dim      = Vector3i(256, 256, 256);
 
     csv.partition = partition;
     csv.num_proc = num_proc;
@@ -41,7 +42,6 @@ void MpiController::InitWith(int argc, char **argv) {
 
 void MpiController::Start() {
     initBlockController();
-    initParameters();
 
     for (int i = 1; i < ds.end-ds.start; i++) {
         TrackForward();
@@ -52,29 +52,12 @@ void MpiController::Start() {
 }
 
 void MpiController::initBlockController() {
+    timestep = 0;   // in fact ds.start
     pBlockController = new BlockController();
     pBlockController->InitData(partition, blockCoord, ds);
-}
-
-void MpiController::initParameters() {
-    int tfSize = TF_RESOLUTION * 4;         // float*rgba
-    int bufSize = tfSize * FLOAT_SIZE;      // file size
-
-    float* pTFColorMap = new float[tfSize];
-    timestep = 0;   // actually ds.start
-
-    string configFile = "tf_config.dat";
-    ifstream inf(configFile.c_str(), ios::binary);
-    if (!inf) { debug("Cannot read config file: " + configFile); }
-    inf.read(reinterpret_cast<char *>(pTFColorMap), bufSize);
-    inf.close();
-
-    pBlockController->SetVolumeDataPointerByIndex(timestep);
     pBlockController->SetCurrentTimestep(timestep);
-    pBlockController->SetTFResolution(TF_RESOLUTION);
-    pBlockController->SetTFColorMap(pTFColorMap);
+    pBlockController->SetVolumeDataPointerByIndex(timestep);
     pBlockController->ExtractAllFeatures();
-    debug("init parameters ready");
 }
 
 void MpiController::TrackForward() {
@@ -137,7 +120,7 @@ void MpiController::TrackForward() {
     csv.time_2 /= (double)num_proc;
     csv.time_3 /= (double)num_proc;
 
-    csv.num_feature = featureTable.size() / 2;
+    csv.num_feature = featureTable.size();
 
     char np[21];
     sprintf(np, "%d", num_proc);
@@ -148,7 +131,7 @@ void MpiController::TrackForward() {
     ofstream outf(result.c_str(), ios::out | ios::app);
 
     if (my_rank == 0) {
-        outf << csv.num_proc << "," << csv.num_feature << "," << timestep << ","
+        outf << csv.num_proc << "," << csv.num_feature << "," << timestep+ds.start << ","
              << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
     }
 

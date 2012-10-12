@@ -18,9 +18,14 @@ public:
     int GetVolumeSize() { return volumeSize; }
     int GetFeatureVectorLength() { return featureVectors.size(); }
 
+    // TF
+    int GetTFResolution() { return tfResolution; }
+    float* GetTFOpacityMap() { return pTFOpacityMap; }
+
     Vector3i GetVolumeDimension() { return volumeDim; }
 
     void MpiReadDataSequence(Vector3i blockCoord, Vector3i partition, DataSet ds);
+    void InitTFSettings(string filename);
 
     vector<Feature> *GetFeatureVector(int iTime) { return &(featureVectors.at(iTime)); }
     Feature *GetFeature(int iTime, int index) { return &(featureVectors.at(iTime).at(index)); }
@@ -36,6 +41,10 @@ private:
 
     float* pDataBuffer;
     float* pMaskMatrix;
+
+    // TF
+    int tfResolution;
+    float *pTFOpacityMap;
 
     void normalizeData(DataSet ds);
     void calculateLocalMinMax();

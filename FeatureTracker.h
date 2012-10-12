@@ -30,11 +30,11 @@ public:
 
     // accessor
     void SetVolumeDataPointer(float* pData) { pVolumeData = pData; }
-    void SetTFColorMap(float* map) { pTFColorMap = map; }
+    void SetTFOpacityMap(float* map) { pTFOpacityMap = map; }
     void SetTFResolution(int res) { tfResolution = res; }
     int GetPointIndex(DataPoint point) { return xs*ys*point.z+xs*point.y+point.x; }
     int GetTFResolution() { return tfResolution; }
-    float* GetTFColorMap() { return pTFColorMap; }
+    float* GetTFOpacityMap() { return pTFOpacityMap; }
     IndexValueMap GetDiffPoints() { return diffPoints; }
 
     // Get all features information of current time step
@@ -62,7 +62,7 @@ private:
     float* pMaskMatrixCurrent;   // Mask matrix, same size with a time step data
     float* pMaskMatrixPrevious;  // Mask matrix, for backward time step when tracking forward & backward
     float* pVolumeData;         // Volume intensity value
-    float* pTFColorMap;
+    float* pTFOpacityMap;
     float lowerThreshold, upperThreshold;
     int tfResolution;
     int numVoxelinFeature;      // Used to calculate the number of voxel in the feature

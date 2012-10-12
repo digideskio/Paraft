@@ -17,7 +17,7 @@ FeatureTracker::FeatureTracker(int xsize, int ysize, int zsize)
     memset(pMaskMatrixCurrent, 0, volumeSize * sizeof(float));
     memset(pMaskMatrixPrevious, 0, volumeSize * sizeof(float));
 
-    pTFColorMap = NULL;
+    pTFOpacityMap = NULL;
     tfResolution = 0;
 }
 
@@ -116,7 +116,7 @@ void FeatureTracker::FindNewFeature(int x, int y, int z, float lowerValue, float
     expandRegion(maskValue);
     /////////////////////////////////
 
-    if (innerPoints.size() < FEATURE_MIN_VOXEL_NUM) {
+    if (innerPoints.size() < (uint)FEATURE_MIN_VOXEL_NUM) {
         maskValue -= 1.0f;
         return;
     }
@@ -475,12 +475,12 @@ void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
 }
 
  float FeatureTracker::getOpacity(float value) {
-    if (pTFColorMap == NULL || tfResolution == 0) {
+    if (pTFOpacityMap == NULL || tfResolution <= 0) {
         cout << "Set TF pointer first." << endl;
-        return -1;
+        return -1; exit(3);
     }
     int factor = (int)((float)(tfResolution-1) * value);
-    return pTFColorMap[4*factor+3];
+    return pTFOpacityMap[factor];
  }
 
  void FeatureTracker::updateDiffPointList(int index, float value) {

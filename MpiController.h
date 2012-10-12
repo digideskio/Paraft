@@ -53,7 +53,7 @@ private:
     hash_map<int, FeatureTable> featureTableVector;    // for time varying data
 
     void initBlockController();
-    void initParameters();
+//    void initParameters();
     void precalculateTimestep1();
 
     void mergeCorrespondentEdges(vector<Edge> edges);

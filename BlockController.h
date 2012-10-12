@@ -34,7 +34,7 @@ public:
     // Accessor - FeatureTracker
     void SetVolumeDataPointerByIndex(int index) { pFeatureTracker->SetVolumeDataPointer(pDataManager->GetVolumeDataPointer(index));}
     void SetTFResolution(int res) { pFeatureTracker->SetTFResolution(res); }
-    void SetTFColorMap(float* map) { pFeatureTracker->SetTFColorMap(map); }
+    void SetTFColorMap(float* map) { pFeatureTracker->SetTFOpacityMap(map); }
     void SetCurrentTimestep(int index) { currentTimestep = index; }
     void ClearHighlightedFeatureList() { highlightedFeatures.clear(); }
     void AddHighlightedFeature(int index);
