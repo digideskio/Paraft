@@ -24,11 +24,11 @@ void MpiController::InitWith(int argc, char **argv) {
     blockCoord.y = (my_rank-blockCoord.z*partition.x*partition.y)/partition.x;
     blockCoord.x = my_rank%partition.x;
 
-    ds.start    = 201;
-    ds.end      = 220;
+    ds.start    = 99;
+    ds.end      = 150;
     ds.prefix   = "vort_";
     ds.surfix   = ".raw";
-    ds.path     = "/Users/Yang/Develop/Data/yubo_new/";
+    ds.path     = "/Users/Yang/Develop/Data/yubo_new/vorts/";
     ds.tf       = "config.tfe";
     ds.dim      = Vector3i(256, 256, 256);
 
@@ -179,6 +179,7 @@ void MpiController::syncFeatureGraph() {
 
     need_to_send = adjacentBlocksNeedRecv.size() > 0 ? 1 : 0;
 
+    // -- debug ---------
 //    if (need_to_send) {
 //        cout << "[" << my_rank << "] need_to_send yes ";
 //        for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
@@ -194,6 +195,7 @@ void MpiController::syncFeatureGraph() {
 //    } else {
 //        debug("need_to_recv no");
 //    }
+    // -- debug ---------
 
     vector<Edge> adjacentGraph;
 

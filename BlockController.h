@@ -35,7 +35,7 @@ public:
     void SetVolumeDataPointerByIndex(int index) { pFeatureTracker->SetVolumeDataPointer(pDataManager->GetVolumeDataPointer(index));}
     void SetTFResolution(int res) { pFeatureTracker->SetTFResolution(res); }
     void SetTFColorMap(float* map) { pFeatureTracker->SetTFOpacityMap(map); }
-    void SetCurrentTimestep(int index) { currentTimestep = index; }
+    void SetCurrentTimestep(int index) { timestep = index; }
     void ClearHighlightedFeatureList() { highlightedFeatures.clear(); }
     void AddHighlightedFeature(int index);
     void ResetMaskMatrixValue(float value);
@@ -48,7 +48,7 @@ private:
     vector<Edge>    localGraph;
     vector<int>     highlightedFeatures;
     Vector3i        blockSize;
-    int             currentTimestep;
+    int             timestep;
     int             xs, ys, zs;
 
     void saveExtractedFeatures(vector<Feature>* f);

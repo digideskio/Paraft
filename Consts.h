@@ -2,22 +2,18 @@
 #define CONSTS_H
 
 #include <hash_map.h>
+#include <fstream>
 #include <math.h>
 #include <string>
 #include <vector>
 #include <list>
 #include <map>
 
-const int FEATURE_MIN_VOXEL_NUM = 10;
-
-const int INT_SIZE = 1;
-const int FLOAT_SIZE = sizeof(float);
-
-const int TF_RESOLUTION = 1024;
+const int FEATURE_MIN_VOXEL_NUM = 20;
 
 const float LOW_THRESHOLD  = 0.2;
-const float HIGH_THRESHOLD = 1.0;
-const float DIST_THRESHOLD = 9.0;
+const float HIGH_THRESHOLD = 0.8;
+const float DIST_THRESHOLD = 4.0;
 
 const int TRACKING_MODE_DIRECT = 0;
 const int TRACKING_MODE_LINEAR = 1;
@@ -34,6 +30,8 @@ const int SURFACE_BOTTOM = 2;   // y = 0
 const int SURFACE_TOP    = 3;   // y = ys
 const int SURFACE_FRONT  = 4;   // z = 0
 const int SURFACE_BACK   = 5;   // z = zs
+
+const bool IS_BIG_ENDIAN = false;
 
 using namespace std;
 
@@ -107,6 +105,7 @@ struct DataSet {
     string  prefix;
     string  surfix;
     string  path;
+    string  tf;
     Vector3i dim;
 };
 

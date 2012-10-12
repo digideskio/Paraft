@@ -66,6 +66,11 @@ void DataManager::InitTFSettings(string filename) {
             pTFOpacityMap[i] = littlen.f;
         }
     }
+
+    // debug tf
+    //    for (int i = 0; i < tfResolution; i++) {
+    //        printf("%2.4f\t", pTFOpacityMap[i]);
+    //    } cout << endl; exit(0);
 }
 
 void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
