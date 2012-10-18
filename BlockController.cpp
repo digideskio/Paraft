@@ -94,7 +94,7 @@ void BlockController::initAdjacentBlocks(Vector3i partition, Vector3i blockCoord
 
 vector<int> BlockController::GetAdjacentBlocks() {
     vector<int> indices;
-    for (unsigned int i = 0; i < adjacentBlocks.size(); i++) {
+    for (uint i = 0; i < adjacentBlocks.size(); i++) {
         if (adjacentBlocks[i] != -1) {
             indices.push_back(adjacentBlocks[i]);
         }

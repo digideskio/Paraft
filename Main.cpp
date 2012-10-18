@@ -19,16 +19,5 @@ int main (int argc, char** argv) {
     mc->Start();
     delete mc;
 
-//    ifstream inf("/Users/Yang/Develop/Data/jet_vort/jet_vort_0001.dat");
-//    if (!inf) cout << "file not found;" << endl;
-
-//    float value;
-//    for (int i = 0; i < 10000; i++) {
-//        inf.read(reinterpret_cast<char*>(&value), sizeof(float));
-//        if (i % 100 == 0)
-//            cout << value << "\t";
-//        } cout << endl;
-//    inf.close();
-
     return 0;
 }

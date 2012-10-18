@@ -45,20 +45,12 @@ private:
     int need_to_recv;
     int any_send, any_recv;
 
-    // for adjacent graph
-    void gatherNeighboringGraph();
-
     // global feature info
     FeatureTable featureTable;
     hash_map<int, FeatureTable> featureTableVector;    // for time varying data
 
     void initBlockController();
-//    void initParameters();
-    void precalculateTimestep1();
-
     void mergeCorrespondentEdges(vector<Edge> edges);
-
-    void debug(string msg);
 };
 
 #endif // MULTICORECONTROLLER_H

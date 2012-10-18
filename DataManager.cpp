@@ -66,11 +66,6 @@ void DataManager::InitTFSettings(string filename) {
             pTFOpacityMap[i] = littlen.f;
         }
     }
-
-    // debug tf
-    //    for (int i = 0; i < tfResolution; i++) {
-    //        printf("%2.4f\t", pTFOpacityMap[i]);
-    //    } cout << endl; exit(0);
 }
 
 void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
@@ -110,8 +105,8 @@ void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
         MPI_Type_commit(&filetype);
 
         MPI_File file;
-        int not_exist = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY,
-                                      MPI_INFO_NULL, &file);
+        int not_exist = MPI_File_open(MPI_COMM_WORLD, filename,
+                                      MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
         if (not_exist) printf("%s not exist.\n", filename);
 
         MPI_File_set_view(file, 0, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
@@ -133,7 +128,6 @@ void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
                 pDataBuffer[i] = littlen.f;
             }
         }
-
 
         MPI_File_close(&file);
         MPI_Type_free(&filetype);

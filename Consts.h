@@ -3,11 +3,10 @@
 
 #include <hash_map.h>
 #include <fstream>
-#include <math.h>
+#include <cmath>
 #include <string>
 #include <vector>
 #include <list>
-#include <map>
 
 const int FEATURE_MIN_VOXEL_NUM = 20;
 
