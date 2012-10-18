@@ -38,6 +38,7 @@ void MpiController::InitWith(int argc, char **argv) {
     csv.time_1 = 0.0;
     csv.time_2 = 0.0;
     csv.time_3 = 0.0;
+    csv.time_4 = 0.0;
 }
 
 void MpiController::Start() {
@@ -81,12 +82,6 @@ void MpiController::TrackForward() {
 
     featureTable.clear();
 
-    // option1: all gather and create a global graph
-//    gatherGlobalGraph();
-
-    // option2: gather adjacent to create feaure graph;
-    // initially sync with all adjacent blocks, when one finished syncing,
-    // delete it from the adjacentBlocks list
     adjacentBlocks = pBlockController->GetAdjacentBlocks();
     need_to_send = 1;
     need_to_recv = 1;
@@ -100,6 +95,11 @@ void MpiController::TrackForward() {
     MPI_Barrier(MPI_COMM_WORLD);
     double t3 = MPI_Wtime();
 
+    gatherGlobalGraph();
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double t4 = MPI_Wtime();
+
     featureTableVector[timestep] = featureTable;
 
     double delta = t1 - t0;
@@ -111,9 +111,13 @@ void MpiController::TrackForward() {
     delta = t3 - t2;
     MPI_Allreduce(&delta, &csv.time_3, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
+    delta = t4 - t3;
+    MPI_Allreduce(&delta, &csv.time_4, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
     csv.time_1 /= (double)num_proc;
     csv.time_2 /= (double)num_proc;
     csv.time_3 /= (double)num_proc;
+    csv.time_4 /= (double)num_proc;
 
     csv.num_feature = featureTable.size();
 
@@ -127,7 +131,8 @@ void MpiController::TrackForward() {
 
     if (my_rank == 0) {
         outf << csv.num_proc << "," << csv.num_feature << "," << timestep+ds.start << ","
-             << csv.time_1 << "," << csv.time_2 << "," << csv.time_3 << endl;
+             << csv.time_1 << "," << csv.time_2 << ","
+             << csv.time_3 << "," << csv.time_4 << endl;
     }
 
     outf.close();
@@ -152,7 +157,7 @@ void MpiController::syncFeatureGraph() {
                      blocksNeedRecv.begin(), blocksNeedRecv.end(),
                      back_inserter(adjacentBlocksNeedRecv));
 
-    need_to_send = adjacentBlocksNeedRecv.empty() ? 1 : 0;
+    need_to_send = adjacentBlocksNeedRecv.size() > 0 ? 1 : 0;
 
     vector<Edge> adjacentGraph;
 
@@ -189,14 +194,10 @@ void MpiController::syncFeatureGraph() {
             int dest = adjacentBlocksNeedRecv.at(i);
 
             // 1. send count
-            cout << "[" << my_rank << "]" << " -> " << dest << " +";
             MPI_Send(&localEdgeCount, 1, MPI_INT, dest, 100, MPI_COMM_WORLD);
-            cout << "-" << endl;
             // 2. send content
             if (localEdgeCount > 0) {
-                cout << "[" << my_rank << "]" << " => " << dest << " +";
                 MPI_Send(&localEdges.front(), localEdgeCount, MPI_TYPE_EDGE, dest, 101, MPI_COMM_WORLD);
-                cout << "-" << endl;
             }
         }
     }
@@ -216,9 +217,6 @@ void MpiController::syncFeatureGraph() {
 
     mergeCorrespondentEdges(adjacentGraph);
     pBlockController->SetLocalGraph(adjacentGraph);
-
-    any_send = -1;
-    any_recv = -1;
 
     MPI_Allreduce(&need_to_send, &any_send, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     MPI_Allreduce(&need_to_recv, &any_recv, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);

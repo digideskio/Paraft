@@ -50,12 +50,10 @@ void BlockController::ExtractAllFeatures() {
                 float opacity = pFeatureTracker->GetTFOpacityMap()[tfIndex];
                 if (opacity >= LOW_THRESHOLD && opacity <= HIGH_THRESHOLD) {
                     pFeatureTracker->FindNewFeature(x, y, z, LOW_THRESHOLD, HIGH_THRESHOLD);
-                }/* else {
-                    cout << "opacity: " << opacity << "\t";
-                } cout << endl;*/
+                }
             }
         }
-    } cout << endl;
+    }
     saveExtractedFeatures(pFeatureTracker->GetCurrentFeatureInfo());
 }
 

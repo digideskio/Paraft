@@ -130,6 +130,7 @@ typedef struct {
     double      time_1;
     double      time_2;
     double      time_3;
+    double      time_4;
 } CSVWriter;
 
 typedef struct { float x; float y; } Vector2f;
