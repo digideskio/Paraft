@@ -12,11 +12,10 @@ public:
 
     void CreateNewMaskMatrix();
 
-    float* GetVolumeDataPointer(int index) { return dataSequence.at(index); }
+    float* GetVolumeDataPointer(int index) { return dataSequenceMap[index]; }
     float* GetMaskMatrixPointer() { return pMaskMatrix; }
 
     int GetVolumeSize() { return volumeSize; }
-    int GetFeatureVectorLength() { return featureVectors.size(); }
 
     // TF
     int GetTFResolution() { return tfResolution; }
@@ -27,17 +26,14 @@ public:
     void MpiReadDataSequence(Vector3i blockCoord, Vector3i partition, DataSet ds);
     void InitTFSettings(string filename);
 
-    vector<Feature> *GetFeatureVector(int iTime) { return &(featureVectors.at(iTime)); }
-    Feature *GetFeature(int iTime, int index) { return &(featureVectors.at(iTime).at(index)); }
-    void SaveExtractedFeatures(vector<Feature> f) { featureVectors.push_back(f); }
-
 private:
     Vector3i volumeDim;
     int volumeSize;
 
-    DataVector dataSequence;
+//    DataVector dataSequence;
+    DataSequenceMap dataSequenceMap;
     MinMaxVector minMaxSequence;
-    vector< vector<Feature> > featureVectors;
+//    vector< vector<Feature> > featureVectors;
 
     float* pDataBuffer;
     float* pMaskMatrix;

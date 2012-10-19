@@ -24,8 +24,8 @@ void MpiController::InitWith(int argc, char **argv) {
     blockCoord.y = (my_rank-blockCoord.z*partition.x*partition.y)/partition.x;
     blockCoord.x = my_rank%partition.x;
 
-    ds.start    = 101;
-    ds.end      = 150;
+    ds.start    = 100;
+    ds.end      = 105;
     ds.prefix   = "vort_";
     ds.surfix   = ".raw";
     ds.path     = "/Users/Yang/Develop/Data/yubo_new/vorts/";
@@ -46,13 +46,14 @@ void MpiController::Start() {
 
     for (int i = 1; i < ds.end-ds.start; i++) {
         TrackForward();
+        if (my_rank == 0) cout << ds.start+i << " done." << endl;
     }
 
-    cout << my_rank << " over." << endl;
+    if (my_rank == 0) cout << my_rank << " over." << endl;
 }
 
 void MpiController::initBlockController() {
-    timestep = 0;   // in fact ds.start
+    timestep = ds.start;
     pBlockController = new BlockController();
     pBlockController->InitData(partition, blockCoord, ds);
     pBlockController->SetCurrentTimestep(timestep);
@@ -130,7 +131,7 @@ void MpiController::TrackForward() {
     ofstream outf(result.c_str(), ios::out | ios::app);
 
     if (my_rank == 0) {
-        outf << csv.num_proc << "," << csv.num_feature << "," << timestep+ds.start << ","
+        outf << csv.num_proc << "," << csv.num_feature << "," << timestep << ","
              << csv.time_1 << "," << csv.time_2 << ","
              << csv.time_3 << "," << csv.time_4 << endl;
     }
@@ -290,18 +291,18 @@ void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
         }
     }
 
-    if (my_rank == 0) {     // debug log
-        FeatureTable::iterator it;
-        for (it = featureTable.begin(); it != featureTable.end(); it++) {
-            int id = it->first;
-            cout << "[" << my_rank << "]" << id << ": ( ";
-            vector<int> value = it->second;
-            for (uint i = 0; i < value.size(); i++) {
-                cout << value[i] << " ";
-            }
-            cout << ")" << endl;
-        }
-    }
+//    if (my_rank == 0) {     // debug log
+//        FeatureTable::iterator it;
+//        for (it = featureTable.begin(); it != featureTable.end(); it++) {
+//            int id = it->first;
+//            cout << "[" << my_rank << "]" << id << ": ( ";
+//            vector<int> value = it->second;
+//            for (uint i = 0; i < value.size(); i++) {
+//                cout << value[i] << " ";
+//            }
+//            cout << ")" << endl;
+//        }
+//    }
 }
 
 void MpiController::updateFeatureTable(Edge edge) {

@@ -8,7 +8,7 @@
 #include <vector>
 #include <list>
 
-const int FEATURE_MIN_VOXEL_NUM = 20;
+const int FEATURE_MIN_VOXEL_NUM = 10;
 
 const float LOW_THRESHOLD  = 0.2;
 const float HIGH_THRESHOLD = 0.8;
@@ -137,7 +137,8 @@ typedef struct { float x; float y; } Vector2f;
 typedef hash_map<int, int> IntMap;
 typedef hash_map<int, float> IndexValueMap;
 typedef hash_map<int, vector<int> > FeatureTable;
-typedef vector<float*> DataVector;
+typedef hash_map<int, float*> DataSequenceMap;
+typedef hash_map<int, vector<Feature> > FeatureVectorSequence;
 typedef vector<MinMax> MinMaxVector;
 typedef unsigned int uint;
 

@@ -26,7 +26,9 @@ public:
     void TrackFeature(float* pDataSet, float lowerValue, float upperValue, int direction, int mode);
 
     // Get mask matrix of current time step
-    float *GetMaskMatrixPointer() { return pMaskMatrixCurrent; }
+    float *GetMaskVolumePointer() { return pMaskVolumeCurrent; }
+
+    void SaveExtractedFeatures(int index);
 
     // accessor
     void SetVolumeDataPointer(float* pData) { pVolumeData = pData; }
@@ -38,7 +40,7 @@ public:
     IndexValueMap GetDiffPoints() { return diffPoints; }
 
     // Get all features information of current time step
-    vector<Feature>* GetCurrentFeatureInfo() { return &currentFeaturesHolder; }
+    vector<Feature>* GetFeatureVectorPointer(int index) { return &featureSequence[index]; }
     void SetCurrentFeatureInfo(vector<Feature>* pFeature);
     void ClearCurrentFeatureInfo() { currentFeaturesHolder.clear(); }
 
@@ -59,8 +61,8 @@ private:
     void updateBoundaryMinMax(DataPoint point, int surface);
     void updateTouchedSurfaces();
 
-    float* pMaskMatrixCurrent;   // Mask matrix, same size with a time step data
-    float* pMaskMatrixPrevious;  // Mask matrix, for backward time step when tracking forward & backward
+    float* pMaskVolumeCurrent;   // Mask volume, same size with a time step data
+    float* pMaskVolumePrevious;  // Mask volume, for backward time step when tracking forward & backward
     float* pVolumeData;         // Volume intensity value
     float* pTFOpacityMap;
     float lowerThreshold, upperThreshold;
@@ -99,6 +101,8 @@ private:
     vector<Feature> backup1FeaturesHolder; // ... in the 1st backup time step
     vector<Feature> backup2FeaturesHolder; // ... in the 2nd backup time step
     vector<Feature> backup3FeaturesHolder; // ... in the 3rd backup time step
+
+    FeatureVectorSequence featureSequence;
 };
 
 #endif // FEATURETRACKER_H

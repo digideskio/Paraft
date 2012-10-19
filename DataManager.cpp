@@ -4,33 +4,21 @@ DataManager::DataManager() {
     tfResolution = -1;
     pDataBuffer = NULL;
     pMaskMatrix = NULL;
-    dataSequence.clear();;
+    dataSequenceMap.clear();
     minMaxSequence.clear();
-    featureVectors.clear();
 }
 
 DataManager::~DataManager() {
-    if (!dataSequence.empty()) {
-        for (uint i = 0; i < dataSequence.size(); i++) {
-            delete [] dataSequence.at(i);
+    if (!dataSequenceMap.empty()) {
+        DataSequenceMap::iterator it;
+        for (it = dataSequenceMap.begin(); it != dataSequenceMap.end(); it++) {
+            delete [] it->second;   // pointer to each timestep
         }
     }
 
     minMaxSequence.clear();
 
-    if (featureVectors.size() != 0) {
-        for (uint i = 0; i < featureVectors.size(); i++) {
-            for (uint j = 0; j < featureVectors.at(i).size(); j++) {
-                featureVectors.at(i).at(j).SurfacePoints.clear();
-                featureVectors.at(i).at(j).InnerPoints.clear();
-                featureVectors.at(i).at(j).Uncertainty.clear();
-            }
-        }
-    }
-
-    if (pMaskMatrix != NULL) {
-        delete [] pMaskMatrix;
-    }
+    if (pMaskMatrix != NULL)  delete [] pMaskMatrix;
 }
 
 void DataManager::CreateNewMaskMatrix() {
@@ -79,7 +67,7 @@ void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
         if (pDataBuffer == NULL) {
             cerr << "Allocate memory failed" << endl; exit(1);
         }
-        dataSequence.push_back(pDataBuffer); // index offset = ds.start
+        dataSequenceMap[time] = pDataBuffer;
 
         // 2. get file name from time index
         string filePath;
@@ -169,10 +157,12 @@ void DataManager::normalizeData(DataSet ds) {
     cout << "global min: " << gmin << " max: " << gmax << endl;
 
     // 2. normalize data sequence
-    for (int i = 0; i < ds.end-ds.start; i++) {
-        for (int j = 0; j < volumeSize; j++) {
-            dataSequence.at(i)[j] -= gmin;          // global min -> 0
-            dataSequence.at(i)[j] /= (gmax-gmin);   // global max -> 1
+    DataSequenceMap::iterator it;
+    for (it = dataSequenceMap.begin(); it != dataSequenceMap.end(); it++) {
+        float *pData = it->second;
+        for (int i = 0; i < volumeSize; i++) {
+            pData[i] -= gmin;          // global min -> 0.0
+            pData[i] /= gmax - gmin;   // global max -> 1.0
         }
     }
 }
