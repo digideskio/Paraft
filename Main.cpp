@@ -10,7 +10,7 @@ int main (int argc, char** argv) {
         cout << "argv[1]: " << argv[1] << endl;
         cout << "argv[2]: " << argv[2] << endl;
         cout << "argv[3]: " << argv[3] << endl;
-        cerr << "Usage : " << argv[0] << " npx npy npz" << endl;
+        cout << "Usage : " << argv[0] << " npx npy npz" << endl;
         return 0;
     }
 

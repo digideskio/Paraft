@@ -1,29 +1,25 @@
 #include "FeatureTracker.h"
 
-using namespace std;
-
-FeatureTracker::FeatureTracker(int xsize, int ysize, int zsize)
-    : xs(xsize), ys(ysize), zs(zsize) {
+FeatureTracker::FeatureTracker(Vector3i size) : xs(size.x), ys(size.y), zs(size.z) {
     maskValue = 0.0f;
-    volumeSize = xs * ys * zs;
+    tfResolution = 0;
+    pTFOpacityMap = NULL;
+    volumeSize = size.volume();
 
-    resetFeatureBoundaryInfo();
-
-    pMaskVolumeCurrent = (float*)malloc(volumeSize * sizeof(float));
-    pMaskVolumePrevious = (float*)malloc(volumeSize * sizeof(float));
+    pMaskVolumeCurrent = new float[volumeSize];
+    pMaskVolumePrevious = new float[volumeSize];
 
     if (pMaskVolumeCurrent == NULL || pMaskVolumePrevious == NULL) { return; }
 
-    memset(pMaskVolumeCurrent, 0, volumeSize * sizeof(float));
-    memset(pMaskVolumePrevious, 0, volumeSize * sizeof(float));
+    std::fill(pMaskVolumeCurrent, pMaskVolumeCurrent+volumeSize, 0);
+    std::fill(pMaskVolumePrevious, pMaskVolumePrevious+volumeSize, 0);
 
-    pTFOpacityMap = NULL;
-    tfResolution = 0;
+    resetFeatureBoundaryInfo();
 }
 
 FeatureTracker::~FeatureTracker() {
-    free(pMaskVolumeCurrent);
-    free(pMaskVolumePrevious);
+    delete [] pMaskVolumeCurrent;
+    delete [] pMaskVolumePrevious;
 
     dataPointList.clear();
     surfacePoints.clear();
@@ -46,17 +42,14 @@ FeatureTracker::~FeatureTracker() {
 void FeatureTracker::Reset() {
     maskValue = 0.0f;
     numVoxelinFeature = 0;
+    timestepsAvailableForward = 0;
+    timestepsAvailableBackward = 0;
+    sumCoordinateValue.x = sumCoordinateValue.y = sumCoordinateValue.z = 0;
 
     resetFeatureBoundaryInfo();
 
-    memset(pMaskVolumeCurrent, 0, xs*ys*zs * sizeof(float));   // clear current data
-    memset(pMaskVolumePrevious, 0, xs*ys*zs * sizeof(float));  // clear previous data
-
-    timestepsAvailableForward = 0;
-    timestepsAvailableBackward = 0;
-    sumCoordinateValue.x = 0;
-    sumCoordinateValue.y = 0;
-    sumCoordinateValue.z = 0;
+    std::fill(pMaskVolumeCurrent, pMaskVolumeCurrent+volumeSize, 0);
+    std::fill(pMaskVolumePrevious, pMaskVolumePrevious+volumeSize, 0);
 
     currentFeaturesHolder.clear();
     backup1FeaturesHolder.clear();
@@ -86,23 +79,20 @@ void FeatureTracker::resetFeatureBoundaryInfo() {
         boundaryMax[i].z = -1;
 
         // weighted ghost center
-        sumBoundaryXYZValue[i].x = 0;
-        sumBoundaryXYZValue[i].y = 0;
-        sumBoundaryXYZValue[i].z = 0;
+        sumBoundaryCoordinate[i].x = 0;
+        sumBoundaryCoordinate[i].y = 0;
+        sumBoundaryCoordinate[i].z = 0;
         numVoxelonBoundary[i] = 0;
     }   // 6 surfaces for a single block
 
     touchedSurfaces.clear();
 }
 
-void FeatureTracker::FindNewFeature(int x, int y, int z, float lowerValue, float upperValue) {
-    DataPoint point; { point.x = x; point.y = y; point.z = z; }
+void FeatureTracker::FindNewFeature(DataPoint point, float lowerValue, float upperValue) {
     upperThreshold = upperValue;
     lowerThreshold = lowerValue;
 
-    sumCoordinateValue.x = x;
-    sumCoordinateValue.y = y;
-    sumCoordinateValue.z = z;
+    sumCoordinateValue = point;
 
     dataPointList.clear();
     surfacePoints.clear();
@@ -166,8 +156,8 @@ void FeatureTracker::TrackFeature(float* pDataSet, float lowerValue,
     innerPoints.clear();
 
     // save current 0-1 matrix to previous, then clear current maxtrix
-    memcpy(pMaskVolumePrevious, pMaskVolumeCurrent, volumeSize*sizeof(float));
-    memset(pMaskVolumeCurrent, 0, volumeSize*sizeof(float));
+    std::copy(pMaskVolumeCurrent, pMaskVolumeCurrent+volumeSize, pMaskVolumePrevious);
+    std::fill(pMaskVolumeCurrent, pMaskVolumeCurrent+volumeSize, 0);
 
     for (uint i = 0; i < currentFeaturesHolder.size(); i++) {
         Feature f = currentFeaturesHolder[i];
@@ -198,10 +188,8 @@ void FeatureTracker::TrackFeature(float* pDataSet, float lowerValue,
 
 void FeatureTracker::updateTouchedSurfaces() {
     for (int i = 0; i < 6; i++) {
-        if (numVoxelonBoundary[i] == 0) { continue; }
-        boundaryCentroid[i].x = sumBoundaryXYZValue[i].x / numVoxelonBoundary[i];
-        boundaryCentroid[i].y = sumBoundaryXYZValue[i].y / numVoxelonBoundary[i];
-        boundaryCentroid[i].z = sumBoundaryXYZValue[i].z / numVoxelonBoundary[i];
+        if (numVoxelonBoundary[i] == 0) continue;
+        boundaryCentroid[i] = sumBoundaryCoordinate[i] / numVoxelonBoundary[i];
         touchedSurfaces.push_back(i);
     }
 }
@@ -232,7 +220,7 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
                 }
 
                 list<DataPoint>::iterator p;
-                for (p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); ++p) {
+                for (p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); p++) {
                     temp = (*p).x + (int)floor(delta.x); (*p).x = temp <= 0 ? 0 : (temp < xs ? temp : xs-1);
                     temp = (*p).y + (int)floor(delta.y); (*p).y = temp <= 0 ? 0 : (temp < ys ? temp : ys-1);
                     temp = (*p).z + (int)floor(delta.z); (*p).z = temp <= 0 ? 0 : (temp < zs ? temp : zs-1);
@@ -257,7 +245,7 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
                     }
                 }
                 list<DataPoint>::iterator p;
-                for (p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); ++p) {
+                for (p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); p++) {
                     temp = (*p).x + (int)floor(delta.x); (*p).x = temp <= 0 ? 0 : (temp < xs ? temp : xs-1);
                     temp = (*p).y + (int)floor(delta.y); (*p).y = temp <= 0 ? 0 : (temp < ys ? temp : ys-1);
                     temp = (*p).z + (int)floor(delta.z); (*p).z = temp <= 0 ? 0 : (temp < zs ? temp : zs-1);
@@ -277,21 +265,19 @@ inline void FeatureTracker::fillRegion(float maskValue) {
     list<DataPoint>::iterator p;
 
     // predicted to be on edge
-    for (p = surfacePoints.begin(); p != surfacePoints.end(); ++p) {
+    for (p = surfacePoints.begin(); p != surfacePoints.end(); p++) {
         index = GetPointIndex(*p);
         if (pMaskVolumeCurrent[index] == 0) {
             pMaskVolumeCurrent[index] = maskValue;
             updateDiffPointList(index, maskValue);
         }
-        sumCoordinateValue.x += (*p).x;
-        sumCoordinateValue.y += (*p).y;
-        sumCoordinateValue.z += (*p).z;
+        sumCoordinateValue += (*p);
+        innerPoints.push_back(*p);
         numVoxelinFeature++;
-        innerPoints.push_back((*p));
     }
 
     // currently not on edge but previously on edge
-    for (p = surfacePoints.begin(); p != surfacePoints.end(); ++p) {
+    for (p = surfacePoints.begin(); p != surfacePoints.end(); p++) {
         index = GetPointIndex(*p);
         (*p).x++;
         while ((*p).x >= 0 && (*p).x <= xs && (*p).x - delta.x >= 0 && (*p).x - delta.x <= xs &&
@@ -304,10 +290,8 @@ inline void FeatureTracker::fillRegion(float maskValue) {
             pMaskVolumeCurrent[index] = maskValue;
             updateDiffPointList(index, maskValue);
 
-            sumCoordinateValue.x += (*p).x;
-            sumCoordinateValue.y += (*p).y;
-            sumCoordinateValue.z += (*p).z;
-            innerPoints.push_back((*p));
+            sumCoordinateValue += (*p);
+            innerPoints.push_back(*p);
             numVoxelinFeature++;
             (*p).x++;
         }
@@ -315,9 +299,6 @@ inline void FeatureTracker::fillRegion(float maskValue) {
 
     if (numVoxelinFeature == 0) { return; }
     centroid = sumCoordinateValue / numVoxelinFeature;
-//    centroid.x = sumCoordinateValue.x / numVoxelinFeature;
-//    centroid.y = sumCoordinateValue.y / numVoxelinFeature;
-//    centroid.z = sumCoordinateValue.z / numVoxelinFeature;
 }
 
 inline void FeatureTracker::shrinkRegion(float maskValue) {
@@ -359,32 +340,26 @@ inline void FeatureTracker::shrinkRegion(float maskValue) {
     for (p = surfacePoints.begin(); p != surfacePoints.end(); ++p) {
         index = GetPointIndex((*p));
         if (pMaskVolumeCurrent[(xs)*(ys)*point.z+(xs)*point.y+point.x] != maskValue) {
-            sumCoordinateValue.x += (*p).x;
-            sumCoordinateValue.y += (*p).y;
-            sumCoordinateValue.z += (*p).z;
+            sumCoordinateValue += (*p);
+            innerPoints.push_back(*p);
             numVoxelinFeature++;
             pMaskVolumeCurrent[(xs)*(ys)*point.z+(xs)*point.y+point.x] = maskValue;
             updateDiffPointList(index, maskValue);
-            innerPoints.push_back((*p));
         }
     }
 
     if (numVoxelinFeature == 0) { return; }
     centroid = sumCoordinateValue / numVoxelinFeature;
-//    centroid.x = sumCoordinateValue.x / numVoxelinFeature;
-//    centroid.y = sumCoordinateValue.y / numVoxelinFeature;
-//    centroid.z = sumCoordinateValue.z / numVoxelinFeature;
 }
 
 inline void FeatureTracker::shrinkEdge(DataPoint point, float maskValue) {
     int index = GetPointIndex(point);
     if (pMaskVolumeCurrent[index] == maskValue) {
         pMaskVolumeCurrent[index] = 0;    // shrink
-        sumCoordinateValue.x -= point.x;
-        sumCoordinateValue.y -= point.y;
-        sumCoordinateValue.z -= point.z;
+        sumCoordinateValue -= point;
         numVoxelinFeature--;
-        for (list<DataPoint>::iterator it = innerPoints.begin(); it != innerPoints.end(); it++) {
+        list<DataPoint>::iterator it;
+        for (it = innerPoints.begin(); it != innerPoints.end(); it++) {
             if (point.x == (*it).x && point.y == (*it).y && point.z == (*it).z) {
                 innerPoints.erase(it); break;
             }
@@ -418,9 +393,6 @@ inline void FeatureTracker::expandRegion(float maskValue) {
 
     if (numVoxelinFeature == 0) { return; }
     centroid = sumCoordinateValue / numVoxelinFeature;
-//    centroid.x = sumCoordinateValue.x / numVoxelinFeature;
-//    centroid.y = sumCoordinateValue.y / numVoxelinFeature;
-//    centroid.z = sumCoordinateValue.z / numVoxelinFeature;
 }
 
 inline bool FeatureTracker::expandEdge(DataPoint point, float maskValue) {
@@ -444,9 +416,7 @@ inline bool FeatureTracker::expandEdge(DataPoint point, float maskValue) {
         ///////////////////////////////////////////////
         dataPointList.push_back(point);
         innerPoints.push_back(point);
-        sumCoordinateValue.x += point.x;
-        sumCoordinateValue.y += point.y;
-        sumCoordinateValue.z += point.z;
+        sumCoordinateValue += point;
         numVoxelinFeature++;
         return false;
     } else {
@@ -471,15 +441,13 @@ void FeatureTracker::updateBoundaryMinMax(DataPoint point, int surface) {
     boundaryMax[surface].y = boundaryMax[surface].y > point.y ? boundaryMax[surface].y : point.y;
     boundaryMax[surface].z = boundaryMax[surface].z > point.z ? boundaryMax[surface].z : point.z;
 
-    sumBoundaryXYZValue[surface].x += point.x;
-    sumBoundaryXYZValue[surface].y += point.y;
-    sumBoundaryXYZValue[surface].z += point.z;
+    sumBoundaryCoordinate[surface] += point;
     numVoxelonBoundary[surface]++;
 }
 
 void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
     currentFeaturesHolder.clear();
-    for (unsigned int i = 0; i < pFeatures->size(); i++) {
+    for (uint i = 0; i < pFeatures->size(); i++) {
         currentFeaturesHolder.push_back(pFeatures->at(i));
     }
 
@@ -490,16 +458,16 @@ void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
     timestepsAvailableBackward = 0;
 }
 
- float FeatureTracker::getOpacity(float value) {
+float FeatureTracker::getOpacity(float value) {
     if (pTFOpacityMap == NULL || tfResolution <= 0) {
         cout << "Set TF pointer first." << endl;
-        return -1; exit(3);
+        exit(3);
     }
     int factor = (int)((float)(tfResolution-1) * value);
     return pTFOpacityMap[factor];
  }
 
- void FeatureTracker::updateDiffPointList(int index, float value) {
+void FeatureTracker::updateDiffPointList(int index, float value) {
     IndexValueMap::iterator it = diffPoints.find(index);
     if (it == diffPoints.end()) {   // !contain
         diffPoints[index] = value;

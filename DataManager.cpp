@@ -2,28 +2,26 @@
 
 DataManager::DataManager() {
     tfResolution = -1;
-    pDataBuffer = NULL;
-    pMaskMatrix = NULL;
-    dataSequenceMap.clear();
-    minMaxSequence.clear();
+    pMaskVolume = NULL;
+    dataSequence.clear();
 }
 
 DataManager::~DataManager() {
-    if (!dataSequenceMap.empty()) {
-        DataSequenceMap::iterator it;
-        for (it = dataSequenceMap.begin(); it != dataSequenceMap.end(); it++) {
+    if (!dataSequence.empty()) {
+        DataSequence::iterator it;
+        for (it = dataSequence.begin(); it != dataSequence.end(); it++) {
             delete [] it->second;   // pointer to each timestep
         }
     }
 
-    minMaxSequence.clear();
-
-    if (pMaskMatrix != NULL)  delete [] pMaskMatrix;
+    if (pMaskVolume != NULL) {
+        delete [] pMaskVolume;
+    }
 }
 
-void DataManager::CreateNewMaskMatrix() {
-    pMaskMatrix = new float[volumeSize];
-    memset(pMaskMatrix, 0, sizeof(float)*volumeSize);
+void DataManager::CreateNewMaskVolume() {
+    pMaskVolume = new float[volumeSize];
+    std::fill(pMaskVolume, pMaskVolume+volumeSize, 0);
 }
 
 void DataManager::InitTFSettings(string filename) {
@@ -36,7 +34,7 @@ void DataManager::InitTFSettings(string filename) {
 
     tfResolution = (int)tfResF;
     pTFOpacityMap = new float[tfResolution];
-    inf.read(reinterpret_cast<char*>(pTFOpacityMap), tfResolution * sizeof(float));
+    inf.read(reinterpret_cast<char*>(pTFOpacityMap), tfResolution*sizeof(float));
     inf.close();
 
     if (IS_BIG_ENDIAN) {  // reverse endian
@@ -56,36 +54,46 @@ void DataManager::InitTFSettings(string filename) {
     }
 }
 
-void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
-                                      DataSet ds) {
-    volumeDim = ds.dim / partition;
-    volumeSize = volumeDim.volume();
+void DataManager::PreloadDataSequence(Vector3i partition, Vector3i blockCoord, DataSet ds, int timestep) {
+    blockSize = ds.size / partition;
+    volumeSize = blockSize.volume();
 
-    for (int time = ds.start; time < ds.end; time++) {
-        // 1. allocate new data buffer then add pointer to map
-        pDataBuffer = new float[volumeSize];
-        if (pDataBuffer == NULL) {
-            cerr << "Allocate memory failed" << endl; exit(1);
+    // delete if exsiting data is not within 2-neighbor of current timestep
+    DataSequence::iterator it;
+    for (it = dataSequence.begin(); it != dataSequence.end(); it++) {
+        if (it->first < timestep-2 || it->first > timestep+2) {
+            delete [] it->second;
+            dataSequence.erase(it);
         }
-        dataSequenceMap[time] = pDataBuffer;
+    }
+
+    for (int t = timestep-2; t <= timestep+3; t++) {
+        if (t < ds.start || t > ds.end) {   // only [t-2, t-1, t, t+1, t+2]
+            continue;
+        }
+
+        // 1. allocate new data buffer then add pointer to map
+        if (dataSequence[t] == NULL) {
+            dataSequence[t] = new float[volumeSize];
+        }
 
         // 2. get file name from time index
         string filePath;
         char timestep[21]; // hold up to 64-bits
-        sprintf(timestep, "%8d", time);
+        sprintf(timestep, "%8d", t);
         for (int i = 0; i < 8; i++) {
             timestep[i] = timestep[i] == ' ' ? '0' : timestep[i];
         }
         filePath = ds.path + ds.prefix + timestep + ds.surfix;
 
         char *filename = new char[filePath.size() + 1];
-        copy(filePath.begin(), filePath.end(), filename);
+        std::copy(filePath.begin(), filePath.end(), filename);
         filename[filePath.size()] = '\0';
 
         // 3. read corresponding file using mpi collective io
-        int *gsizes = (volumeDim * partition).toArray();
-        int *subsizes = volumeDim.toArray();
-        int *starts = (volumeDim * blockCoord).toArray();
+        int *gsizes = (blockSize * partition).toArray();
+        int *subsizes = blockSize.toArray();
+        int *starts = (blockSize * blockCoord).toArray();
 
         MPI_Datatype filetype;
         MPI_Type_create_subarray(3, gsizes, subsizes, starts, MPI_ORDER_FORTRAN,
@@ -93,76 +101,37 @@ void DataManager::MpiReadDataSequence(Vector3i blockCoord, Vector3i partition,
         MPI_Type_commit(&filetype);
 
         MPI_File file;
-        int not_exist = MPI_File_open(MPI_COMM_WORLD, filename,
-                                      MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
+        int not_exist = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY,
+                                      MPI_INFO_NULL, &file);
         if (not_exist) printf("%s not exist.\n", filename);
 
         MPI_File_set_view(file, 0, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
-        MPI_File_read_all(file, pDataBuffer, volumeSize, MPI_FLOAT,
-                          MPI_STATUS_IGNORE);
-
-        if (IS_BIG_ENDIAN) { // reverse endian
-            union {
-                float f;
-                unsigned char b[4];
-            } bigen, littlen;
-
-            for (int i = 0; i < volumeSize; i++) {
-                bigen.f = pDataBuffer[i];
-                littlen.b[0] = bigen.b[3];
-                littlen.b[1] = bigen.b[2];
-                littlen.b[2] = bigen.b[1];
-                littlen.b[3] = bigen.b[0];
-                pDataBuffer[i] = littlen.f;
-            }
-        }
+        MPI_File_read_all(file, dataSequence[t], volumeSize, MPI_FLOAT, MPI_STATUS_IGNORE);
 
         MPI_File_close(&file);
         MPI_Type_free(&filetype);
         delete[] filename;
-
-        calculateLocalMinMax();
     }
 
     normalizeData(ds);
 }
 
-void DataManager::calculateLocalMinMax() {
-    float min = std::numeric_limits<float>::max();
-    float max = std::numeric_limits<float>::min();
-
-    for (int i = 0; i < volumeSize; i++) {
-        min = min < pDataBuffer[i] ? min : pDataBuffer[i];
-        max = max > pDataBuffer[i] ? max : pDataBuffer[i];
-    }
-
-    minMaxSequence.push_back(MinMax(min, max));
-}
-
 void DataManager::normalizeData(DataSet ds) {
-    float min = std::numeric_limits<float>::max();
-    float max = std::numeric_limits<float>::min();
-
-    // 1. get local min-max for the whole data sequence
-    for (int i = 0; i < ds.end-ds.start; i++) {
-        min = min < minMaxSequence.at(i).min ? min : minMaxSequence.at(i).min;
-        max = max > minMaxSequence.at(i).max ? max : minMaxSequence.at(i).max;
-    }
-
-    // 2. get global min-max for the whole data sequence
-    float gmin, gmax;
-    MPI_Allreduce(&min, &gmin, 1, MPI_FLOAT, MPI_MIN, MPI_COMM_WORLD);
-    MPI_Allreduce(&max, &gmax, 1, MPI_FLOAT, MPI_MAX, MPI_COMM_WORLD);
-
-    cout << "global min: " << gmin << " max: " << gmax << endl;
-
-    // 2. normalize data sequence
-    DataSequenceMap::iterator it;
-    for (it = dataSequenceMap.begin(); it != dataSequenceMap.end(); it++) {
+    union { float f; unsigned char b[4]; } bigen, littlen;
+    DataSequence::iterator it;
+    for (it = dataSequence.begin(); it != dataSequence.end(); it++) {
         float *pData = it->second;
         for (int i = 0; i < volumeSize; i++) {
-            pData[i] -= gmin;          // global min -> 0.0
-            pData[i] /= gmax - gmin;   // global max -> 1.0
+            if (IS_BIG_ENDIAN) {    // reverse endian
+                bigen.f = pData[i];
+                littlen.b[0] = bigen.b[3];
+                littlen.b[1] = bigen.b[2];
+                littlen.b[2] = bigen.b[1];
+                littlen.b[3] = bigen.b[0];
+                pData[i] = littlen.f;
+            }
+            pData[i] -= ds.min;             // min -> 0.0
+            pData[i] /= ds.max - ds.min;    // max -> 1.0
         }
     }
 }

@@ -10,40 +10,28 @@ public:
     DataManager();
     ~DataManager();
 
-    void CreateNewMaskMatrix();
+    void CreateNewMaskVolume();
 
-    float* GetVolumeDataPointer(int index) { return dataSequenceMap[index]; }
-    float* GetMaskMatrixPointer() { return pMaskMatrix; }
-
-    int GetVolumeSize() { return volumeSize; }
-
-    // TF
-    int GetTFResolution() { return tfResolution; }
+    float* GetDataPointer(int index) { return dataSequence[index]; }
     float* GetTFOpacityMap() { return pTFOpacityMap; }
+    int GetTFResolution() { return tfResolution; }
 
-    Vector3i GetVolumeDimension() { return volumeDim; }
+    Vector3i GetVolumeDimension() { return blockSize; }
 
-    void MpiReadDataSequence(Vector3i blockCoord, Vector3i partition, DataSet ds);
     void InitTFSettings(string filename);
+    void PreloadDataSequence(Vector3i partition, Vector3i blockCoord, DataSet ds, int timestep);
 
 private:
-    Vector3i volumeDim;
+    DataSequence dataSequence;
+    Vector3i blockSize;
+
     int volumeSize;
-
-//    DataVector dataSequence;
-    DataSequenceMap dataSequenceMap;
-    MinMaxVector minMaxSequence;
-//    vector< vector<Feature> > featureVectors;
-
-    float* pDataBuffer;
-    float* pMaskMatrix;
-
-    // TF
     int tfResolution;
+
+    float *pMaskVolume;
     float *pTFOpacityMap;
 
     void normalizeData(DataSet ds);
-    void calculateLocalMinMax();
 };
 
 #endif // DATAMANAGER_H

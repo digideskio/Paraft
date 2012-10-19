@@ -101,11 +101,13 @@ public:
 struct DataSet {
     int     start;
     int     end;
+    float   min;
+    float   max;
     string  prefix;
     string  surfix;
     string  path;
     string  tf;
-    Vector3i dim;
+    Vector3i size;
 };
 
 struct Feature {
@@ -127,17 +129,17 @@ typedef struct {
     Vector3i    partition;
     int         num_proc;
     int         num_feature;
-    double      time_1;
-    double      time_2;
-    double      time_3;
-    double      time_4;
+    double      t1;
+    double      t2;
+    double      t3;
+    double      t4;
 } CSVWriter;
 
 typedef struct { float x; float y; } Vector2f;
 typedef hash_map<int, int> IntMap;
 typedef hash_map<int, float> IndexValueMap;
 typedef hash_map<int, vector<int> > FeatureTable;
-typedef hash_map<int, float*> DataSequenceMap;
+typedef hash_map<int, float*> DataSequence;
 typedef hash_map<int, vector<Feature> > FeatureVectorSequence;
 typedef vector<MinMax> MinMaxVector;
 typedef unsigned int uint;

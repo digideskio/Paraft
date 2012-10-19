@@ -11,7 +11,7 @@ using namespace std;
 class FeatureTracker {
 
 public:
-    FeatureTracker(int xsize, int ysize, int zsize);
+    FeatureTracker(Vector3i size);
     ~FeatureTracker() ;
 
     void Reset();
@@ -20,7 +20,8 @@ public:
     // 1. Do region growing at the current time step
     // 2. Adding a center point into the center point list
     // 3. Adding edge points into the edge list
-    void FindNewFeature(int x, int y, int z, float lowerValue, float upperValue);
+//    void FindNewFeature(int x, int y, int z, float lowerValue, float upperValue);
+    void FindNewFeature(DataPoint point, float lowerValue, float upperValue);
 
     // Track forward one time step based on the center points of the features at the last time step
     void TrackFeature(float* pDataSet, float lowerValue, float upperValue, int direction, int mode);
@@ -88,7 +89,7 @@ private:
     Vector3i    sumCoordinateValue;    // Sum of the voxel values of the feature
     Vector3f    delta;
 
-    Vector3i    sumBoundaryXYZValue[6];  // Sum of the voxel values on boundary surface
+    Vector3i    sumBoundaryCoordinate[6];  // Sum of the voxel values on boundary surface
     int         numVoxelonBoundary[6];
 
     // 6 possible ghost area

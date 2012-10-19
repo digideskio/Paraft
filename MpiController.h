@@ -25,7 +25,7 @@ private:
 
     int my_rank;
     int num_proc;
-    int timestep;
+    int t;  // current timestep
 
     CSVWriter csv;
     DataSet ds;
@@ -41,9 +41,9 @@ private:
     vector<int> adjacentBlocks;
     void syncFeatureGraph();
     void updateFeatureTable(Edge edge);
-    int need_to_send;
-    int need_to_recv;
-    int any_send, any_recv;
+    bool need_to_send;
+    bool need_to_recv;
+    bool any_send, any_recv;
 
     // global feature info
     FeatureTable featureTable;

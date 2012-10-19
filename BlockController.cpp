@@ -13,22 +13,24 @@ BlockController::~BlockController() {
     pFeatureTracker->~FeatureTracker();
 }
 
-void BlockController::InitData(Vector3i partition, Vector3i blockCoord, DataSet ds) {
+void BlockController::InitParameters(Vector3i partition, Vector3i blockCoord, DataSet ds) {
     initAdjacentBlocks(partition, blockCoord);
 
     pDataManager = new DataManager();
-    pDataManager->MpiReadDataSequence(blockCoord, partition, ds);
-    pDataManager->CreateNewMaskMatrix();
+    pDataManager->PreloadDataSequence(partition, blockCoord, ds, t);
+    pDataManager->CreateNewMaskVolume();
     pDataManager->InitTFSettings(ds.tf);
 
     blockSize = pDataManager->GetVolumeDimension();
-    pFeatureTracker = new FeatureTracker(blockSize.x, blockSize.y, blockSize.z);
+    pFeatureTracker = new FeatureTracker(blockSize);
     pFeatureTracker->SetTFResolution(pDataManager->GetTFResolution());
     pFeatureTracker->SetTFOpacityMap(pDataManager->GetTFOpacityMap());
+    pFeatureTracker->SetVolumeDataPointer(pDataManager->GetDataPointer(t));
 }
 
-void BlockController::TrackForward() {
-    pFeatureTracker->TrackFeature(pDataManager->GetVolumeDataPointer(timestep),
+void BlockController::TrackForward(Vector3i partition, Vector3i blockCoord, DataSet ds) {
+    pDataManager->PreloadDataSequence(partition, blockCoord, ds, t);
+    pFeatureTracker->TrackFeature(pDataManager->GetDataPointer(t),
                                   LOW_THRESHOLD, HIGH_THRESHOLD,
                                   TRACKING_FORWARD, TRACKING_MODE_DIRECT);
     ExtractAllFeatures();
@@ -43,16 +45,17 @@ void BlockController::ExtractAllFeatures() {
                 if (pFeatureTracker->GetMaskVolumePointer()[index] != 0) {
                     continue;
                 }
-                float *pVolume = pDataManager->GetVolumeDataPointer(timestep);
+                float *pVolume = pDataManager->GetDataPointer(t);
                 int tfIndex = (int)(pVolume[index] * (float)(tfRes-1));
                 float opacity = pFeatureTracker->GetTFOpacityMap()[tfIndex];
                 if (opacity >= LOW_THRESHOLD && opacity <= HIGH_THRESHOLD) {
-                    pFeatureTracker->FindNewFeature(x, y, z, LOW_THRESHOLD, HIGH_THRESHOLD);
+                    pFeatureTracker->FindNewFeature(DataPoint(x,y,z), LOW_THRESHOLD,
+                                                    HIGH_THRESHOLD);
                 }
             }
         }
     }
-    pFeatureTracker->SaveExtractedFeatures(timestep);
+    pFeatureTracker->SaveExtractedFeatures(t);
 }
 
 void BlockController::initAdjacentBlocks(Vector3i partition, Vector3i blockCoord) {
@@ -81,7 +84,7 @@ void BlockController::UpdateLocalGraph(int blockID, Vector3i blockCoord) {
     localGraph.clear();
 
     vector<Feature> *pCurrentFeatures;
-    pCurrentFeatures = pFeatureTracker->GetFeatureVectorPointer(timestep);
+    pCurrentFeatures = pFeatureTracker->GetFeatureVectorPointer(t);
     if (pCurrentFeatures->size() == 0) {
         return;
     }

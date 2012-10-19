@@ -11,19 +11,16 @@ public:
     BlockController();
     ~BlockController();
 
-    void InitData(Vector3i partition, Vector3i blockCoord, DataSet ds);
-    void TrackForward();
+    void InitParameters(Vector3i partition, Vector3i blockCoord, DataSet ds);
+    void TrackForward(Vector3i partition, Vector3i blockCoord, DataSet ds);
     void ExtractAllFeatures();
     void UpdateLocalGraph(int blockID, Vector3i blockCoord);
+    void SetCurrentTimestep(int timestep) { t = timestep; }
 
     // Feature Connectivity Graph
     vector<int> GetAdjacentBlocks();
     vector<Edge> GetLocalGraph() { return localGraph; }
     void SetLocalGraph(vector<Edge> graph) { localGraph = graph; }
-
-    // Accessor - FeatureTracker
-    void SetVolumeDataPointerByIndex(int index) { pFeatureTracker->SetVolumeDataPointer(pDataManager->GetVolumeDataPointer(index));}
-    void SetCurrentTimestep(int index) { timestep = index; }
 
 private:
     DataManager     *pDataManager;
@@ -32,7 +29,7 @@ private:
     IntMap          adjacentBlocks;
     vector<Edge>    localGraph;
     Vector3i        blockSize;
-    int             timestep;
+    int             t;  // current timestep
 
     void initAdjacentBlocks(Vector3i partition, Vector3i blockCoord);
 };

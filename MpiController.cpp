@@ -16,64 +16,63 @@ void MpiController::InitWith(int argc, char **argv) {
     MPI_Type_contiguous(sizeof(Edge), MPI_BYTE, &MPI_TYPE_EDGE);
     MPI_Type_commit(&MPI_TYPE_EDGE);
 
-    partition.x = atoi(argv[1]);
-    partition.y = atoi(argv[2]);
-    partition.z = atoi(argv[3]);
+    partition = Vector3i(atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
 
     blockCoord.z = my_rank/(partition.x*partition.y);
     blockCoord.y = (my_rank-blockCoord.z*partition.x*partition.y)/partition.x;
     blockCoord.x = my_rank%partition.x;
 
     ds.start    = 100;
-    ds.end      = 105;
+    ds.end      = 110;
+    ds.min      = 0.0;
+    ds.max      = 3.01309;
     ds.prefix   = "vort_";
     ds.surfix   = ".raw";
     ds.path     = "/Users/Yang/Develop/Data/yubo_new/vorts/";
     ds.tf       = "config.tfe";
-    ds.dim      = Vector3i(256, 256, 256);
+    ds.size      = Vector3i(256, 256, 256);
 
     csv.partition = partition;
     csv.num_proc = num_proc;
     csv.num_feature = 0;
-    csv.time_1 = 0.0;
-    csv.time_2 = 0.0;
-    csv.time_3 = 0.0;
-    csv.time_4 = 0.0;
+    csv.t1 = 0.0;
+    csv.t2 = 0.0;
+    csv.t3 = 0.0;
+    csv.t4 = 0.0;
 }
 
 void MpiController::Start() {
     initBlockController();
 
-    for (int i = 1; i < ds.end-ds.start; i++) {
+    for (int i = ds.start; i < ds.end; i++) {
         TrackForward();
-        if (my_rank == 0) cout << ds.start+i << " done." << endl;
+        if (my_rank == 0) cout << i+1 << " done." << endl;
     }
 
     if (my_rank == 0) cout << my_rank << " over." << endl;
 }
 
 void MpiController::initBlockController() {
-    timestep = ds.start;
+    t = ds.start;
     pBlockController = new BlockController();
-    pBlockController->InitData(partition, blockCoord, ds);
-    pBlockController->SetCurrentTimestep(timestep);
-    pBlockController->SetVolumeDataPointerByIndex(timestep);
+    pBlockController->SetCurrentTimestep(t);
+    pBlockController->InitParameters(partition, blockCoord, ds);
     pBlockController->ExtractAllFeatures();
 }
 
 void MpiController::TrackForward() {
-    timestep++;
-    if (timestep > ds.end) {
-        timestep = ds.end;
+    t++;
+    if (t > ds.end) {
+        t = ds.end;
         cout << "already last timestep." << endl;
         return;
     }
 
-    pBlockController->SetCurrentTimestep(timestep);
+    pBlockController->SetCurrentTimestep(t);
     MPI_Barrier(MPI_COMM_WORLD);
     double t0 = MPI_Wtime();
 
-    pBlockController->TrackForward();
+    pBlockController->TrackForward(partition, blockCoord, ds);
     MPI_Barrier(MPI_COMM_WORLD);
     double t1 = MPI_Wtime();
 
@@ -84,12 +83,10 @@ void MpiController::TrackForward() {
     featureTable.clear();
 
     adjacentBlocks = pBlockController->GetAdjacentBlocks();
-    need_to_send = 1;
-    need_to_recv = 1;
-    any_send = 1;
-    any_recv = 1;
+    need_to_send = need_to_recv = true;
+    any_send = any_recv = true;
 
-    while (any_send == 1 || any_recv == 1) {
+    while (any_send || any_recv) {
         syncFeatureGraph();
     }
 
@@ -101,24 +98,24 @@ void MpiController::TrackForward() {
     MPI_Barrier(MPI_COMM_WORLD);
     double t4 = MPI_Wtime();
 
-    featureTableVector[timestep] = featureTable;
+    featureTableVector[t] = featureTable;
 
     double delta = t1 - t0;
-    MPI_Allreduce(&delta, &csv.time_1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&delta, &csv.t1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     delta = t2 - t1;
-    MPI_Allreduce(&delta, &csv.time_2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&delta, &csv.t2, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     delta = t3 - t2;
-    MPI_Allreduce(&delta, &csv.time_3, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&delta, &csv.t3, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     delta = t4 - t3;
-    MPI_Allreduce(&delta, &csv.time_4, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&delta, &csv.t4, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-    csv.time_1 /= (double)num_proc;
-    csv.time_2 /= (double)num_proc;
-    csv.time_3 /= (double)num_proc;
-    csv.time_4 /= (double)num_proc;
+    csv.t1 /= (double)num_proc;
+    csv.t2 /= (double)num_proc;
+    csv.t3 /= (double)num_proc;
+    csv.t4 /= (double)num_proc;
 
     csv.num_feature = featureTable.size();
 
@@ -131,9 +128,8 @@ void MpiController::TrackForward() {
     ofstream outf(result.c_str(), ios::out | ios::app);
 
     if (my_rank == 0) {
-        outf << csv.num_proc << "," << csv.num_feature << "," << timestep << ","
-             << csv.time_1 << "," << csv.time_2 << ","
-             << csv.time_3 << "," << csv.time_4 << endl;
+        outf << csv.num_proc << "," << csv.num_feature << "," << t << ","
+             << csv.t1 << "," << csv.t2 << "," << csv.t3 << "," << csv.t4 << endl;
     }
 
     outf.close();
@@ -158,11 +154,11 @@ void MpiController::syncFeatureGraph() {
                      blocksNeedRecv.begin(), blocksNeedRecv.end(),
                      back_inserter(adjacentBlocksNeedRecv));
 
-    need_to_send = adjacentBlocksNeedRecv.size() > 0 ? 1 : 0;
+    need_to_send = adjacentBlocksNeedRecv.size() > 0 ? true : false;
 
     vector<Edge> adjacentGraph;
 
-    if (need_to_recv == 1) {
+    if (need_to_recv) {
         for (uint i = 0; i < adjacentBlocks.size(); i++) {
             int src = adjacentBlocks.at(i);
             int srcEdgeCount = 0;
@@ -187,10 +183,10 @@ void MpiController::syncFeatureGraph() {
                 }
             }
         }
-        need_to_recv = 0;
+        need_to_recv = false;
     }
 
-    if (need_to_send == 1) {
+    if (need_to_send) {
         for (uint i = 0; i < adjacentBlocksNeedRecv.size(); i++) {
             int dest = adjacentBlocksNeedRecv.at(i);
 
@@ -219,8 +215,8 @@ void MpiController::syncFeatureGraph() {
     mergeCorrespondentEdges(adjacentGraph);
     pBlockController->SetLocalGraph(adjacentGraph);
 
-    MPI_Allreduce(&need_to_send, &any_send, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    MPI_Allreduce(&need_to_recv, &any_recv, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(&need_to_send, &any_send, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
+    MPI_Allreduce(&need_to_recv, &any_recv, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
 }
 
 void MpiController::gatherGlobalGraph() {
@@ -291,18 +287,18 @@ void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
         }
     }
 
-//    if (my_rank == 0) {     // debug log
-//        FeatureTable::iterator it;
-//        for (it = featureTable.begin(); it != featureTable.end(); it++) {
-//            int id = it->first;
-//            cout << "[" << my_rank << "]" << id << ": ( ";
-//            vector<int> value = it->second;
-//            for (uint i = 0; i < value.size(); i++) {
-//                cout << value[i] << " ";
-//            }
-//            cout << ")" << endl;
-//        }
-//    }
+    if (my_rank == 0) {     // debug log
+        FeatureTable::iterator it;
+        for (it = featureTable.begin(); it != featureTable.end(); it++) {
+            int id = it->first;
+            cout << "[" << my_rank << "]" << id << ": ( ";
+            vector<int> value = it->second;
+            for (uint i = 0; i < value.size(); i++) {
+                cout << value[i] << " ";
+            }
+            cout << ")" << endl;
+        }
+    }
 }
 
 void MpiController::updateFeatureTable(Edge edge) {
@@ -311,19 +307,17 @@ void MpiController::updateFeatureTable(Edge edge) {
         value.push_back(edge.start);
         value.push_back(edge.end);
         featureTable[edge.id] = value;
-        need_to_recv = 1;
+        need_to_recv = true;
     } else {
         vector<int> value = featureTable[edge.id];
         if (find(value.begin(), value.end(), edge.start) == value.end()) {
             value.push_back(edge.start);
-            need_to_recv = 1;
+            need_to_recv = true;
         }
-
         if (find(value.begin(), value.end(), edge.end) == value.end()) {
             value.push_back(edge.end);
-            need_to_recv = 1;
+            need_to_recv = true;
         }
-
         featureTable[edge.id] = value;
     }
 }
