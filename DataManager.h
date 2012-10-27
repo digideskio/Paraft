@@ -31,7 +31,7 @@ private:
     float *pMaskVolume;
     float *pTFOpacityMap;
 
-    void normalizeData(DataSet ds);
+    void normalizeData(float *pData, DataSet ds);
 };
 
 #endif // DATAMANAGER_H

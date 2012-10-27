@@ -30,26 +30,17 @@ void DataManager::InitTFSettings(string filename) {
 
     float tfResF = 0.0f;
     inf.read(reinterpret_cast<char*>(&tfResF), sizeof(float));
-    if (tfResF <= 0) { cout << "tfResolution = " << tfResF << endl; exit(2); }
+    if (IS_BIG_ENDIAN) ReverseEndian(&tfResF);
+    if (tfResF < 1) { cout << "tfResolution = " << tfResF << endl; exit(2); }
 
     tfResolution = (int)tfResF;
     pTFOpacityMap = new float[tfResolution];
     inf.read(reinterpret_cast<char*>(pTFOpacityMap), tfResolution*sizeof(float));
     inf.close();
 
-    if (IS_BIG_ENDIAN) {  // reverse endian
-        union {
-            float f;
-            unsigned char b[4];
-        } bigen, littlen;
-
+    if (IS_BIG_ENDIAN) {
         for (int i = 0; i < tfResolution; i++) {
-            bigen.f = pTFOpacityMap[i];
-            littlen.b[0] = bigen.b[3];
-            littlen.b[1] = bigen.b[2];
-            littlen.b[2] = bigen.b[1];
-            littlen.b[3] = bigen.b[0];
-            pTFOpacityMap[i] = littlen.f;
+            ReverseEndian(&pTFOpacityMap[i]);
         }
     }
 }
@@ -108,30 +99,18 @@ void DataManager::PreloadDataSequence(Vector3i partition, Vector3i blockCoord, D
         MPI_File_set_view(file, 0, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
         MPI_File_read_all(file, dataSequence[t], volumeSize, MPI_FLOAT, MPI_STATUS_IGNORE);
 
+        normalizeData(dataSequence[t], ds);
+
         MPI_File_close(&file);
         MPI_Type_free(&filetype);
         delete[] filename;
     }
-
-    normalizeData(ds);
 }
 
-void DataManager::normalizeData(DataSet ds) {
-    union { float f; unsigned char b[4]; } bigen, littlen;
-    DataSequence::iterator it;
-    for (it = dataSequence.begin(); it != dataSequence.end(); it++) {
-        float *pData = it->second;
-        for (int i = 0; i < volumeSize; i++) {
-            if (IS_BIG_ENDIAN) {    // reverse endian
-                bigen.f = pData[i];
-                littlen.b[0] = bigen.b[3];
-                littlen.b[1] = bigen.b[2];
-                littlen.b[2] = bigen.b[1];
-                littlen.b[3] = bigen.b[0];
-                pData[i] = littlen.f;
-            }
-            pData[i] -= ds.min;             // min -> 0.0
-            pData[i] /= ds.max - ds.min;    // max -> 1.0
-        }
+void DataManager::normalizeData(float *pData, DataSet ds) {
+    for (int i = 0; i < volumeSize; i++) {
+        if (IS_BIG_ENDIAN) ReverseEndian(&pData[i]);
+        pData[i] -= ds.min;
+        pData[i] /= ds.max - ds.min;
     }
 }

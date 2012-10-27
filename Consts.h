@@ -144,4 +144,10 @@ typedef hash_map<int, vector<Feature> > FeatureVectorSequence;
 typedef vector<MinMax> MinMaxVector;
 typedef unsigned int uint;
 
+template <class T>
+void ReverseEndian(T *pObject) {
+    unsigned char *pChar = reinterpret_cast<unsigned char*>(pObject);
+    std::reverse(pChar, pChar + sizeof(T));
+}
+
 #endif // CONSTS_H

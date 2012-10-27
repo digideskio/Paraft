@@ -79,6 +79,12 @@ A.~W. Klein, P.~pike J.~Sloan, A.~Finkelstein, and M.~F. Cohen, ``Stylized
   video cubes,'' in \emph{In ACM SIGGRAPH Symposium on Computer Animation},
   2002, pp. 15--22.
 
+\bibitem{Boykov2004}
+Y.~Boykov and V.~Kolmogorov, ``An experimental comparison of min-cut/max- flow
+  algorithms for energy minimization in vision,'' \emph{Pattern Analysis and
+  Machine Intelligence, IEEE Transactions on}, vol.~26, no.~9, pp. 1124 --1137,
+  sept. 2004.
+
 \bibitem{Liu2010}
 \BIBentryALTinterwordspacing
 J.~Liu, ``{Parallel graph-cuts by adaptive bottom-up merging},'' \emph{2010
@@ -87,10 +93,15 @@ J.~Liu, ``{Parallel graph-cuts by adaptive bottom-up merging},'' \emph{2010
   \url{http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=5539898}
 \BIBentrySTDinterwordspacing
 
-\bibitem{Boykov2004}
-Y.~Boykov and V.~Kolmogorov, ``An experimental comparison of min-cut/max- flow
-  algorithms for energy minimization in vision,'' \emph{Pattern Analysis and
-  Machine Intelligence, IEEE Transactions on}, vol.~26, no.~9, pp. 1124 --1137,
-  sept. 2004.
+\bibitem{Huang2003}
+R.~Huang and K.-L. Ma, ``Rgvis: region growing based techniques for volume
+  visualization,'' in \emph{Computer Graphics and Applications, 2003.
+  Proceedings. 11th Pacific Conference on}, oct. 2003, pp. 355 -- 363.
+
+\bibitem{Schlemmer2007}
+M.~Schlemmer, M.~Heringer, F.~Morr, I.~Hotz, M.-H. Bertram, C.~Garth,
+  W.~Kollmann, B.~Hamann, and H.~Hagen, ``Moment invariants for the analysis of
+  2d flow fields,'' \emph{Visualization and Computer Graphics, IEEE
+  Transactions on}, vol.~13, no.~6, pp. 1743 --1750, nov.-dec. 2007.
 
 \end{thebibliography}
