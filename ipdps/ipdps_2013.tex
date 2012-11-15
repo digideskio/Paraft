@@ -91,7 +91,7 @@ To obtain the distribution information of features, a connectivity map of each f
 % ======================================================================================== Done
 
 % ======================================================================================== Related Work
-\section{Related Work}
+\section{Backgound and Related Work}
 
 \subsection{Feature Extraction and Tracking}
 
@@ -116,8 +116,10 @@ Graph-based algorithms have long been studied and used for a wide range of appli
 Grundmann et al. \cite{Grundmann2010} recently proposed a hierarchical graph-based approach for video segmentation, a closely related research topic to 3D flow feature extraction as video can be treated as a space-time volume of image data \cite{Klein2002}. In their work, a connected sequence of time-axis-aligned subsets of cubic image volumes are assigned to a set of corresponding processors, and incident regions are merged if they are inside the volumes window. Incident regions on window boundary, however, are first marked as ambiguous and later connected by merging neighboring window to a larger window, which consists of the unresolved regions form both window on their common boundary. This approach is not applicable for memory intensive situation since the allocated volume size before merging might already reaches the capacity. Same restriction applies to the parallelized BK algorithm \cite{Boykov2004} proposed by Liu and Sun \cite{Liu2010}, in which data are uniformly partitioned and then adaptively merged to achieve fast graph-cuts. These approaches are suitable for shared-memory but not message-passing parallelization as for their frequent shifting on data ranges.\textcolor{red}{Not enough, need to read more.}
 % ========================================================================================
 
-% ======================================================================================== Algorithm Design
-\section{Algorithm Design}
+\section{System and Implementation}
+
+% ======================================================================================== Methodology
+\section{Methodology}
 
 Though features can be extracted within individual processors using the conventional methods, they might also span over multiple data blocks, which is unavoidable as the number of processors increases. To extract and trace a feature over a distributed volume data set, we need to build and maintain the connectivity information of the features across multiple nodes. As feature descriptors, such as size, curvature, and velocity, are distributed among processors, connectivity information can facilitate us to obtain the description of a feature from neighboring processors, and also enable more advanced operations such as similarity evaluation.
 
@@ -378,29 +380,6 @@ The detail algorithm of the hybrid approach is given in Algorithm~\ref{alg:hybri
 \end{algorithm}
 %------------------------------------------------
 
-%------------------------------------------------
-% \begin{figure*}[ht]
-%   \centering
-%     \subfigure[Local connectivity graph]{
-%       \includegraphics[width=0.23\linewidth]{combustion.png}
-%       \label{fig:create}
-%     }
-%     \subfigure[Centralized merge with host]{
-%       \includegraphics[width=0.23\linewidth]{figure5.png}
-%       \label{fig:host}
-%     }    
-%     \subfigure[Centralized merge without host]{
-%       \includegraphics[width=0.23\linewidth]{figure6.png}
-%       \label{fig:centralized}
-%     }
-%     \subfigure[Decentralized merge]{
-%       \includegraphics[width=0.23\linewidth]{figure7.png}
-%       \label{fig:decentralized}
-%     }
-%   \caption[Optional caption for list of figures]{Caption of subfigures \subref{fig:create}, \subref{fig:centralized} and \subref{fig:decentralized}}
-% \end{figure*}
-%------------------------------------------------
-
 % ======================================================================================== Application
 \section{Application}
 
@@ -422,8 +401,8 @@ Then the host processor imply broadcasts the selected feature id to all those pr
 
 
 % ======================================================================================== Result
-\section{Result}
-We first tested our feature extraction and tracking algorithm on a 256*256*256 vortex data set obtained from a combustion solver that can simulate turbulent flames. In this data set, each voxel represents the magnitude of vorticity derived from velocity using a curl operator. As time evolves, vortical features may vary from small amassed blob features to long curly features that span over large portion of the volume, as depicted in Figure~\ref{fig:combustion-labeled}.
+\section{Result and Analyze}
+We first test our feature extraction and tracking algorithm on a 256*256*256 vortex data set obtained from a combustion solver that can simulate turbulent flames. In this data set, each voxel represents the magnitude of vorticity derived from velocity using a curl operator. As time evolves, vortical features may vary from small amassed blob features to long curly features that span over large portion of the volume, as depicted in Figure~\ref{fig:combustion-labeled}.
 
 \begin{figure}[!htp]
 \includegraphics[width=0.9\linewidth]{combustion_labeled.png}
@@ -434,9 +413,9 @@ We first tested our feature extraction and tracking algorithm on a 256*256*256 v
 \subsection{Performance Result}
 The volume data could be generated either in advance or on the fly, hence here we ignore the I/O cost and only focus on the computation time of the following three portions.
 
-1. Time to extract the features;
+1. Extracting Features ($T_{extract}$);
 
-Since we use the region-growing based algorithm to extract features, the computation time is mainly depending on the scale of the volume, as well as the number of processors used for processing. Once the raw volume data and how it is partitioned, a.k.a. the scale of each data block is determined, the computation time for extracting residing feature remains approximately the same. For \textcolor{red}{pre-generated} data set, the size of each data block decrease as the number of processors increases and hence the amount of time spent on extracting features decreases accordingly.
+Since we use the region-growing based algorithm to extract features, the computation time is mainly determined by the scale of the volume as well as the number of processors being used. Once the raw volume data and how it is partitioned, a.k.a. the size of each data block is determined, the computation time for extracting residing features remains approximately the same. For pre-generated data set, the size of each data block decreases as the number of processors increases and hence so does the time spent on extracting features. As depicted in Figure~\ref{fig:feature-extraction} $T_{extract}$ is approximately log-linear decreased as the number of processors grows from 8 to 16384;
 
 \begin{figure}[ht]
 	\centering
@@ -446,9 +425,9 @@ Since we use the region-growing based algorithm to extract features, the computa
 	\label{fig:feature-extraction}
 \end{figure}
 
-2. Time to create / update local connectivity graph;
+2. Create Local Connectivity Graph ($T_{create}$);
 
-Despite the size of each data block, the computational cost for creating and updating local connectivity graph is largely depending on the number of the features extracted within the original volume, or more precisely, the number of features that touches the boundary surface of their residing data block. Similar to the computation time for extracting features, for \textcolor{red}{pre-generated} data set, the number of feature on boundary will decrease as the number of processors increases, and so does the computational time to create and update the local connectivity graph.
+Despite the size of each data block, the computational cost for creating and updating local connectivity graph is dependent on the number of the features extracted within the original volume, or more precisely, the number of features that touches the boundary surface of their residing data block. Similar to $T_{extract}$, $T_{create}$ will decrease as the number of processors increases for pre-generated data set, as the the number of feature-on-boundary decreases accordingly. For the combustion data set, it takes an average of 0.1 seconds to create the local connectivity graph, approximately 0.5\% the time of $T_{extract}$ using the same amount of processors. This portion increases but does not succeed 1\% in out test, \textcolor{red}{figure?} hence $T_{create}$ is not considered a bottleneck for the pre-generated data set. \textcolor{red}{for in-situ visualization however... }
 
 \begin{figure}[ht]
 	\centering
@@ -458,39 +437,34 @@ Despite the size of each data block, the computational cost for creating and upd
 	\label{fig:create-local-graph}
 \end{figure}
 
-3. Time to merge to obtain all necessary connectivity information.
-Last but not least, the three merging strategies explain in part III are the major factor of the scalability of our feature tracking algorithm. 
+3. Merge Local Connectivity Graph ($T_{merge}$)
+
+The three \textcolor{red}{(only the first two are tested for now)} merging strategies are the major factors of the scalability of our algorithm. Though the number of feature-on-boundary decreases as more processors involved, the communication time for the Global-Merge approach increases as $N_p$ increases. The total temporal cost $T_{global}$ for Global-Merge exceeds $T_{extract}$ after certain amount of processors, 2048 for the combustion data set, which makes the overall computation time rebounds (Figure~\ref{fig:global-merge}). The Local-Merge approach on the other hand, scaled well up to 16384 processors for the combustion data set, as the communicational cost is as low as ${O(\sqrt[3]{N_p})}$. (Figure~\ref{fig:local-merge}).
+
+Also from the comparison of the computational cost as depicted in Figure~\ref{fig:local-vs-global}, we can see that the Global-Merge is suitable for scenarios that we only need a small cluster of processors, and Local-Merge for creating connectivity graph using a relatively large amount of the processors.
 
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width=0.45\linewidth]{figure5.png}
-	\includegraphics[width=0.45\linewidth]{figure5.png}
+	\includegraphics[width=0.45\linewidth]{global_merge.png}
+	\includegraphics[width=0.45\linewidth]{global_merge_log.png}
 	\caption{TODO: processor level region growing}
-	\label{fig:create-local-graph}
+	\label{fig:global-merge}
 \end{figure}
 
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width=0.45\linewidth]{figure6.png}
-	\includegraphics[width=0.45\linewidth]{figure6.png}
+	\includegraphics[width=0.45\linewidth]{local_merge.png}
+	\includegraphics[width=0.45\linewidth]{local_merge_log.png}
 	\caption{TODO: processor level region growing}
-	\label{fig:create-local-graph}
+	\label{fig:local-merge}
 \end{figure}
 
 \begin{figure}[ht]
 	\centering
-	\includegraphics[width=0.45\linewidth]{figure7.png}
-	\includegraphics[width=0.45\linewidth]{figure7.png}
+	\includegraphics[width=0.45\linewidth]{local_vs_global.png}
 	\caption{TODO: processor level region growing}
-	\label{fig:create-local-graph}
+	\label{fig:local-vs-global}
 \end{figure}
-
-% \begin{figure}[ht]
-% \centering
-% \includegraphics[width=0.5\linewidth]{figure7.png}
-% \caption{}
-% \label{fig:improve}
-% \end{figure}
 
 \subsection{Visualization Result}
 % ========================================================================================
