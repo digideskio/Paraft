@@ -66,32 +66,21 @@ Large-scale time-varying volumetric data set can take terabytes to petabytes of 
 feature tracking; parallel graph;
 \end{IEEEkeywords}
 
-% For peer review papers, you can put extra information on the cover
-% page as needed:
-% \ifCLASSOPTIONpeerreview
-% \begin{center} \bfseries EDICS Category: 3-BBND \end{center}
-% \fi
-%
-% For peerreview papers, this IEEEtran command inserts a page break and
-% creates the second title. It will be ignored for other modes.
 \IEEEpeerreviewmaketitle
 
 % ======================================================================================== Introduction
 \section{Introduction}
 \textcolor{red}{Rewrite the following two paragraph: motivation, challenge, technique approach, tested on...}
 
-The accessibility to supercomputers with increasing computing power has enabled scientists to simulate physical phenomena of unprecedented complexity and resolution. However, these large-scale time-varying data sets can take tera- or even peta-bytes of space to preserve. One promising solution to the problem is to reduce the data by storing only features of interest in the data. Storing the extracted features instead usually requires storage space that is several orders of magnitude smaller than the raw data.
+The accessibility to supercomputers with increasing computing power has enabled scientists to simulate physical phenomena of unprecedented complexity and resolution. However, these large-scale time-varying data sets can take tera- or even peta-bytes of space to preserve. One promising solution to the problem is to reduce the data by storing only features of interest in the data. Storing the extracted features instead usually requires storage space that is several orders of magnitude smaller than the raw data. However, large volumetric data sets are typically presented and processed in a distributed fashion, simply because of the shear size, which makes extracting and tracking features embedded in such distributed volumetric data set a non-trivial task. 
 
-In general, features can be any interesting pattern, structure, or object that are considered relevant for investigtation. However, large volumetric data sets are typically presented and processed in a distributed fashion simply because of the shear size, which makes extracting and tracking features embedded in such distributed volumetric data set a non-trivial task. 
+Existing researches on feature-based data visualization have been done mostly focusing on decomposing features using quantitative measures such as size, location, shape or topology information, and so on. These measures cannot be applied to distributed volumetric data directly since volumetric features are consist of certain amount of voxels, and are very likely to span over distributed data blocks as they evolve over time. Therefore existing quantitative measures of partial data scattered across different data blocks cannot be used to describe an integrated feature, unless the distribution of partial features can be obtained beforehand.
 
-Existing researches on feature-based data visualization have been done mostly focusing on decomposing features using quantitative measures such as size, location, shape or topology information, and so on. These measures cannot be applied to distributed volumetric data set directly since volumetric features are consist of certain amount of voxels and are very likely to span over distributed data blocks as they evolve over time. Therefore existing quantitative measures of partial data scattered across different data blocks cannot be used to describe an integrated feature, unless the distribution of partial features can be obtained beforehand.
-
-To obtain the distribution information of features, a connectivity map of each feature should be generated and maintained. In this paper, we present an approach to creating and maintaining feature residual information as well as connectivity information using parallel graphs. Comparing to the existing approaches, which generate and maintain the global feature information in a single host node, our approach can be done locally that only involves residual data blocks of target features. This requires least communication overhead and avoids the potential link contention. We demonstrate the effectiveness of this method with \textcolor{red}{three} vortical flow data sets and the scalability of our system in a distributed environment.
-
+To obtain the distribution information of features, a connectivity map \textcolor{red}{(map? graph?)} of each feature should be generated and maintained. In this paper, we present an approach to creating and maintaining feature residual information as well as connectivity information using parallel graphs. Comparing to the existing approaches, which generate and maintain the global feature information in a single host node, our approach can be done locally that only involves residual data blocks of target features. This requires least communication overhead and avoids the potential link contention. We demonstrate the effectiveness of this method with \textcolor{red}{three} vortical flow data sets and the scalability of our system in a distributed environment.
 % ======================================================================================== Done
 
-% ======================================================================================== Related Work
-\section{Backgound and Related Work}
+% ======================================================================================== Background and Related Work
+\section{Background and Related Work}
 
 \subsection{Feature Extraction and Tracking}
 
@@ -116,7 +105,21 @@ Graph-based algorithms have long been studied and used for a wide range of appli
 Grundmann et al. \cite{Grundmann2010} recently proposed a hierarchical graph-based approach for video segmentation, a closely related research topic to 3D flow feature extraction as video can be treated as a space-time volume of image data \cite{Klein2002}. In their work, a connected sequence of time-axis-aligned subsets of cubic image volumes are assigned to a set of corresponding processors, and incident regions are merged if they are inside the volumes window. Incident regions on window boundary, however, are first marked as ambiguous and later connected by merging neighboring window to a larger window, which consists of the unresolved regions form both window on their common boundary. This approach is not applicable for memory intensive situation since the allocated volume size before merging might already reaches the capacity. Same restriction applies to the parallelized BK algorithm \cite{Boykov2004} proposed by Liu and Sun \cite{Liu2010}, in which data are uniformly partitioned and then adaptively merged to achieve fast graph-cuts. These approaches are suitable for shared-memory but not message-passing parallelization as for their frequent shifting on data ranges.\textcolor{red}{Not enough, need to read more.}
 % ========================================================================================
 
-\section{System and Implementation}
+% ======================================================================================== System Overview
+\section{System Overview}
+Our implementation uses a similar system structurer that forms the basis of previous work \cite{Muelder2009}. Figure~\ref{fig:system-overview} depicts a high-level view and the work flow of a single time-step. 
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=1\linewidth]{system_overview.png}
+	\caption{Work flow of a single time-step}
+	\label{fig:system-overview}
+\end{figure}
+
+First, the source volume data is read either from a pre-generated data set or from a simulation program in-situ. Then, user can identify features of interest via transfer function manipulation as such candidate features will be extracted. However, the descriptive power of a transfer function is often insufficient to precisely highlight a desired subset of features. 
+
+Once the user has identified the interesting features, our system tracks only these features in subsequent time steps.
+% ========================================================================================
 
 % ======================================================================================== Methodology
 \section{Methodology}
@@ -126,7 +129,7 @@ Though features can be extracted within individual processors using the conventi
 However, it typically requires data exchanges among processors to build and maintain the connectivity information, and thus incurs extra communication cost. To design a proper communication scheme for better performance and scalability, we carefully consider the following three factors in our design:
 
 \begin{itemize}
-\item The amount of communication equired to build the connectivity graph;
+\item The amount of communication required to build the connectivity graph;
 \item The number of processors involved in one communication;
 \item The amount of data that mush be changed in each communication step.
 \end{itemize}
