@@ -70,7 +70,6 @@ feature tracking; parallel graph;
 
 % ======================================================================================== Introduction
 \section{Introduction}
-\textcolor{red}{Rewrite the following two paragraph: motivation, challenge, technique approach, tested on...}
 
 The accessibility to supercomputers with increasing computing power has enabled scientists to simulate physical phenomena of unprecedented complexity and resolution. However, these large-scale time-varying data sets can take tera- or even peta-bytes of space to preserve. One promising solution to the problem is to reduce the data by storing only features of interest in the data. Storing the extracted features instead usually requires storage space that is several orders of magnitude smaller than the raw data. However, large volumetric data sets are typically presented and processed in a distributed fashion, simply because of the shear size, which makes extracting and tracking features embedded in such distributed volumetric data set a non-trivial task. 
 
@@ -107,7 +106,7 @@ Grundmann et al. \cite{Grundmann2010} recently proposed a hierarchical graph-bas
 
 % ======================================================================================== System Overview
 \section{System Overview}
-Our implementation uses a similar system structurer that forms the basis of previous work \cite{Muelder2009}. Figure~\ref{fig:system-overview} depicts a high-level view and the work flow of a single time-step. 
+Our implementation uses a similar system structurer that forms the basis of previous work \cite{Muelder2009}. Figure~\ref{fig:system-overview} depicts a high-level view of the work flow for a single time-step. 
 
 \begin{figure}[ht]
 	\centering
@@ -116,15 +115,16 @@ Our implementation uses a similar system structurer that forms the basis of prev
 	\label{fig:system-overview}
 \end{figure}
 
-First, the source volume data is read either from a pre-generated data set or from a simulation program in-situ. Then, user can identify features of interest via transfer function manipulation as such candidate features will be extracted. However, the descriptive power of a transfer function is often insufficient to precisely highlight a desired subset of features. 
+First, the source volume data is read either from a pre-generated data set or from a simulation program in-situ. Then, user can identify features of interest via transfer function manipulation as such candidate features will be extracted. However, the descriptive power of a transfer function is often insufficient to precisely highlight the desired subset of features. Hence next user may have to select significant features either by simple point-and-select or iteratively filter out unwanted ones using different feature descriptors. Once the user has identified the interesting features, the system tracks only these features in subsequent time steps. What our approach distinct from that of the previous one lies in that the global connectivity information of each feature need to be constructed \textcolor{red}{(obtained)} before the Significant Feature Selection process could be carried out. 
 
-Once the user has identified the interesting features, our system tracks only these features in subsequent time steps.
+As shown in blue color in Figure~\ref{fig:system-overview}, first the raw data are distributed in \textcolor{red}{logically adjacent data blocks.}. After Feature Extraction is done in each data block, the set of local features as well as the local connectivity information will be generated. Then by applying our merging algorithms, global connectivity information can be obtained efficiently such that each data block will possess the global connectivity information for each of its residing features. This enables Signification Feature Selection in a distributed environment and henceforth Feature Tracking and Visualization.
+
+The detailed algorithm design and analyze on how to create and merge features in parallelize efficiently will be elucidated in the following chapter.
 % ========================================================================================
 
 % ======================================================================================== Methodology
 \section{Methodology}
-
-Though features can be extracted within individual processors using the conventional methods, they might also span over multiple data blocks, which is unavoidable as the number of processors increases. To extract and trace a feature over a distributed volume data set, we need to build and maintain the connectivity information of the features across multiple nodes. As feature descriptors, such as size, curvature, and velocity, are distributed among processors, connectivity information can facilitate us to obtain the description of a feature from neighboring processors, and also enable more advanced operations such as similarity evaluation.
+The biggest challenge on tracking large time-varying volumetric data set lies in that, though features can be extracted within individual processors using the conventional methods, they might also span over multiple data blocks, which is unavoidable as the number of processors increases. To extract and trace a feature over a distributed volume data set, we need to build and maintain the connectivity information of the features across multiple nodes. As feature descriptors, such as size, curvature, and velocity, are distributed among processors, connectivity information can facilitate us to obtain the description of a feature from neighboring processors, and also enable more advanced operations such as similarity evaluation.
 
 However, it typically requires data exchanges among processors to build and maintain the connectivity information, and thus incurs extra communication cost. To design a proper communication scheme for better performance and scalability, we carefully consider the following three factors in our design:
 
