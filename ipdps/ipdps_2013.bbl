@@ -98,10 +98,4 @@ R.~Huang and K.-L. Ma, ``Rgvis: region growing based techniques for volume
   visualization,'' in \emph{Computer Graphics and Applications, 2003.
   Proceedings. 11th Pacific Conference on}, oct. 2003, pp. 355 -- 363.
 
-\bibitem{Schlemmer2007}
-M.~Schlemmer, M.~Heringer, F.~Morr, I.~Hotz, M.-H. Bertram, C.~Garth,
-  W.~Kollmann, B.~Hamann, and H.~Hagen, ``Moment invariants for the analysis of
-  2d flow fields,'' \emph{Visualization and Computer Graphics, IEEE
-  Transactions on}, vol.~13, no.~6, pp. 1743 --1750, nov.-dec. 2007.
-
 \end{thebibliography}
