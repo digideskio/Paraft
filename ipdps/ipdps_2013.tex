@@ -162,7 +162,7 @@ As depicted in Figure~\ref{fig:partition}, if we partition a volumetric data set
 Since data is distributed, each processor is not aware of the partial features identified on the other processors. Though exchanging the voxels on the sectional area between two adjacent processors would be sufficient for finding possible matches of partial features, we choose to exchange more abstract data to find matches:
 
 \begin{itemize}
-	\item The geometric centroid $P_{center}$ of the cross-sectional area.
+	\item The geometric centroid $P_{centroid}$ of the cross-sectional area.
 	\item The minimal and maximal (min-max) coordinate $P_{min-max}$ of the cross-sectional area;
 \end{itemize}
 
@@ -172,7 +172,7 @@ The reason why we choose geometric centroid instead of introducing a voxel-width
 \begin{algorithm}
 \caption{Match of two partial features}
 	\begin{algorithmic}[1]
-		\IF{$P_{center}$ = $P_{center}^{'}$ \textbf{and} $P_{min-max}$ = $P_{min-max}^{'}$}
+		\IF{$P_{centroid}$ = $P_{center}^{'}$ \textbf{and} $P_{min-max}$ = $P_{min-max}^{'}$}
 			\STATE return $f \approx f^{'}$ \textcolor{red}{(use $\approx$ for match?)}
 		\ENDIF
 	\end{algorithmic}
@@ -191,52 +191,48 @@ Another reason the min-max coordinate values are not optional is because they en
 
 Based on the afore-explained fact that partial features could be connected by finding matches, we can abstract the local connectivity information using a tree structure. For each data block in the grid, there will be six direct neighbors (the outermost blocks have less), each with a sharing boundary surface with the current block. The connectivity tree is constructed taking the current block as root, its six adjacent blocks as the first level child nodes, and a new leaf is appended to the corresponding node \textcolor{red}{(how to describe this node, child node? corresponding parent node?)} if a local feature touches the block boundary surface. Each leaf contains the aforementioned geometric centroid and the min-max coordinate on the cross-sectional area. 
 
-Note that each voxel in the local data block has a unique global index, each leaf could thus be encoded using 3 integers (global index for $P_{center}$, $P_{min}$ and $P_{max}$). The root and the first level child nodes are encoded using the index of corresponding data blocks. Therefore the total memory cost for each local connectivity tree is proportional to the number of features on boundary surfaces ($O(N_{fb})$). \textcolor{red}{Consider an extreme case that there are 1000 features touches each side of the boundary surface, the total memory needed for the local connectivity tree is only ((3*1000 + 1)*6 + 1) * 4 bytes \approx 72KB, neglectable compare to the volume size itself.}
-
-On the other hand, the creation of local connectivity tree will not introduce extra computational cost as it can be done along with the process of region growing. 
-
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=0.9\linewidth]{match.png}
-	\caption{A special case where two features share the same centroid on the section.}
+	\caption{The tree structure used for maintaining the local conneticity information. }
 	\label{fig:match}
 \end{figure}
 
-Algorithm~\ref{alg:local} shows the detailed algorithm of creating local connectivity graph.
+Note that each voxel in the local data block has a unique global index, each leaf could thus be encoded using 3 integers (global index for $P_{centroid}$, $P_{min}$ and $P_{max}$). On the other hand, the root and the first level child nodes are encoded using the index of corresponding data blocks, irrelevant to the number of features-on-boundary (henceforth referred as $N_{fb}$). Therefore the spatial complexity of creating local connectivity tree for each data block is ($O(N_{fb})$). \textcolor{red}{Consider an extreme case that there are 1000 features touching each side of the boundary surface, the total memory needed for the local connectivity tree is only $((3*1000 + 1)*6 + 1) * 4 bytes \approx 72KB$, neglectable comparing to the volume size itself.}
+
+From the temporal complexity perspective of view, the creation of local connectivity tree will not introduce much extra computational cost as it can be done along with the region growing process. The value of $P_{centroid}$ and $P_{min-max}$ are updated only if the feature reaches the boundary surface, hence the temporal complexity for creating the local connectivity tree remains ${O(\sqrt[2/3]{N_{vexol}})}$, a magnitude less than \textcolor{red}{$O(region-growing)$.}
+
+Algorithm~\ref{alg:local} shows the detailed algorithm of creating local connectivity tree in the region growing process.
 %------------------------------------------------
 \begin{algorithm}
-\caption{Creating Partial Connectivity Graph}
+\caption{Creating Partial Connectivity Tree}
 \label{alg:local}
-\begin{algorithmic}[1]
-\STATE $edgeList \leftarrow new List()$
-\STATE $featureList \leftarrow new List()$
-\IF{Current time step $t = t_0$}
-	\STATE // Initialize random seeding points
-	\STATE $seedList \leftarrow randomVortices()$
-	\FOR {each $seed$ in $seedList$}
+\begin{algorithmic}
+
+\IF{$t = t_0$}
+	\STATE $seeds \leftarrow randomVortices()$
+	\FOR {each $seed$ in $seeds$}
 		\STATE $feture \leftarrow expendRegion()$
 		\STATE append $feture$ to $featureList$
 	\ENDFOR	
 \ELSE
 	\FOR {each $feture$ in $featureList$}
 		\STATE $feture \leftarrow predictRegion()$
-		\STATE $feture \leftarrow adjustRegion()$	
+		\STATE $feture \leftarrow \textbf{adjustRegion()}$
 		
-		\STATE $start \leftarrow$ current processor ID
-		\STATE $end \leftarrow$ target neighboring processor ID
-		\STATE $min,max \leftarrow$ min-max boundary coordinate
-		\STATE $index \leftarrow$ global voxel index of centroid
-		\STATE Edge $e = Edge(start, end, min, max, index)$
-		\STATE append $e$ to $edgeList$
+		\STATE $leaf \leftarrow LEAF(P_{centroid}, P_{min-max})$
+		\STATE append $leaf$ to $connectivityTree$
 	\ENDFOR
 \ENDIF
 \end{algorithmic}
+
 \begin{algorithmic} \STATE \end{algorithmic}	% line separator
-\begin{algorithmic}[1]
-\STATE $adjustRegion()$
+
+\begin{algorithmic}
+\STATE $\textbf{adjustRegion:}$
 	\IF{Voxel $v$ on boundary surface}
-		\STATE $updateMixMaxBoundary()$
-		\STATE $updateBoundaryCentroid()$
+		\STATE $P_{centroid} \leftarrow updateBoundaryCentroid()$
+		\STATE $P_{min-max} \leftarrow updateMinMaxBoundary()$
 	\ENDIF
 \end{algorithmic}
 \end{algorithm}
@@ -246,7 +242,7 @@ Algorithm~\ref{alg:local} shows the detailed algorithm of creating local connect
 
 \subsubsection{The naive solution}
 
-Local connectivity graphs need to be merged to obtain the overall description of a partitioned feature. A naive approach to gathering local connectivity graphs is to let each processor exchanges the shared edges with its neighbors. After exchanges, two edges are merged at a processor if they satisfy the following three conditions:
+Local connectivity information need to be merged to obtain the overall description of a partitioned feature. A naive solution to gathering local connectivity information is to let each data block exchanging their leaves with its neighboring blocks. If a match was found for two corresponding boundary surfaces, the two leaves are merged.  at a processor if they satisfy the following three conditions:
 
 \begin{itemize}
 \item The starting and ending vertices are reversely matched;
