@@ -75,7 +75,7 @@ The accessibility to supercomputers with increasing computing power has enabled 
 
 Existing researches on feature-based data visualization have been done mostly focusing on decomposing features using quantitative measures such as size, location, shape or topology information, and so on. These measures cannot be applied to distributed volumetric data directly since volumetric features are consist of certain amount of voxels, and are very likely to span over distributed data blocks as they evolve over time. Therefore existing quantitative measures of partial data scattered across different data blocks cannot be used to describe an integrated feature, unless the distribution of partial features can be obtained beforehand.
 
-To obtain the distribution information of features, a connectivity map \textcolor{red}{(map? graph?)} of each feature should be generated and maintained. In this paper, we present an approach to creating and maintaining feature residual information as well as connectivity information using parallel graphs. Comparing to the existing approaches, which generate and maintain the global feature information in a single host node, our approach can be done locally that only involves residual data blocks of target features. This requires least communication overhead and avoids the potential link contention. We demonstrate the effectiveness of this method with \textcolor{red}{three} vortical flow data sets and the scalability of our system in a distributed environment.
+To obtain the distribution information of features, a connectivity graph of each feature should be generated and maintained. In this paper, we present an approach to creating and maintaining feature residual information as well as connectivity information using parallel graphs. Comparing to the existing approaches, which generate and maintain the global feature information in a single host node, our approach can be done locally that only involves residual data blocks of target features. This requires least communication overhead and avoids the potential link contention. We demonstrate the effectiveness of this method with \textcolor{red}{three} vortical flow data sets and the scalability of our system in a distributed environment.
 % ======================================================================================== Done
 
 % ======================================================================================== Background and Related Work
@@ -189,7 +189,7 @@ Another reason the min-max coordinate values are not optional is because they en
 	\label{fig:special}
 \end{figure}
 
-Based on the afore-explained fact that partial features could be connected by finding matches, we can abstract the local connectivity information using a tree structure. For each data block in the grid, there will be six direct neighbors (the outermost blocks have less), each with a sharing boundary surface with the current block. The connectivity tree is constructed taking the current block as root, its six adjacent blocks as the first level child nodes, and a new leaf is appended to the corresponding node \textcolor{red}{(how to describe this node, child node? corresponding parent node?)} if a local feature touches the block boundary surface. Each leaf contains the aforementioned geometric centroid and the min-max coordinate on the cross-sectional area. 
+Based on the afore-explained fact that partial features could be connected by finding matches, we can abstract the local connectivity information using a tree structure as depicted in Figure~\ref{fig:match}. For each data block in the grid, there will be six direct neighbors (the outermost blocks have less), each with a sharing boundary surface with the current block. The connectivity tree is constructed taking the current block as root, its six adjacent blocks as its first level child nodes, and a new leaf is appended to each surface node if a local feature touches the block boundary surface. 
 
 \begin{figure}[ht]
 	\centering
@@ -198,14 +198,14 @@ Based on the afore-explained fact that partial features could be connected by fi
 	\label{fig:match}
 \end{figure}
 
-Note that each voxel in the local data block has a unique global index, each leaf could thus be encoded using 3 integers (global index for $P_{centroid}$, $P_{min}$ and $P_{max}$). On the other hand, the root and the first level child nodes are encoded using the index of corresponding data blocks, irrelevant to the number of features-on-boundary (henceforth referred as $N_{fb}$). Therefore the spatial complexity of creating local connectivity tree for each data block is ($O(N_{fb})$). \textcolor{red}{Consider an extreme case that there are 1000 features touching each side of the boundary surface, the total memory needed for the local connectivity tree is only $((3*1000 + 1)*6 + 1) * 4 bytes \approx 72KB$, neglectable comparing to the volume size itself.}
+Note that each voxel in the local data block has a unique global index, each leaf could thus be encoded using 3 integers (global index for $P_{centroid}$, $P_{min}$ and $P_{max}$). On the other hand, the root and the first level child nodes are encoded with the index of corresponding data blocks, irrelevant to the number of features-on-boundary (henceforth referred as $N_{fb}$). Therefore the spatial complexity of creating local connectivity tree for each data block is ($O(N_{fb})$). \textcolor{red}{Consider an extreme case that there are 1000 features touching each side of the boundary surface, the total memory needed for the local connectivity tree is only $((3*1000 + 1)*6 + 1) * 4 bytes \approx 72KB$, neglectable comparing to the volume size itself.}
 
-From the temporal complexity perspective of view, the creation of local connectivity tree will not introduce much extra computational cost as it can be done along with the region growing process. The value of $P_{centroid}$ and $P_{min-max}$ are updated only if the feature reaches the boundary surface, hence the temporal complexity for creating the local connectivity tree remains ${O(\sqrt[2/3]{N_{vexol}})}$, a magnitude less than \textcolor{red}{$O(region-growing)$.}
+From the temporal complexity perspective of view, the creation of local connectivity tree will not introduce extra computational cost as it can be done along with the region growing process. The value of $P_{centroid}$ and $P_{min-max}$ are updated only if the feature reaches the boundary surface, hence the temporal complexity for creating the local connectivity tree remains ${O(\sqrt[2/3]{N_{vexol}})}$, a magnitude less than \textcolor{red}{$O(region-growing)$.}
 
 Algorithm~\ref{alg:local} shows the detailed algorithm of creating local connectivity tree in the region growing process.
 %------------------------------------------------
 \begin{algorithm}
-\caption{Creating Partial Connectivity Tree}
+\caption{Creating Local Connectivity Tree}
 \label{alg:local}
 \begin{algorithmic}
 
@@ -218,7 +218,7 @@ Algorithm~\ref{alg:local} shows the detailed algorithm of creating local connect
 \ELSE
 	\FOR {each $feture$ in $featureList$}
 		\STATE $feture \leftarrow predictRegion()$
-		\STATE $feture \leftarrow \textbf{adjustRegion()}$
+		\STATE $feture,P_{centroid},P_{min-max} \leftarrow \textbf{adjustRegion()}$
 		
 		\STATE $leaf \leftarrow LEAF(P_{centroid}, P_{min-max})$
 		\STATE append $leaf$ to $connectivityTree$
@@ -238,32 +238,25 @@ Algorithm~\ref{alg:local} shows the detailed algorithm of creating local connect
 \end{algorithm}
 %------------------------------------------------
 
-\subsection{Merging Local Connectivity Graph}
+\subsection{Creating Global Connectivity Graph}
+After local connectivity trees are created within each data block, their leaves need to be exchanged and then merged to obtain the overall description of a partitioned feature. The exchanging and merging process is decisive that their effectiveness will largely affect the overall performance and scalability of the feature tracking algorithm as a whole.
+
+In this subsection, we start with a naive solution and discuss progressively through different data exchanging strategy for different scenarios.
 
 \subsubsection{The naive solution}
 
-Local connectivity information need to be merged to obtain the overall description of a partitioned feature. A naive solution to gathering local connectivity information is to let each data block exchanging their leaves with its neighboring blocks. If a match was found for two corresponding boundary surfaces, the two leaves are merged.  at a processor if they satisfy the following three conditions:
+A naive solution for obtaining global connectivity information for each feature-on-boundary is to send the leaves in the local connectivity trees together with parent node \textcolor{red}{so what?}. Recall that the first level child node of the root are encoded as the ranks of adjacent blocks, and the leaves the global index of the geometric centroid and the min-max boundary on the shared boundary surface. Therefore if a leaf received from neighboring data block matches a local leaf, the two leaves, that is, the two partial features must share the same boundary section with the same centroid and section region. In other word, these two partial features are resulted by partitioning a original feature, and should be considered the same feature.
 
-\begin{itemize}
-\item The starting and ending vertices are reversely matched;
-\item The min-max boundary coordinate do match;
-\item Edge centroid is located within direct neighbors.
-\end{itemize}
-
-Recall that the starting vertex of an edge represents the current processor rank, and the ending vertex represents the rank of a neighboring processor whose partial feature is adjacent to the local one. The edge value represents the global coordinate of the geometric centroid and the min-max boundary on the shared boundary surface. If two edges match to each other, the two partial features must share a same boundary section with the same centroid and section region. In other word, these two partial features are resulted by partitioning a original feature, and should be considered the same feature sharing a same feature ID.
-
-Algorithm~\ref{alg:merge} shows the detailed process to merge matched edges (henceforth referred to as \emph{Reduce}).
+Algorithm~\ref{alg:merge} shows the detailed process to merge matched leaves.
 %------------------------------------------------
 \begin{algorithm}
-\caption{Reduce: Merging Matched Edges \textcolor{red}{BIPARTITE MATCH}}
+\caption{Merging Matched Leaves}
 \label{alg:merge}
 \begin{algorithmic}[1]
-\REQUIRE $localEdges$, $recievedEdges$
-\FOR {each $ei$ in $localEdges$}
-	\FOR {each $ej$ in $recievedEdges$}
-		\IF{$ei.start$ = $ej.end$ and $ej.start$ = $ei.end$ \textbf{and}
-			$ei.min$ = $ej.min$ and $ei.max$ = $ej.max $ \textbf{and}
-			$ei.centroid \approx ej.centroid$}
+\STATE sort $localLeaves$, $recievedLeaves$ by $P_{centroid}$
+\FOR {each $leaf_{local}$ in $localLeaves$}
+	\FOR {each $leaf_{recved}$ in $recievedLeaves$}
+		\IF{$li \approx lj$}
 			\IF {$ei.id < ej.id$}
 				\STATE $ej.id \leftarrow ei.id$
 			\ELSE
