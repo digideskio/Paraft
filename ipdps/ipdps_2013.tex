@@ -172,8 +172,8 @@ The reason why we choose geometric centroid instead of introducing a voxel-width
 \begin{algorithm}
 \caption{Match of two partial features}
 	\begin{algorithmic}[1]
-		\IF{$P_{centroid}$ = $P_{center}^{'}$ \textbf{and} $P_{min-max}$ = $P_{min-max}^{'}$}
-			\STATE return $f \approx f^{'}$ \textcolor{red}{(use $\approx$ for match?)}
+		\IF{$P_{centroid}$ = $P_{centroid}^{'}$ \textbf{and} $P_{min-max}$ = $P_{min-max}^{'}$}
+			\STATE return $f$ \textbf{matches} $f^{'}$
 		\ENDIF
 	\end{algorithmic}
 \label{alg:match}
@@ -194,11 +194,11 @@ Based on the afore-explained fact that partial features could be connected by fi
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=0.9\linewidth]{match.png}
-	\caption{The tree structure used for maintaining the local conneticity information. }
+	\caption{The tree structure used for maintaining the local connectivity information. }
 	\label{fig:match}
 \end{figure}
 
-Note that each voxel in the local data block has a unique global index, each leaf could thus be encoded using 3 integers (global index for $P_{centroid}$, $P_{min}$ and $P_{max}$). On the other hand, the root and the first level child nodes are encoded with the index of corresponding data blocks, irrelevant to the number of features-on-boundary (henceforth referred as $N_{fb}$). Therefore the spatial complexity of creating local connectivity tree for each data block is ($O(N_{fb})$). \textcolor{red}{Consider an extreme case that there are 1000 features touching each side of the boundary surface, the total memory needed for the local connectivity tree is only $((3*1000 + 1)*6 + 1) * 4 bytes \approx 72KB$, neglectable comparing to the volume size itself.}
+Note that each voxel in the local data block has a unique global index, each leaf could thus be encoded using 3 integers (global index for $P_{centroid}$, $P_{min}$ and $P_{max}$), we use the index of $P_{centroid}$ as the feature index, and sort the sibling leaves according to its index in ascending order. On the other hand, the root and the first level child nodes can be encoded with the index of corresponding data blocks, which is irrelevant to the number of feature-on-boundary (henceforth referred as $N_{fb}$). Therefore the overall spatial complexity of creating local connectivity tree for each data block is ($\theta(3*N_{fb})$). \textcolor{red}{Consider an extreme case that there are 1000 features touching each side of the boundary surface, the total memory needed for the local connectivity tree is only $((3*1000 + 1)*6 + 1) * 4 bytes \approx 72KB$, neglectable comparing to the volume size itself.}
 
 From the temporal complexity perspective of view, the creation of local connectivity tree will not introduce extra computational cost as it can be done along with the region growing process. The value of $P_{centroid}$ and $P_{min-max}$ are updated only if the feature reaches the boundary surface, hence the temporal complexity for creating the local connectivity tree remains ${O(\sqrt[2/3]{N_{vexol}})}$, a magnitude less than \textcolor{red}{$O(region-growing)$.}
 
@@ -239,42 +239,48 @@ Algorithm~\ref{alg:local} shows the detailed algorithm of creating local connect
 %------------------------------------------------
 
 \subsection{Creating Global Connectivity Graph}
-After local connectivity trees are created within each data block, their leaves need to be exchanged and then merged to obtain the overall description of a partitioned feature. The exchanging and merging process is decisive that their effectiveness will largely affect the overall performance and scalability of the feature tracking algorithm as a whole.
+
+After local connectivity trees have been created within each data block, their leaves need to be exchanged and merged to obtain the overall description of a partitioned feature. The exchanging and merging process is decisive that their effectiveness will largely affect the overall performance and scalability of the feature tracking algorithm as a whole.
 
 In this subsection, we start with a naive solution and discuss progressively through different data exchanging strategy for different scenarios.
 
-\subsubsection{The naive solution}
+\subsubsection{The Naive Solution}
 
-A naive solution for obtaining global connectivity information for each feature-on-boundary is to send the leaves in the local connectivity trees together with parent node \textcolor{red}{so what?}. Recall that the first level child node of the root are encoded as the ranks of adjacent blocks, and the leaves the global index of the geometric centroid and the min-max boundary on the shared boundary surface. Therefore if a leaf received from neighboring data block matches a local leaf, the two leaves, that is, the two partial features must share the same boundary section with the same centroid and section region. In other word, these two partial features are resulted by partitioning a original feature, and should be considered the same feature.
+A naive solution to obtaining global connectivity information for each feature-on-boundary is to exchange its corresponding leaf with its targeting block. Recall that the first level child nodes are encoded as the ranks of adjacent blocks, and the leaves the global index of the geometric centroid and the min-max boundary on the shared boundary surface. Therefore if a leaf received from neighboring data block matches a local leaf, the two leaves, that is, the two partial features they represented, must share the same boundary section with the same centroid and section region. In other word, these two partial features are resulted by partitioning a original feature, and should be considered as the same feature.
+
+To prevent a leaf from being resending to the same neighboring block multiple times, it is marked as sent and unless the same feature was found partially reside in another neighboring block, this leaf will be ignored in the next communication to reduce $N_{data/com}$.
 
 Algorithm~\ref{alg:merge} shows the detailed process to merge matched leaves.
 %------------------------------------------------
 \begin{algorithm}
 \caption{Merging Matched Leaves}
 \label{alg:merge}
-\begin{algorithmic}[1]
-\STATE sort $localLeaves$, $recievedLeaves$ by $P_{centroid}$
-\FOR {each $leaf_{local}$ in $localLeaves$}
-	\FOR {each $leaf_{recved}$ in $recievedLeaves$}
-		\IF{$li \approx lj$}
-			\IF {$ei.id < ej.id$}
-				\STATE $ej.id \leftarrow ei.id$
-			\ELSE
-				\STATE $ei.id \leftarrow ej.id$
-			\ENDIF
+\begin{algorithmic}
+\STATE traverse local connectivity tree in preorder
+\FOR {each $f_{local}$ in $localLeaves$}
+	\IF{$f_{local}$ is sent = false}
+		\STATE send $f_{local}$ to targeting block
+	\ENDIF
+	\STATE mark $f_{local}$ as sent
+\ENDFOR
+\FOR {each $f_{recv}$ in $recievedLeaves$}
+	\FOR {each $f_{local}$ in $localLeaves$}
+		\IF{$f_{recv}$ \textbf{matches} $f_{local}$}
+			\STATE $f_{local}.id = min(f_{recv}.id, f_{local}.id)$
+			\STATE mark $f_{local}$ as not sent
 		\ENDIF
 	\ENDFOR	
-\ENDFOR	
+\ENDFOR
 \end{algorithmic}
 \end{algorithm}
 %------------------------------------------------
-\textcolor{red}{Preorder traversal}
-This naive solution may work for data sets with small features. However, if there are long curly features partitioned evenly over the processor grid, each processor needs to consecutively communicate with its neighbors to incremently gather and merge a global feature. This requires O(${N_p}$) communications to connect a single feature, where ${N_p}$ is the number of processors in the grid. Consequently, the total communication cost is O(${N_f \times N_p}$) times communication, where ${N_f}$ is the number of features within one time step. In addition, since one processor cannot predict how many edges it will receive from its adjacent processors, it is hard to schedule the communication process.
+
+The naive solution may work for data sets with feature-on-boundary that span only a few number of blocks. However, if there exists long curly features partitioned evenly over the data block grid, each block needs to consecutively communicate with its neighbors to incrementally gather and merge a global feature. This requires O(${N_p}$) communications to connect a single feature, where ${N_p}$ is the number of processors in the grid. Consequently, the total communication cost is O(${N_{fb} \times N_p}$) times communication. In addition, since one processor cannot predict how many leaves it will receive from its adjacent processors, it is hard to schedule the communication process. 
 
 %------------------------------------------------
 \begin{figure*}[ht]
   \centering
-    \subfigure[Local connectivity graph]{
+    \subfigure[Local connectivity tree]{
       \includegraphics[width=0.23\linewidth]{create.png}
       \label{fig:create}
     }
@@ -294,9 +300,9 @@ This naive solution may work for data sets with small features. However, if ther
 \end{figure*}
 %------------------------------------------------
 
-\subsubsection{The centralized approach}
+\subsubsection{The Centralized Approach}
 
-A possible solution is to use a master-slave hierarchy to reduce the number of communication required for merging all edges. The master-slave hierarchy can be constructed using a separate host processor. When the feature extraction process is done, the edges of a local graph represents the number of features across the block boundary, and also encodes the location information of each local feature. All local graphs are then gathered to the host processor. After this \emph{Gather} operation is done, that is the host processor has collected all local graphs, the \emph{Reduce} operation starts to merge the edges from each partial graph to construct a single global connectivity graph, as depicted in figure \ref{fig:host}.
+A possible solution to improve the aforementioned \textcolor{red}{serialized} approach is to introduce the master-slave hierarchy to reduce the number of communication required for merging all leaves. The master-slave hierarchy can be constructed using a separate host processor. When the feature extraction process is done, the leaves of a local connectivity tree represents the number of features across the block boundary, and also encodes the location information of each local feature. All local connectivity tree are then gathered to the host processor. After this \emph{Gather} operation is done, that is the host processor has collected all local connectivity trees, the \emph{Reduce} operation starts to merge the leaves from each connectivity tree to construct a single global connectivity graph, as depicted in figure \ref{fig:host}.
 
 The merit of this centralized approach lies in that it requires inter-processor communication only once. Moreover, the global graph of feature information can be preserved in the host, and the host can response feature queries directly without pulling information from the slaves again. However, this approach has an obvious drawback. Since all partial graphs are sent to the host, there exists potential bottlenecks, both in communication and computation, on the host.  
 
@@ -393,26 +399,6 @@ The detail algorithm of the hybrid approach is given in Algorithm~\ref{alg:hybri
 	\end{algorithmic}
 \end{algorithm}
 %------------------------------------------------
-
-% ======================================================================================== Application
-\section{Application}
-
-\subsection{Feature Selection and Refinement}
-To allow a user to select or highlight certain features is commonly required in various applications. 
-Since the feature extraction is performed independently within each processor, 
-%one of the potential function need to be addressed is that how do they know if their adjacent processor was has the feature to be highlighted and whether it has the other part of the features. 
-we need to design a method to let each processor know if the features on its adjacent processor are selected or not.  
-Intuitively, we can implement this by sending a message to the adjacent PE whenever a feature was detected to touch the surface boundary. But if the target feature spans over multiple PEs, this sending / receiving procedure would take several rounds to end. This is potentially a big problem when the PE/Volume ratio is relatively high such that each feature spans over a lot of PEs. Another problem is that, if a PE has two selected features whose connectivity information arrive in different rounds, it requests to compute twice, which again, will become a problem when PE/Volume ratio is large.
-
-By introducing the global connectivity graph in our approach, whenever part of the feature was selected, the unique feature id will be sent back to the host processor and then be broadcast to all PEs containing it. Thus, the selection can be finished only in one round.
-
-Based on the coordinates user specified or clicked on the volume rendering result, 
-%the residual processor as well as the feature, if the point was included by, could be obtains. 
-we can identify the user selected processor and feature.
-Then the host processor imply broadcasts the selected feature id to all those processors who has the partial feature to be highlighted.
-
-\subsection{Feature Tracking}
-
 
 % ======================================================================================== Result
 \section{Result and Analyze}
