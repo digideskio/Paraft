@@ -129,7 +129,7 @@ However, it typically requires data exchanges among processors to build and main
 \begin{itemize}
 	\item $N_{com}$ : The amount of communication required to build the connectivity graph;
 	\item $N_{proc/com}$ : The number of processors involved in each communication;
-	\item $N_{data/com}$ : The amount of data that mush be changed in each communication.
+	\item $N_{data/com}$ : The amount of data that must be changed in each communication.
 \end{itemize}
 
 In the following sections, we give a detailed description on how to create and maintain such connectivity information using an \textcolor{red}{undirected unweighted graph} to minimize the cost over the above three factors.
@@ -171,7 +171,7 @@ The reason why we choose geometric centroid instead of introducing a voxel-width
 %------------------------------------------------
 \begin{algorithm}
 \caption{Match of two partial features}
-	\begin{algorithmic}[1]
+	\begin{algorithmic}
 		\IF{$P_{centroid}$ = $P_{centroid}^{'}$ \textbf{and} $P_{min-max}$ = $P_{min-max}^{'}$}
 			\STATE return $f$ \textbf{matches} $f^{'}$
 		\ENDIF
@@ -302,9 +302,13 @@ The naive solution may work for data sets with feature-on-boundary that span onl
 
 \subsubsection{The Centralized Approach}
 
-A possible solution to improve the aforementioned \textcolor{red}{serialized} approach is to introduce the master-slave hierarchy to reduce the number of communication required for merging all leaves. The master-slave hierarchy can be constructed using a separate host processor. When the feature extraction process is done, the leaves of a local connectivity tree represents the number of features across the block boundary, and also encodes the location information of each local feature. All local connectivity tree are then gathered to the host processor. After this \emph{Gather} operation is done, that is the host processor has collected all local connectivity trees, the \emph{Reduce} operation starts to merge the leaves from each connectivity tree to construct a single global connectivity graph, as depicted in figure \ref{fig:host}.
+A possible solution to improve the aforementioned \textcolor{red}{serialized} approach is to introduce master-slave hierarchy to reduce the number of communication required for merging all leaves. The master-slave hierarchy can be constructed using a separate host processor. When the feature extraction process is done, all local connectivity trees are gathered to the host processor. Then the host nodes starts to merge the leaves from each connectivity tree to construct a single global connectivity graph, as depicted in figure \ref{fig:host}.
 
-The merit of this centralized approach lies in that it requires inter-processor communication only once. Moreover, the global graph of feature information can be preserved in the host, and the host can response feature queries directly without pulling information from the slaves again. However, this approach has an obvious drawback. Since all partial graphs are sent to the host, there exists potential bottlenecks, both in communication and computation, on the host.  
+The merit of this centralized approach lies in that it requires inter-processor communication only once ($N_{com} = 1$). Moreover, the global graph of feature information can be preserved in the host, and the host can response feature queries directly without pulling information from the slaves again. However, this approach has an obvious drawback. Since all local connectivity trees are sent to the host, the number of processors involved in each communication is $N_{proc/com} = N_p$, and there exists potential bottlenecks, both in communication and computation, on the host.  
+
+% --
+r19
+% --
 
 \subsubsection{The decentralized approach}
 
