@@ -308,74 +308,59 @@ The merit of this centralized approach lies in that it requires inter-processor 
 
 \subsubsection{The Decentralized Approach}
 
-A better solution is to decentralize the gathering and merging process from a single host processor to all processors that are available. After the feature extraction process is done and so does the creation of local connectivity tree, an \emph{all-gather} process starts to exchange all local connectivity trees within each data block to all the others. Each block will first collect a full copy of all local connectivity trees followed by the same process as mentioned in Algorithm~\ref{alg:merge} to merge the leaves into a single concise connectivity graph, as depicted in figure figure \ref{fig:centralized}.
+A better solution is to decentralize the gathering and merging process from a single host processor to all processors available. After the feature extraction process is done and so does the creation of local connectivity tree, an \emph{all-gather} process starts to exchange all local connectivity trees within each data block to all the others. Each block will first collect a full copy of all local connectivity trees followed by the same process as mentioned in Algorithm~\ref{alg:merge} to merge the leaves into a single concise connectivity graph, as depicted in figure figure \ref{fig:centralized}.
 
-Though the "redundant" host processor is no longer required when applying for computation resources, this approach does not actually solve the bottleneck problem since now every processor is acting like the host for that they still need to gather all local trees and try to merge them together. For real world data set, however, it is rarely the case that all features will span over every processor. In other word, it is unnecessary for a processor to gather leaves of features that are not local. To reduce the redundant communications with every other processor in the data grid, the decentralized approach could be further improved to consider those data blocks that are directly adjacent to the current one. That is, each data block only communicates with its direct neighbors and shares information with them regardless what is happening outside.
+Though the "redundant" host processor is no longer required when applying for computation resources, this approach does not actually resolve the bottleneck problem since now every processor is acting like the host for that they still need to gather all local trees and to merge them \textcolor{red}{simultaneously}. For real world data set however, it is rarely the case that all features will span over every data block. In other word, it is unnecessary for one processor to gather leaves of features that are not local. To reduce the redundant communications with every other data block in the grid, the decentralized approach could be further improved to communicate with only those data blocks that are directly adjacent. That is, each data block only communicates with its direct neighbors and shares information with them regardless what is happening outside.
 
-For a regularly partitioned volumetric data set, there are at most six direct neighbors for each data block. \textcolor{red}{An other option is to communicate with 26 direct neighbor, but this increases the number of processors being communicated with while not much reduced the number of times to "traverse" the whole processor grid.} Instead of gathering connectivity information from all other data blocks in the grid, each block only gathers local trees of their neighboring blocks. This could be considered as a higher level of region growing process, starts from one seeding data block and grows to adjacent block by exchanging and merging connectivity information in a bread-first fashion, until all cross-boundary features are connected.
+For a regularly partitioned volumetric data set, there are at most six direct neighbors for each data block. Instead of gathering connectivity information from all non-current data blocks in the grid, we let each data block gather only new leaves from its neighboring blocks within each communication. This could be considered as a higher level of region growing process, as shown in Figure~\ref{fig:grid2d}, starts from one seeding block and grows to adjacent blocks by exchanging and merging connectivity information in a bread-first fashion until all cross-boundary features are connected.
 
 %------------------------------------------------
 \begin{figure}[ht]
-  \centering
-    \subfigure[Region growing for 2d grid]{
-      \includegraphics[width=0.45\linewidth]{grid2d.png}
-      \label{fig:grid2d}
-    }
-    \subfigure[Region growing for 2d grid]{
-      \includegraphics[width=0.45\linewidth]{grid3d.png}
-      \label{fig:grid3d}
-    }    
-  \caption[Optional caption for list of figures]{\textcolor{red}{TODO: Add detail to illustrate the process}}
+	\centering
+	\includegraphics[width=0.5\linewidth]{grid2d.png}
+	\label{fig:grid2d}  
+	\caption{\textcolor{red}{TODO: Add detail to illustrate the process}}
 \end{figure}
 %------------------------------------------------
 
-% --
-r20
-% --
+The reason we choose the six-direct-neighbor paradigm is because it gives the minimum overall computational complexity. It takes a maximum of ${3n-1}$ times communication, where \emph{n} denotes the longest side length, for any data block to receive connectivity information from the furthest block on the opposite diagonal. The temporal complexity for garnering all necessary leaves is hence as low as ${O(\sqrt[3]{N_{proc}})}$. And the number of processors involved in each communication is a constant of a maximum of six ($N_{proc/com} \leq 6$). 
 
-To schedule the local communication with neighboring blocks, we use two flags to indicate whether a processor need to send/receive local leaves from/to its neighboring blocks. Whenever a block gathers leaves that can be merged into its existing graph, it is considered it might still need to gather edges, and the \emph{toRecv} flag is set to true until the graph is \textcolor{red}{saturated <- need to check}; On the other hand, the \emph{toSend} flag is set in accordance to whether one of its neighboring processors need to recieve edges. Each processor will keep exchaning edges untill both the \emph{toSend} and \emph{toRecv} flags are set to false. Note that it only takes ${3n-1}$ times to reach the farest processor on the opposite diagonal for a 3D grid, where n denotes the longest side length, the time complexity for collecting all necessary edges is hence as low as ${O(\sqrt[3]{N_p})}$.
+Another optional paradigm is to let each processor communicate with its 26 neighbors, including the adjacent diagonal blocks. Communicate with the adjacent diagonal block takes as much as half the time for any block to reach its furthest diagonal. However, $N_{proc/com}$  is also increased to 26. For data sets that features span over all blocks are subordinate, six-direct-neighbor paradigm outweighs the 26-neighbors paradigm in computational complexity.
+
+To schedule the communication with neighboring blocks, we use two schedule flags, \emph{toSend} and \emph{toRecv}, to indicate whether a block need to send or receive leaves to/from its neighboring blocks. Whenever a block receives leaves that can be merged into its existing connectivity graph, we assume the neighboring blocks might receive further connectivity information from their neighbors. In this case, the \emph{toRecv} flag is set to true until the connectivity graph is \textcolor{red}{saturated}; On the other hand, the \emph{toSend} flag is set in accordance to whether one of the neighboring blocks need to receive leaves, which can be obtained by gathering the neighboring \emph{toRecv} flags. Each data block will keep exchanging connectivity information until both \emph{toSend} and \emph{toRecv} flags are set to false. 
 
 The detailed scheduling algorithm is depicted in Algorithm~\ref{alg:schedule}.
 %------------------------------------------------
 \begin{algorithm}
-\caption{Local Merge}
+\caption{Decentralized Local Merge}
 \label{alg:schedule}
-  \begin{algorithmic}[1]
-  \REQUIRE $adjacentProcessors$, $localEdges$
-  \STATE $toSend, toRecv \leftarrow true$	// init scheduling flags
-  \STATE $\delta \leftarrow localEdges$	// init data to be sent
-  \WHILE {$toSend$ = $true$ or $toRecv$ = $true$}
-  	\STATE $target \leftarrow toRecv$ = $true$ ? $myRank$ : null
-  	\STATE $procsToSync \leftarrow Allgather(target)$
-  	\FOR {each $proc$ in $procsToSync$}
-  		\IF {$toSend$ = $true$}
-  			\STATE send $\delta$ to $proc$
-  		\ENDIF
-  		\IF {$toRecv$ = $true$}
-  			\STATE receive $\delta\prime$ from $proc$
-  		\ENDIF
-  	\ENDFOR
-  	\STATE $toSend \leftarrow procsToSync$ is empty ? $false$ : $true$
-  	\STATE $toRecv \leftarrow false$
-  	\STATE $localEdges \leftarrow Reduce(localEdges, \delta\prime)$
+	\begin{algorithmic}
+	\STATE $toSend, toRecv \leftarrow true$	// init scheduling flags
+	\STATE $\delta \leftarrow localLeaves$	// init data to be sent
+	\WHILE {$toSend$ is true \textbf{or} $toRecv$ is true}
+		\STATE $target \leftarrow myRank$ \textbf{if} $toRecv$ = $true$
+		\STATE $procsToSync \leftarrow gatherNeighbor(target)$
+		
+		\FOR {each $proc$ in $procsToSync$}
+			\IF {$toSend$ = $true$}
+				\STATE send $\delta$ to $proc$
+			\ENDIF
+			\IF {$toRecv$ = $true$}
+				\STATE receive $\delta\prime$ from $proc$
+			\ENDIF
+		\ENDFOR
+		
+		\STATE $toSend \leftarrow false$ \textbf{if} $procsToSync$ is empty \textbf{else} $true$
+		\STATE $toRecv \leftarrow false$ \textbf{if} $\delta$ = $Merge(\delta, \delta\prime)$ \textbf{else} $true$
+		\STATE $\delta \leftarrow Merge(\delta, \delta\prime)$ \textbf{if} $toRecv$ is true
   \ENDWHILE
-  \end{algorithmic}
-  \begin{algorithmic} \STATE \end{algorithmic}	% line separator
-  \begin{algorithmic}[1]
-  \STATE $Reduce(localEdges, \delta\prime)$
-  	\FOR {each $edge$ in $\delta\prime$}
-  		\IF {$edge$ is new}
-  			\STATE add $edge$ to $\delta$
-  			\STATE $toRecv \leftarrow true$
-  		\ENDIF
-  	\ENDFOR	
   \end{algorithmic}
 \end{algorithm}
 %------------------------------------------------
 
 \subsubsection{The hybrid approach}
 
-Consider the fact that as the {volume data ?} evolves over time, the vortical features may drift but should not change drastically in neither size, shape nor location if the sampling interval when generating the data is sufficiently small, we can further optimizing the aforementioned decentralized-local-merge approach using a similar prediction-correction approach that further reduces the number of communications required to complete the whole connectivity graph.
+Consider the fact that as the data evolves over time, the volumetric features may drift but should not change drastically in neither size, shape nor location if the sampling interval when generating the data is sufficiently small. Base on this assumption we can further optimizing the aforementioned decentralized-local-merge approach using a similar prediction-correction approach that further reduces the number of communications required to complete the whole connectivity graph.
 
 \begin{figure}[ht]
 	\centering
