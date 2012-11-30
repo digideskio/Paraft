@@ -437,17 +437,9 @@ Also from the comparison of the computational cost as depicted in Figure~\ref{fi
 \begin{figure}[ht]
 	\centering
 	\includegraphics[width=0.45\linewidth]{global_merge.png}
-	\includegraphics[width=0.45\linewidth]{global_merge_log.png}
-	\caption{Total computation time for the decentralized global merging strategy, scaled up to 2048 processors while the time for global merging outweighs the time used for feature extraction and when using more processors}
-	\label{fig:global-merge}
-\end{figure}
-
-\begin{figure}[ht]
-	\centering
 	\includegraphics[width=0.45\linewidth]{local_merge.png}
-	\includegraphics[width=0.45\linewidth]{local_merge_log.png}
-	\caption{Total computation time for the decentralized local merging strategy, log-linearly scalable as the number of processor increases up to 16384 processors and the portion for local merging starts to increase when using more processors}
-	\label{fig:local-merge}
+	\caption{Total computation time comparison for different merging strategy. The decentralized-global-merge strategy scaled up to 2048 processors but the merging time outweighs the extraction time when using more processors; The decentralized-local-merge strategy scaled log-linearly up 16384 processors for the combustion data set.}
+	\label{fig:global-merge}
 \end{figure}
 
 \begin{figure}[ht]
@@ -457,7 +449,6 @@ Also from the comparison of the computational cost as depicted in Figure~\ref{fi
 	\label{fig:local-vs-global}
 \end{figure}
 
-\subsection{Visualization Result}
 % ========================================================================================
 
 % ========================================================================================
