@@ -4,21 +4,36 @@
 1
 1
 ptrack.tex
+7
+3
 2
-1
-0
 
 
 
 
 
 
-ptrack.tex
+ptrack_s_relatedwork.tex
 TeX
-403714043 0 -1 3894 -1 4870 0 0 887 320 0 25 289 -1 -1 0 0 77 -1 -1 77 1 0 4870 -1   0
+1060859 1 -1 2223 -1 2201 0 0 1382 670 0 705 241 -1 -1 0 0 22 -1 -1 22 1 0 2201 -1   0
+ptrack_s_overview.tex
+TeX
+1060859 0 -1 715 -1 3997 0 0 1382 670 0 241 445 -1 -1 0 0 2959 -1 -1 2959 1 0 3997 -1   0
+ptrack_s_method.tex
+TeX
+286273531 0 -1 688 -1 155 50 50 976 339 0 89 51 -1 -1 0 0 21 -1 -1 21 1 0 155 -1   0
 ptrack_s_abstract.tex
 TeX
-1060859 0 -1 0 -1 0 0 0 912 258 0 25 0 -1 -1 0 0 -1 -1 -1 -1 1 0 0 -1   0
+1060859 0 -1 0 -1 0 0 0 1382 670 0 25 0 -1 -1 0 0 120 -1 -1 120 1 0 0 -1   0
+ptrack_s_introduction.tex
+TeX
+17838075 0 -1 2448 -1 2485 0 0 1382 670 0 705 442 -1 -1 0 0 22 -1 -1 22 1 0 2485 -1   0
+ptrack.tex
+TeX
+135278587 0 -1 2582 -1 2582 0 0 1382 670 0 249 187 -1 -1 0 0 77 -1 -1 77 1 0 2582 -1   0
+ptrack.bib
+BibTeX
+1049586 1 109 12 109 104 75 75 976 393 0 849 272 -1 -1 0 0 -1 -1 -1 -1 1 0 104 109   0
 
 *ptrack.tex
 >
@@ -27,7 +42,5 @@ TeX
 *ptrack_s_relatedwork.tex
 *ptrack_s_overview.tex
 *ptrack_s_method.tex
-*ptrack_s_result.tex
-*ptrack_s_conclusion.tex
 *ptrack.bib
 <
