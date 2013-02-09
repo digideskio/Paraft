@@ -1,0 +1,92 @@
+%-------------------------------------------------------------------------
+\begin{figure}[t]
+% \includegraphics[width=0.49\linewidth]{combustion_labeled.png}
+\includegraphics[width=1.0\linewidth]{combustion_ft.png}
+% \includegraphics[width=0.49\linewidth]{combustion_feature.png}
+\caption{Left: The volume rendering of a single time step of the combustion data set; Right: Selected features of interest extracted tracked overtime.}
+\label{fig:combustion-labeled}
+\end{figure}
+
+\begin{figure}[t]
+\includegraphics[width=1.0\linewidth]{vorts_ft.png}
+% \includegraphics[width=0.24\linewidth]{vorts1.png}
+% \includegraphics[width=0.24\linewidth]{vorts3.png}
+% \includegraphics[width=0.24\linewidth]{vorts5.png}
+% \includegraphics[width=0.24\linewidth]{vorts7.png}
+\caption{Left: The volume rendering of a single time step of the vortex data set; Right: Selected features of interest extracted tracked overtime.}
+\label{fig:vorts-tracking-result}
+\end{figure}
+%-------------------------------------------------------------------------
+
+\section{Results}
+
+We test our feature extraction and tracking algorithm on two datasets. A 400 time steps $256\times256\times256$ vortex data set obtained from a combustion solver that can simulate turbulent flames, and a 100 time steps $1024\times1024\times1024$ vortex data set synthesized from the $128\times128\times128$ volume data set used in the other works~\cite{Silver:1997:TVT:614266.614369, Ji2003, Ji2006}. In the combustion data set, each voxel contains the magnitude value of vorticity derived from velocity using a curl operator. As time evolves, vortical features may vary from small amassed blob features to long curly features that span over large portion of the volume. Figures~\ref{fig:combustion-labeled} and \ref{fig:vorts-tracking-result} show the examples of identified and tracked features in these two data sets.
+
+Since our design is to target an in situ setting, we ignore the I/O cost and only focus on the computation time in our study.
+
+%\subsection{Performance Result}
+
+% The volume data can be generated either in advance or on the fly, and thus we ignore the I/O cost and only focus on the computation time for the following three portions.
+
+
+\textbf{Time for extracting features ($T_{extract}$).}
+%
+Since we use the region-growing based algorithm to extract features, given a fix specification of features, the computation time is mainly determined by the size of the volume as well as the number of processors being used. Once the raw volume data and its partitioning, a.k.a. the size of each data block is determined, the computation time for extracting residing features remains approximately the same. In post-processing, the size of each data block decreases with the increasing number, and hence so does the time spent on extracting features. As depicted in Figure~\ref{fig:feature-extraction}, $T_{extract}$ is approximately log-linear decreased as the number of processors increases.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\linewidth]{combustion_t_extract.png}
+\includegraphics[width=0.49\linewidth]{combustion_t_extract_log.png}
+\includegraphics[width=0.49\linewidth]{vorts_t_extract.png}
+\includegraphics[width=0.49\linewidth]{vorts_t_extract_log.png}
+\caption{Computation time for feature extraction. The left two plots are shown in linear scale, and the right plots are shown in logarithmic scale. The speedup is linear with the number of processors.}
+\label{fig:feature-extraction}
+\end{figure}
+
+\textbf{Create Local Connectivity Tree ($T_{create}$).}
+%
+Despite the size of each data block, the computation cost for creating and updating local connectivity tree is dependent on the number of the features extracted within the original volume, or more precisely, the number of features that touches the boundary surface of their residing data block. As shown in Figure~\ref{fig:create-local-graph}, similar to $T_{extract}$, $T_{create}$ decreases as the number of processors increases in post-processing, as the the number of feature-on-boundary decreases accordingly. For both the combustion and vorticity data set, it takes an average of 0.1 seconds to create the local connectivity tree, approximately 0.5\% the time of $T_{extract}$ using the same amount of processors. This portion increases but does not succeed 1\% in out test, hence $T_{create}$ is not considered as a bottleneck. %\textcolor{red}{for in-situ visualization however... }
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\linewidth]{combustion_t_create.png}
+\includegraphics[width=0.49\linewidth]{combustion_num_feature.png}
+\includegraphics[width=0.49\linewidth]{vorts_t_create.png}
+\includegraphics[width=0.49\linewidth]{vorts_num_feature.png}
+%\includegraphics[width=0.6\linewidth]{create_local_graph_log.png}
+\caption{Computation time for creating local connectivity tree. The speedup is linear with the number of processors. And the time cost is approximately proportional to the number of features-on-boundary. Note that, for the processor number greater than 4096 for the combustion data set and 512 for the vorticity data set, the average feature number is between 0 and 0.5 and is rounded to 0.}
+\label{fig:create-local-graph}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.45\linewidth]{combustion_local_vs_global.png}
+\includegraphics[width=0.45\linewidth]{vorts_local_vs_global.png}
+\caption{The comparison between the computation time for the centralized approach and the decentralized approach. The centralized approach works well for a small number of processors while the decentralized approach exceeds after a certain number, e.g. 128 processors for the combustion data set, is used.}
+\label{fig:local-vs-global}
+\end{figure}
+
+% Total computation time comparison for different approaches to
+% global connectivity information generation. The centralized approach
+% scales up to 2048 processors but the merging time outweighs
+% the extraction time when using more processors;
+% The decentralized approach scales linearly
+% up 16384 processors for the combustion data set.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.49\linewidth]{combustion_t_total_centralized.png}
+\includegraphics[width=0.49\linewidth]{combustion_t_total_decentralized.png}
+\includegraphics[width=0.49\linewidth]{vorts_t_total_centralized.png}
+\includegraphics[width=0.49\linewidth]{vorts_t_total_decentralized.png}
+% \includegraphics[width=1.0\linewidth]{global_merge.png}\\
+% \includegraphics[width=1.0\linewidth]{local_merge.png}
+\caption{Total computation time comparison for different approaches to global connectivity information generation. The centralized approach scales up to 2048 processors but the merging time outweighs the extraction time when using more processors; The decentralized approach scales linearly up 16384 processors for the combustion data set.}
+\label{fig:global-merge}
+\end{figure}
+
+\textbf{Create Global Connectivity Information ($T_{merge}$)}
+%
+We also test the centralized approach and the decentralized approach in creating global connectivity information that is the major factor related to the scalability of our algorithm. Though the number of features-on-boundary decreases as more processors involved, the communication time for the centralized approach increases as $N_p$ increases. According to the comparison depicted in Figure~\ref{fig:local-vs-global}, we can see that the centralized approach is suitable for the scenarios that we only need a small number of processors, and the decentralized approach for creating connectivity information using a relatively large amount of the processors.
+
+As shown in Figure~\ref{fig:global-merge}, the total time $T_{merge}$ for the centralized approach exceeds $T_{extract}$ after certain amount of processors, 2048, for the combustion data set, which makes the overall execution time rebounds . On the other hand, the decentralized approach  scales well up to 16384 processors for the combustion data set, as the communication cost is as low as ${O(\sqrt[3]{N_p})}$.
