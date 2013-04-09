@@ -3,6 +3,7 @@
 
 #include <hash_map.h>
 #include <fstream>
+#include <iostream>
 #include <cmath>
 #include <string>
 #include <vector>

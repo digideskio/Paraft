@@ -71,11 +71,8 @@ void DataManager::PreloadDataSequence(Vector3i partition, Vector3i blockCoord, D
         // 2. get file name from time index
         string filePath;
         char timestep[21]; // hold up to 64-bits
-        sprintf(timestep, "%8d", t);
-        for (int i = 0; i < 8; i++) {
-            timestep[i] = timestep[i] == ' ' ? '0' : timestep[i];
-        }
-        filePath = ds.path + ds.prefix + timestep + ds.surfix;
+        sprintf(timestep, "%08d", t);
+        filePath = ds.path+"/"+ds.prefix+timestep+"."+ds.surfix;
 
         char *filename = new char[filePath.size() + 1];
         std::copy(filePath.begin(), filePath.end(), filename);
@@ -85,6 +82,37 @@ void DataManager::PreloadDataSequence(Vector3i partition, Vector3i blockCoord, D
         int *gsizes = (blockSize * partition).toArray();
         int *subsizes = blockSize.toArray();
         int *starts = (blockSize * blockCoord).toArray();
+
+//        cout << "+++++++++++++++++++++++" << endl;
+
+//        cout << "blockSize: " << blockSize.x << "," << blockSize.y << "," << blockSize.z << endl;
+//        cout << "partition: " << partition.x << "," << partition.y << "," << partition.z << endl;
+//        cout << "blockCoord: " << blockCoord.x << "," << blockCoord.y << "," << blockCoord.z << endl;
+
+//        cout << "gsizes: " << gsizes[0] << "," << gsizes[1] << "," << gsizes[2] << endl;
+//        cout << "subsizes: " << subsizes[0] << "," << subsizes[1] << "," << subsizes[2] << endl;
+//        cout << "starts: " << starts[0] << "," << starts[1] << "," << starts[2] << endl;
+
+//        int gsizes[3];
+//        int subsizes[3];
+//        int starts[3];
+
+        gsizes[0]   = blockSize.x * partition.x;
+        subsizes[0] = blockSize.x;
+        starts[0]   = blockSize.x * blockCoord.x;
+
+        gsizes[1]   = blockSize.y * partition.y;
+        subsizes[1] = blockSize.y;
+        starts[1]   = blockSize.y * blockCoord.y;
+
+        gsizes[2]   = blockSize.z * partition.z;
+        subsizes[2] = blockSize.z;
+        starts[2]   = blockSize.z * blockCoord.z;
+
+//        cout << "----------------------" << endl;
+//        cout << "gsizes: " << gsizes[0] << "," << gsizes[1] << "," << gsizes[2] << endl;
+//        cout << "subsizes: " << subsizes[0] << "," << subsizes[1] << "," << subsizes[2] << endl;
+//        cout << "starts: " << starts[0] << "," << starts[1] << "," << starts[2] << endl;
 
         MPI_Datatype filetype;
         MPI_Type_create_subarray(3, gsizes, subsizes, starts, MPI_ORDER_FORTRAN,
@@ -104,6 +132,7 @@ void DataManager::PreloadDataSequence(Vector3i partition, Vector3i blockCoord, D
         MPI_File_close(&file);
         MPI_Type_free(&filetype);
         delete[] filename;
+
     }
 }
 

@@ -1,0 +1,9 @@
+\section{Conclusion}
+
+We present a scalable approach to extracting and tracking features for large time-varying 3D volume data using parallel machines. We carefully design the communication scheme such that only minimal amount of data need to be exchanged among processors through local communications. The features are tracked in parallel by incrementally updating the connectivity information over time. Compare with the naive centralized solution, our decentralized approach can significantly reduce the communication cost and ensure the scalability with up to 16384 processors. To the best of our knowledge, no prior approaches can extract and track features at the scale in terms of the number of processors we have achieved. 
+
+Our approach shows the performance that can be as scalable as large scientific simulations. In the future, we plan to integrate our approach with large simulations and conduct experimental studies on in situ feature extraction and tracking during a simulation execution. The study can possibly enable scientists to capture highly intermittent transient phenomena which could be missed in post-processing. In addition, we would like to investigate the feature-base data reduction and compression techniques to significantly reduce simulation data but retain the essential features for scientific discovery. Our parallel feature extraction and tracking approach builds a solid foundation for these future studies.
+
+\section{Acknowledgment}
+
+This work has been supported in part by the U.S. National Science Foundation through grants OCI-0749227, CCF-0811422, OCI-0850566, and OCI-0905008, and also by the U.S. Department of Energy through the SciDAC program with Agreement No. DE-FC02-06ER25777 and DE-FC02-12ER26072, program manager Lucy Nowell.
