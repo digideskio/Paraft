@@ -1,0 +1,2 @@
+0, HelloWorld, 0.9.0, ./plugins/libHelloWorld.dylib
+1, DevRenderer, 0.0.1, ./plugins/libDevRenderer.dylib

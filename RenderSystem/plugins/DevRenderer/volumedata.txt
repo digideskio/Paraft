@@ -1,0 +1,367 @@
+Lobster {
+	filename = ./plugins/DevRenderer/data/lobster.raw,
+	tfefile = ./plugins/DevRenderer/data/lobster.tfe,
+	dim = 301x324x56,
+	format = UNSIGNED_8BIT,
+	byteorder = BIGENDIAN
+}
+
+Lobster (2 timesteps) {
+	filename = ./plugins/DevRenderer/data/lobstert%1.raw,
+	tfefile = ./plugins/DevRenderer/data/lobstert.tfe,
+	dim = 301x324x56,
+	format = UNSIGNED_8BIT,
+	byteorder = BIGENDIAN,
+	totalstep = 2,
+	startstep = 1,
+	numdigits = 1,
+	max = 255,
+	min = 0,
+}
+
+Ball {
+	filename = ./plugins/DevRenderer/data/ball.raw,
+	tfefile = ./plugins/DevRenderer/data/ball.tfe,
+	dim = 128x128x128,
+	format = FLOATT,
+	byteorder = BIGENDIAN
+}
+
+vorts9 {
+	filename = ./plugins/DevRenderer/data/vorts9.data,
+	tfefile = ./plugins/DevRenderer/data/vorts9.tfe,
+	dim = 128x128x128,
+	format = FLOATT,
+	byteorder = LITTEENDIAN
+}
+
+vorts1-9 {
+	filename = ./plugins/DevRenderer/data/vorts%1.data,
+	tfefile = ./plugins/DevRenderer/data/vorts.tfe,
+	dim = 128x128x128,
+	format = FLOATT,
+	byteorder = LITTEENDIAN,
+	totalstep = 9,
+	startstep = 1,
+	numdigits = 1
+}
+
+plt00001527 {
+	filename = ./plugins/SupernovaRenderer/data/plt00001527.raw,
+	tfefile = ./plugins/SupernovaRenderer/data/plt00001527.tfe,
+	dim = 320x640x320,
+	format = FLOATT,
+	byteorder = LITTEENDIAN,
+	max = 2.207e+7,
+	min = 0.5868,
+}
+
+plt00002023 {
+	filename = ./plugins/SupernovaRenderer/data/plt00002023.raw,
+	tfefile = ./plugins/SupernovaRenderer/data/plt00002023.tfe,
+	dim = 160x320x320,
+	format = FLOATT,
+	byteorder = LITTEENDIAN,
+	max = 2.20692e+007,
+	min = 0.421361,
+}
+
+plt00009998 {
+	filename = ./plugins/SupernovaRenderer/data/plt00009998.raw,
+	tfefile = ./plugins/SupernovaRenderer/data/plt00009998.tfe,
+	dim = 160x320x320,
+	format = FLOATT,
+	byteorder = LITTEENDIAN,
+	max = 2.20686e+007,
+	min = 0.103314,
+}
+
+plt00011763_h_g {
+	filename = ./plugins/SupernovaRenderer/data/plt00011763_h_g.raw,
+	tfefile = ./plugins/SupernovaRenderer/data/plt00011763_h_g.tfe,
+	dim = 320x640x320,
+	format = FLOATT,
+	byteorder = LITTEENDIAN,
+	max = 2.20685e+007,
+	min = 0.0,
+}
+
+plt00011763_d_1_f {
+	filename = ./plugins/SupernovaRenderer/data/plt00011763_d_1_f.raw,
+	tfefile = ./plugins/SupernovaRenderer/data/plt00011763_d_1_f.tfe,
+	dim = 160x320x320,
+	format = FLOATT,
+	byteorder = LITTEENDIAN,
+	max = 2.20615e+007,
+	min = 0.0872233,
+}
+
+plt00011763_d_g_1_f {
+	filename = ./plugins/SupernovaRenderer/data/plt00011763_d_g_1_f.raw,
+	tfefile = ./plugins/SupernovaRenderer/data/plt00011763_d_g_1_f.tfe,
+	dim = 160x320x320,
+	format = FLOATT,
+	byteorder = LITTEENDIAN,
+	max = 2.39251e+006,
+	min = 5.54178e-007,
+}
+
+plt00011763_d_g2_1_f {
+	filename = ./plugins/SupernovaRenderer/data/plt00011763_d_g2_1_f.raw,
+	tfefile = ./plugins/SupernovaRenderer/data/plt00011763_d_g2_1_f.tfe,
+	dim = 160x320x320,
+	format = FLOATT,
+	byteorder = LITTEENDIAN,
+	max = 1.61647e+006,
+	min = 1.60055e-008,
+}
+
+plt00011763_d_gad_1_f {
+	filename = ./plugins/SupernovaRenderer/data/plt00011763_d_gad_1_f.raw,
+	tfefile = ./plugins/SupernovaRenderer/data/plt00011763_d_gad_1_f.tfe,
+	dim = 160x320x320,
+	format = FLOATT,
+	byteorder = LITTEENDIAN,
+	max = 2.04753e+006,
+	min = 2.47355e-008,
+}
+
+plt00011763_d_l_1_f {
+	filename = ./plugins/SupernovaRenderer/data/plt00011763_d_l_1_f.raw,
+	tfefile = ./plugins/SupernovaRenderer/data/plt00011763_d_l_1_f.tfe,
+	dim = 160x320x320,
+	format = FLOATT,
+	byteorder = LITTEENDIAN,
+	max = 3.51922e+006,
+	min = 1.41185e-008,
+}
+
+MACOESSIX {
+	filename = /home/brian/Desktop/Datasets/MACOESSIX/Macoessix_float32bit_512x512x461.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/MACOESSIX.tfe,
+	dim = 512x512x461,
+	format = FLOATT,
+}
+
+ANEURIX {
+	filename = /home/brian/Desktop/Datasets/ANEURIX/LL5363.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/ANEURIX.tfe,
+	dim = 512x512x922,
+	format = UNSIGNED_16BIT,
+	byteorder = LITTEENDIAN,
+}
+
+Beetle{
+	filename = ./programs/SimpleVolumeRenderer/data/stagbeetle-416x416x247.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/stagbeetle.tfe,
+	dim = 416x416x247,
+	format = UNSIGNED_16BIT
+}
+
+ComputerMouse {
+	filename = ./programs/SimpleVolumeRenderer/data/cmouse-512x440x512.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/cmouse-512x440x512.tfe,
+	dim = 512x440x512,
+	format = UNSIGNED_8BIT,
+	byteorder = LITTEENDIAN
+}
+
+Chest {
+	filename = ./programs/SimpleVolumeRenderer/data/CorCTAw-512x512x355.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/CorCTA.tfe,
+	dim = 512x512x355,
+	format = UNSIGNED_16BIT,
+	byteorder = LITTEENDIAN
+}
+
+FurbyToy {
+	filename = ./programs/SimpleVolumeRenderer/data/furby_unsigned8bit_256x256x256.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/furby_unsigned8bit_256x256x256.tfe,
+	dim = 256x256x256,
+	format = UNSIGNED_8BIT,
+}
+
+Heart {
+	filename = ./programs/SimpleVolumeRenderer/data/GOUDURIX.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/Goudurix.tfe,
+	dim = 512x512x220,
+	format = UNSIGNED_16BIT,
+	byteorder = LITTEENDIAN
+}
+
+Mouse {
+	filename = ./programs/SimpleVolumeRenderer/data/mouse-272x216x480.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/mouse-272x216x480.tfe,
+	dim = 272x216x480,
+	format = UNSIGNED_16BIT,
+}
+
+Plume {
+	filename = ./programs/SimpleVolumeRenderer/data/plume-398.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/plume.tfe,
+	dim = 252x252x1024,
+	format = FLOATT,
+	max = 125,
+	min = 0,
+}
+
+Plume (398 timesteps){
+	filename = ./programs/SimpleVolumeRenderer/data/plume-small/%1.omh.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/plume-small.tfe,
+	dim = 126x126x512,
+	format = FLOATT,
+	totalstep = 398,
+	startstep = 1,
+	numdigits = 3,
+	max = 125,
+	min = 0,
+}
+
+
+Present {
+	filename = ./programs/SimpleVolumeRenderer/data/present492x492x442.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/present492x492x442.tfe,
+	dim = 492x492x442,
+	format = UNSIGNED_16BIT,
+}
+
+Supernova {
+	filename = ./programs/SimpleVolumeRenderer/data/Supernova-1340.dat,
+	tfefile = ./programs/SimpleVolumeRenderer/data/Supernova-1340.tfe,
+	dim = 432x432x432,
+	format = FLOATT
+}
+
+Vorts (100 timesteps) {
+	filename = ./programs/SimpleVolumeRenderer/data/vorts/vorts%1.data,
+	tfefile = ./programs/SimpleVolumeRenderer/data/vorts.tfe,
+	dim = 128x128x128,
+	format = FLOATT,
+	byteorder = BIGENDIAN,
+	totalstep = 100,
+	startstep = 1,
+}
+Plume tiny {
+	filename = /media/7CD4E8D0D4E88DA8/RealPlume/tiny/%1.omh.raw,
+	tfefile = ./programs/SimpleVolumeRenderer/data/plume.tfe,
+	dim = 63x63x256,
+	format = FLOATT,
+	totalstep = 398,
+	startstep = 1,
+	numdigits = 3,
+	max = 125,
+	min = 0,
+}
+
+Supernova {
+	filename = /media/7CD4E8D0D4E88DA8/Supernova/E_%1.dat,
+	tfefile = ./programs/SimpleVolumeRenderer/data/supernova.tfe,
+	dim = 432x432x432,
+	format = FLOATT,
+	totalstep = 60,
+	startstep = 1295,
+	numdigits = 4,
+	max = 0.136766,
+	min = 0,
+}
+
+Supernova small {
+	filename = /media/7CD4E8D0D4E88DA8/Supernova/small/E_%1.dat,
+	tfefile = ./programs/SimpleVolumeRenderer/data/supernova.tfe,
+	dim = 216x216x216,
+	format = FLOATT,
+	totalstep = 60,
+	startstep = 1295,
+	numdigits = 4,
+	max = 0.136766,
+	min = 0,
+}
+
+Supernova tiny {
+	filename = /media/7CD4E8D0D4E88DA8/Supernova/tiny/E_%1.dat,
+	tfefile = ./programs/SimpleVolumeRenderer/data/supernova.tfe,
+	dim = 108x108x108,
+	format = FLOATT,
+	totalstep = 60,
+	startstep = 1295,
+	numdigits = 4,
+	max = 0.136766,
+	min = 0,
+}
+
+SupernovaA small {
+	filename = /media/7CD4E8D0D4E88DA8/SupernovaA/smallA%1.dat,
+	tfefile = ./programs/SimpleVolumeRenderer/data/supernovaa.tfe,
+	dim = 216x216x216,
+	format = FLOATT,
+	totalstep = 105,
+	startstep = 1250,
+	numdigits = 4,
+	max = 1,
+	min = 0,
+}
+
+SupernovaA tiny {
+	filename = /media/7CD4E8D0D4E88DA8/SupernovaA/tiny/smallA%1.dat,
+	tfefile = ./programs/SimpleVolumeRenderer/data/supernovaa.tfe,
+	dim = 108x108x108,
+	format = FLOATT,
+	totalstep = 105,
+	startstep = 1250,
+	numdigits = 4,
+	max = 1,
+	min = 0,
+}
+
+PLT {
+	filename = /media/7CD4E8D0D4E88DA8/PLT_flow/plt-%1.dat,
+	tfefile = ./programs/SimpleVolumeRenderer/data/plt.tfe,
+	dim = 640x256x256,
+	format = FLOATT,
+	totalstep = 165,
+	startstep = 100,
+	numdigits = 4,
+	max = 4.284966,
+	min = 1.336306,
+}
+
+PLT small {
+	filename = /media/7CD4E8D0D4E88DA8/PLT_flow/small/plt-%1.dat,
+	tfefile = ./programs/SimpleVolumeRenderer/data/plt.tfe,
+	dim = 320x128x128,
+	format = FLOATT,
+	totalstep = 165,
+	startstep = 100,
+	numdigits = 4,
+	max = 4.284966,
+	min = 1.336306,
+}
+
+PLT tiny {
+	filename = /media/7CD4E8D0D4E88DA8/PLT_flow/tiny/plt-%1.dat,
+	tfefile = ./programs/SimpleVolumeRenderer/data/plt.tfe,
+	dim = 160x64x64,
+	format = FLOATT,
+	totalstep = 165,
+	startstep = 100,
+	numdigits = 4,
+	max = 4.284966,
+	min = 1.336306,
+}
+
+Angio {
+	filename = /home/brian/Desktop/ANGIO CT.raw,
+	tfefile = ./data/ANGIO CT.tfe,
+	dim = 512x512x460,
+	format = UNSIGNED_16BIT,
+}
+
+Dipole {
+	filename = ./programs/SimpleVolumeRenderer/data/100psCorr/100ps%1.corr,
+	tfefile = ./programs/SimpleVolumeRenderer/data/dipole.tfe,
+	dim = 32x32x32,
+	format = FLOATT,
+	byteorder = BIGENDIAN,
+	totalstep = 50,
+	startstep = 0,
+}

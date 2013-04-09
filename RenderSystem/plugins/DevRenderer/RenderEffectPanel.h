@@ -1,0 +1,6 @@
+#ifndef RENDEREFFECTPANEL_H
+#define RENDEREFFECTPANEL_H
+
+//class
+
+#endif // RENDEREFFECTPANEL_H

@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>preint.frag</file>
+        <file>preint.vert</file>
+        <file>preint3d.frag</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,7 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+	<file>icons/SpacialOverview.png</file>
+	<file>icons/TemporalOverview.png</file>
+	<file>icons/TransferFunctionOverview.png</file>
+</qresource>
+</RCC>

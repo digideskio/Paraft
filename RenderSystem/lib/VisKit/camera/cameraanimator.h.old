@@ -1,0 +1,35 @@
+#ifndef _CAMERAANIMATOR_H_
+#define _CAMERAANIMATOR_H_
+
+#include "camera.h"
+#include <QObject>
+
+#include <QList>
+
+struct CameraKeyStep {
+	CameraOptions options;
+	double time;
+
+	CameraKeyStep(const CameraOptions& options, double time=1):options(options), time(time) {}
+};
+
+class CameraAnimator : public QObject {
+	Q_OBJECT
+
+	QList<CameraKeyStep> steps;
+	double totaltime;
+	double tau;
+public:
+	CameraAnimator():totaltime(0), tau(0.2) {} 
+	void push_back(const CameraOptions& step, double t=1);
+	void push_back(const Camera& cam, double t=1);
+	void setCam(Camera& cam, double t) const;
+	void drawSpline() const;
+	void drawCamera(const Camera& cam) const;
+	double getTotalTime() const { return totaltime; }
+	void setTau(double t) { tau = t; }
+	double getTau() const { return tau; }
+};
+
+
+#endif

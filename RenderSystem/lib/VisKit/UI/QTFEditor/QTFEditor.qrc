@@ -1,0 +1,6 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+     <file>arrow-collapsed.png</file>
+     <file>arrow-expanded.png</file>
+</qresource>
+</RCC>

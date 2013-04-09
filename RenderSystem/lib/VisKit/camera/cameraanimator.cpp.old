@@ -1,0 +1,126 @@
+#include <GL/glew.h>
+#include "cameraanimator.h"
+#include "vectors.h"
+#include "matrices.h"
+#include "quaternion.h"
+
+#define clamp(a, b, c) ((a) < (b) ? (b) : (a) > (c) ? (c) : (a))
+
+void CameraAnimator::push_back(const CameraOptions& step, double t) {
+	if(!steps.isEmpty())
+		totaltime += t;
+	steps.push_back(CameraKeyStep(step, t));
+}
+
+void CameraAnimator::push_back(const Camera& cam, double t) {
+	CameraOptions options;
+	cam.saveOptions(options);
+	push_back(options, t);
+}
+
+void CameraAnimator::drawSpline() const {
+	glColor3f(1,1,1);
+	glBegin(GL_POINTS);
+	for(int i = 0; i < steps.size(); i++) {
+		glVertex3d(unpack3(steps[i].options.l + steps[i].options.c*steps[i].options.dist));
+	}
+	glEnd();
+
+
+	if(steps.size() < 2)
+		return;
+
+	double t;
+	Vector4 p;
+	Matrix4x4 mat;
+	glBegin(GL_LINE_STRIP);
+	for(int j = 0; j < steps.size() - 1; j++) {
+		mat = Matrix4x4::CatmullRom(steps[clamp(j - 1, 0, steps.size() - 1)].options.l + 
+				steps[clamp(j - 1, 0, steps.size() - 1)].options.c*steps[clamp(j - 1, 0, steps.size() - 1)].options.dist, 
+			steps[j].options.l + steps[j].options.c*steps[j].options.dist, 
+			steps[j + 1].options.l + steps[j + 1].options.c*steps[j + 1].options.dist,
+			steps[clamp(j + 2, 0, steps.size() - 1)].options.l + 
+				steps[clamp(j + 2, 0, steps.size() - 1)].options.c*steps[clamp(j + 2, 0, steps.size() - 1)].options.dist, tau);
+		for(int i = 0; i < 50; i++) {
+			t = i/49.;
+			p = mat*Vector4::CatmullRom(t);
+			glVertex3d(unpack3(p));
+		}
+	}
+	glEnd();
+}
+
+void CameraAnimator::setCam(Camera &cam, double t) const {
+	if(steps.isEmpty())
+		return;
+	if((steps.size() == 1) || (t >= totaltime)) {
+		cam.loadOptions((*(steps.end() - 1)).options);
+		return;
+	}
+	CameraOptions options;
+	double total = 0;
+	int j;
+	for(j = 0; j < steps.size() - 1; j++) {
+		if(total + steps[j + 1].time > t) {
+			t -= total;
+			t /= steps[j + 1].time;
+			break;
+		}
+		total += steps[j + 1].time;
+	}
+
+	Matrix4x4 mat = Matrix4x4::CatmullRom(steps[clamp(j - 1, 0, steps.size() - 1)].options.l + 
+		steps[clamp(j - 1, 0, steps.size() - 1)].options.c*steps[clamp(j - 1, 0, steps.size() - 1)].options.dist, 
+		steps[j].options.l + steps[j].options.c*steps[j].options.dist, 
+		steps[j + 1].options.l + steps[j + 1].options.c*steps[j + 1].options.dist,
+		steps[clamp(j + 2, 0, steps.size() - 1)].options.l + 
+		steps[clamp(j + 2, 0, steps.size() - 1)].options.c*steps[clamp(j + 2, 0, steps.size() - 1)].options.dist, tau);
+
+	Matrix4x4 mat2 = Matrix4x4::CatmullRom(steps[clamp(j - 1, 0, steps.size() - 1)].options.l, 
+		steps[j].options.l, 
+		steps[j + 1].options.l,
+		steps[clamp(j + 2, 0, steps.size() - 1)].options.l, tau);
+
+	Vector3 campos = mat*Vector4::CatmullRom(t);
+	Vector3 lpos = mat2*Vector4::CatmullRom(t);
+
+	options = steps[j].options;
+
+	options.l = lpos;
+	options.dist = (campos - lpos).length();
+	//options.dist = steps[j].options.dist + t*(steps[j + 1].options.dist - steps[j].options.dist);
+	options.c = campos - lpos;
+	//options.c = Quaternion::slerp(steps[j].options.c, steps[j + 1].options.c, t);
+	options.c.normalize();
+	options.u = Quaternion::slerp(steps[j].options.u, steps[j + 1].options.u, t);
+	options.o = options.u*options.c;
+
+	cam.loadOptions(options);
+
+}
+
+void CameraAnimator::drawCamera(const Camera& cam) const {
+
+	glBegin(GL_LINES);
+	glColor3f(1,1,0);
+	glVertex3d(unpack3(cam.l));
+	glVertex3d(unpack3(cam.l + cam.c*cam.dist));
+
+	glColor3f(1,0,0);
+	glVertex3d(unpack3(cam.l));
+	glVertex3d(unpack3(cam.l + cam.u));
+
+	glColor3f(0,0,1);
+	glVertex3d(unpack3(cam.l));
+	glVertex3d(unpack3(cam.l + cam.o));
+	glEnd();
+
+	glBegin(GL_POINTS);
+	glColor3f(0, 1, 0);
+	glVertex3d(unpack3(cam.l));
+	glColor3f(1, 1, 0);
+	glVertex3d(unpack3(cam.l + cam.c*cam.dist));
+	glEnd();
+
+	glColor3f(1,1,1);
+}
