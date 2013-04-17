@@ -64,12 +64,9 @@ public:
     PluginInterface *getParentPlugin() { return m_parentPlugin; }
     void setWidget(QWidget *widget) { QMdiSubWindow::setWidget(widget); setFocusProxy(widget); }
 protected:
-    //
-    //virtual void keyPressEvent(QKeyEvent *e) { qDebug("SubWindow::keyPressEvent(%d)", e->key()); e->ignore(); }
     virtual void keyPressEvent(QKeyEvent *e) { qDebug("SubWindow::keyPressEvent(%d)", e->key()); QMdiSubWindow::keyPressEvent(e); }
-
     virtual void closeEvent(QCloseEvent *) { emit windowClosed(this); }
-    virtual void focusInEvent(QFocusEvent *e) { qDebug("SubWindow::focusInEvent()"); QMdiSubWindow::focusInEvent(e); /*widget()->setFocus();*/ }
+    virtual void focusInEvent(QFocusEvent *e) { qDebug("SubWindow::focusInEvent()"); QMdiSubWindow::focusInEvent(e); }
     PluginInterface *m_parentPlugin;
 signals:
     void windowClosed(QMdiSubWindow *window);

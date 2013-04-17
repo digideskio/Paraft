@@ -1,15 +1,12 @@
 #include "PreIntegrationRenderer.h"
 
-PreIntegrationRenderer::PreIntegrationRenderer()
-    : RayCastingShader(),
-      _preIntegrator(nullptr),
-      _internalPreIntegratorUsed(false)
-{
-}
+PreIntegrationRenderer::PreIntegrationRenderer() : RayCastingShader(),
+    _preIntegrator(nullptr), _internalPreIntegratorUsed(false) { }
 
-PreIntegrationRenderer::~PreIntegrationRenderer()
-{
-    if (_internalPreIntegratorUsed && _preIntegrator != nullptr) delete _preIntegrator;
+PreIntegrationRenderer::~PreIntegrationRenderer() {
+    if (_internalPreIntegratorUsed && _preIntegrator != nullptr) {
+        delete _preIntegrator;
+    }
 }
 
 void PreIntegrationRenderer::init(QRenderWindow &renderWindow,
@@ -20,17 +17,11 @@ void PreIntegrationRenderer::init(QRenderWindow &renderWindow,
                                   MSLib::GLTexture3D &dataTex,
                                   MSLib::GLTexture1D &tfTex,
                                   const String &workingPath,
-                                  PreIntegratorGL *preIntegrator)
-{
+                                  PreIntegratorGL *preIntegrator) {
     _renderWindow = &renderWindow;
     _tfEditor = &tfEditor;
     _ps = &ps;
     _model = &model;
-
-    //_scaleDim[0] = scaleDimX;
-    //_scaleDim[1] = scaleDimY;
-    //_scaleDim[2] = scaleDimZ;
-    //_projection = projection;
     _dataTex = &dataTex;
     _tfTex = &tfTex;
 
@@ -40,20 +31,10 @@ void PreIntegrationRenderer::init(QRenderWindow &renderWindow,
 
     RayCastingShader::init();
 
-    //_preIntegrator = new PreIntegratorGL(_tfEditor->getTFColorMapResolution(), (*_ps)["sampleStep"].toFloat(), 0.01f);
-    //_preIntegrator->update(*_tfTex);
-    //_preIntTex = _glPreIntegrator->colorTable();
-    //_preIntFrontTex = _glPreIntegrator->frontTable();
-    //_preIntBackTex = _glPreIntegrator->backTable();
-
-    if (preIntegrator != nullptr)
-    {
+    if (preIntegrator != nullptr) {
         _preIntegrator = preIntegrator;
         _internalPreIntegratorUsed = false;
-    }
-    else
-    {
-        //Vector3f scaledDim(_scaleDim);
+    } else {
         float sampleInterval = (*_ps)["sampleStep"].toFloat() * _model->scaledDim().length();
         _preIntegrator = new PreIntegratorGL(_tfEditor->getTFColorMapResolution(), sampleInterval, 0.01f);
         _preIntegrator->update(*_tfTex);
@@ -65,8 +46,7 @@ void PreIntegrationRenderer::init(QRenderWindow &renderWindow,
     _shader->addUniformSampler("preIntBack", 5);
 }
 
-void PreIntegrationRenderer::preRender()
-{
+void PreIntegrationRenderer::preRender() {
     _preIntegrator->colorTable()->bind(3);
     _preIntegrator->frontTable()->bind(4);
     _preIntegrator->backTable()->bind(5);
@@ -78,21 +58,17 @@ void PreIntegrationRenderer::preRender()
     RayCastingShader::preRender();
 }
 
-void PreIntegrationRenderer::postRender()
-{
+void PreIntegrationRenderer::postRender() {
     RayCastingShader::postRender();
-
     _preIntegrator->colorTable()->release();
     _preIntegrator->frontTable()->release();
     _preIntegrator->backTable()->release();
 }
 
-void PreIntegrationRenderer::setStepSize(float stepSize)
-{
+void PreIntegrationRenderer::setStepSize(float stepSize) {
     _preIntegrator->setStepSize(stepSize);
 }
 
-void PreIntegrationRenderer::update(MSLib::GLTexture1D &tfTex)
-{
+void PreIntegrationRenderer::update(MSLib::GLTexture1D &tfTex) {
     _preIntegrator->update(tfTex);
 }

@@ -1,40 +1,28 @@
 #include "MainUI.h"
 
 RenderEffectPanel::RenderEffectPanel(MainUI *mainUI, QWidget *parent)
-    : QTabWidget(parent),
-      _mainUI(mainUI)
-{
+    : QTabWidget(parent), _mainUI(mainUI) {
     // Dev tab
     _devTab = new QWidget(this);
     _component = new QComboBox(this);
     for (int i = 0; i < 5; i++)
         _component->addItem(QString("Component %1").arg(i));
     _preIntEnabled = new QCheckBox(tr("Pre-Integration"), this);
-    //_genPreIntTable = new QPushButton(tr("Gen Pre-Int Table"), this);
-    //_genPreIntTable2 = new QPushButton(tr("Gen Pre-Int Table (n^2)"), this);
     _segmentEnabled = new QCheckBox(tr("Segmented Ray Casting"), this);
 
     _mainUI->connectParameter("compIdx", _component);
     _mainUI->getParameterConnecter("compIdx")->setAutoUpdate(false);   // do not auto update to avoid it being set to -1
-    //// setUpdateOnFocused
-
     _mainUI->connectParameter("preIntEnabled", _preIntEnabled);
-    //connect(_genPreIntTable, SIGNAL(clicked()), this, SLOT(genPreIntTable()));
-    //connect(_genPreIntTable2, SIGNAL(clicked()), this, SLOT(genPreIntTable2()));
     _mainUI->connectParameter("segmentEnabled", _segmentEnabled);
     connect(_mainUI->getParameterConnecter("varNames"), SIGNAL(valueChanged()), this, SLOT(setVarNames()));
 
     QVBoxLayout *devLayout = new QVBoxLayout();
     devLayout->addWidget(_component);
     devLayout->addWidget(_preIntEnabled);
-    //devLayout->addWidget(_genPreIntTable);
-    //devLayout->addWidget(_genPreIntTable2);
     devLayout->addWidget(_segmentEnabled);
 
     _devTab->setLayout(devLayout);
-
     addTab(_devTab, tr("Dev"));
-
 
     // General tab
     _generalTab = new QWidget(this);
@@ -62,7 +50,6 @@ RenderEffectPanel::RenderEffectPanel(MainUI *mainUI, QWidget *parent)
     _generalTab->setLayout(generalLayout);
 
     addTab(_generalTab, tr("General"));
-
 
     // Light tab
     _lightTab = new QWidget(this);
@@ -99,7 +86,6 @@ RenderEffectPanel::RenderEffectPanel(MainUI *mainUI, QWidget *parent)
     _lightTab->setLayout(lightLayout);
 
     addTab(_lightTab, tr("Light"));
-
 
     // Slice tab
     _sliceTab = new QWidget(this);
@@ -148,8 +134,6 @@ RenderEffectPanel::RenderEffectPanel(MainUI *mainUI, QWidget *parent)
     connect(_xn, SIGNAL(clicked()), this, SLOT(setSlicerXn()));
     connect(_yn, SIGNAL(clicked()), this, SLOT(setSlicerYn()));
     connect(_zn, SIGNAL(clicked()), this, SLOT(setSlicerZn()));
-    //connect(_slicerMask, SIGNAL(toggled(bool)), this, SLOT(setSlicerMask(bool)));
-    //connect(_slicerPos, SIGNAL(valueChanged(float)), this, SLOT(slicerPosChanged(float)));
 
     QVBoxLayout *sliceLayout = new QVBoxLayout();
     QHBoxLayout *sliceLayout1 = new QHBoxLayout();
@@ -183,7 +167,6 @@ RenderEffectPanel::RenderEffectPanel(MainUI *mainUI, QWidget *parent)
 
     addTab(_sliceTab, tr("Slice"));
 
-
     // Time tab
     _timeTab = new QWidget(this);
     _timestep = new IntScalarEditor(tr("Timestep"), this);
@@ -203,8 +186,7 @@ RenderEffectPanel::RenderEffectPanel(MainUI *mainUI, QWidget *parent)
     addTab(_timeTab, tr("Time"));
 }
 
-void RenderEffectPanel::setVarNames()
-{
+void RenderEffectPanel::setVarNames() {
     qDebug("setVarNames(%s)", _mainUI->getParameter("varNames")->name().c_str());
     _component->blockSignals(true);
     _component->clear();
@@ -216,41 +198,16 @@ void RenderEffectPanel::setVarNames()
     _component->blockSignals(false);
 }
 
-/*void RenderEffectPanel::setSlicers(int slicerIdx, QList<float> slicerPos, QList<bool> slicerMask)
-{
-    _slicerList->clear();
-    //_slicerListPos.clear();
-    //_slicerListMask.clear();
-    _newSlicerId = 0;
-    for (int i = 0; i < slicerPos.size(); i++)
-    {
-        _slicerList->addItem(tr("Slicer%1").arg(_newSlicerId++));
-        //_slicerListPos.append(slicerPos[i]);
-        //_slicerListMask.append(slicerMask[i]);
-    }
-    if (_slicerList->count() == 0)
-        _setSliceEnabled(false);
-    else
-    {
-        _slicerList->setCurrentIndex(slicerIdx);
-        //_slicerPos->setValue(_slicerListPos[slicerIdx]);
-        //_slicerMask->setChecked(_slicerListMask[slicerIdx]);
-
-        _setSliceEnabled(true);
-    }
-}*/
-
-void RenderEffectPanel::setSlicers(int slicerCount, int slicerIdx)
-{
-    _slicerList->blockSignals(true);    ////
+void RenderEffectPanel::setSlicers(int slicerCount, int slicerIdx) {
+    _slicerList->blockSignals(true);
     _slicerList->clear();
     _newSlicerId = 0;
-    for (int i = 0; i < slicerCount; i++)
+    for (int i = 0; i < slicerCount; i++) {
         _slicerList->addItem(tr("Slicer%1").arg(_newSlicerId++));
-    if (_slicerList->count() == 0)
+    }
+    if (_slicerList->count() == 0) {
         _setSliceEnabled(false);
-    else
-    {
+    } else {
         qDebug("slicerIdx=%d", slicerIdx);
         _slicerList->setCurrentIndex(slicerIdx);
         _setSliceEnabled(true);
@@ -258,22 +215,19 @@ void RenderEffectPanel::setSlicers(int slicerCount, int slicerIdx)
     _slicerList->blockSignals(false);   ////
 }
 
-void RenderEffectPanel::_addScalarEditor(ScalarEditor *editor, QGridLayout *layout, int row, int column)
-{
+void RenderEffectPanel::_addScalarEditor(ScalarEditor *editor, QGridLayout *layout, int row, int column) {
     layout->addWidget(editor->label(), row, column);
     layout->addWidget(editor->slider(), row, column + 1);
     layout->addWidget(editor->spinBox(), row, column + 2);
 }
 
-void RenderEffectPanel::_addIntScalarEditor(IntScalarEditor *editor, QGridLayout *layout, int row, int column)
-{
+void RenderEffectPanel::_addIntScalarEditor(IntScalarEditor *editor, QGridLayout *layout, int row, int column) {
     layout->addWidget(editor->label(), row, column);
     layout->addWidget(editor->slider(), row, column + 1);
     layout->addWidget(editor->spinBox(), row, column + 2);
 }
 
-void RenderEffectPanel::_setSliceEnabled(bool enable)
-{
+void RenderEffectPanel::_setSliceEnabled(bool enable) {
     _delSlicer->setEnabled(enable);
     _slicerMask->setEnabled(enable);
     _xp->setEnabled(enable);
@@ -285,119 +239,69 @@ void RenderEffectPanel::_setSliceEnabled(bool enable)
     _slicerPos->setEnabled(enable);
 }
 
-/*void RenderEffectPanel::genPreIntTable()
-{
-    emit actionTriggered("genPreIntTable");
-}
-
-void RenderEffectPanel::genPreIntTable2()
-{
-    emit actionTriggered("genPreIntTable2");
-}*/
-
-void RenderEffectPanel::slicerIdxChanged(int idx)
-{
+void RenderEffectPanel::slicerIdxChanged(int idx) {
     //emit actionTriggered("slicerIdxChanged");
-
-    if (idx >= 0)
-    {
-        //_slicerPos->setValue(_slicerListPos[idx]);
-        //_slicerMask->setChecked(_slicerListMask[idx]);
-    }
 }
 
-void RenderEffectPanel::addSlicer()
-{
+void RenderEffectPanel::addSlicer() {
     emit actionTriggered("addSlicer");
-    //_slicerListPos.append(0.0f);
-    //_slicerListMask.append(true);
     _slicerList->addItem(tr("Slicer%1").arg(_newSlicerId++));
     _slicerList->setCurrentIndex(_slicerList->count() - 1);
     _setSliceEnabled(true);
 }
 
-void RenderEffectPanel::delSlicer()
-{
+void RenderEffectPanel::delSlicer() {
     int idx = _slicerList->currentIndex();
-    if (idx >= 0)
-    {
+    if (idx >= 0) {
         emit actionTriggered("delSlicer");
         _slicerList->removeItem(idx);
-        //_slicerListPos.removeAt(idx);
-        //_slicerListMask.removeAt(idx);
         idx = _slicerList->currentIndex();
-        if (idx >= 0)
-        {
+        if (idx >= 0) {
             //_slicerPos->setValue(_slicerListPos[idx]);
             //_slicerMask->setChecked(_slicerListMask[idx]);
-        }
-        else
-        {
+        } else {
             _setSliceEnabled(false);
         }
     }
 }
 
-void RenderEffectPanel::setSlicerXp()
-{
+void RenderEffectPanel::setSlicerXp() {
     emit actionTriggered("setSlicerXp");
 }
 
-void RenderEffectPanel::setSlicerYp()
-{
+void RenderEffectPanel::setSlicerYp() {
     emit actionTriggered("setSlicerYp");
 }
 
-void RenderEffectPanel::setSlicerZp()
-{
+void RenderEffectPanel::setSlicerZp() {
     emit actionTriggered("setSlicerZp");
 }
 
-void RenderEffectPanel::setSlicerXn()
-{
+void RenderEffectPanel::setSlicerXn() {
     emit actionTriggered("setSlicerXn");
 }
 
-void RenderEffectPanel::setSlicerYn()
-{
+void RenderEffectPanel::setSlicerYn() {
     emit actionTriggered("setSlicerYn");
 }
 
-void RenderEffectPanel::setSlicerZn()
-{
+void RenderEffectPanel::setSlicerZn() {
     emit actionTriggered("setSlicerZn");
 }
 
-/*void RenderEffectPanel::setSlicerMask(bool enable)
-{
-    if (_slicerList->currentIndex() >= 0)
-        _slicerListMask[_slicerList->currentIndex()] = enable;
-}
-
-void RenderEffectPanel::slicerPosChanged(float val)
-{
-    if (_slicerList->currentIndex() >= 0)
-        _slicerListPos[_slicerList->currentIndex()] = val;
-}*/
-
-void RenderEffectPanel::setTotalTimeSteps(int timesteps)
-{
-    if (_timestep != 0)
-    {
+void RenderEffectPanel::setTotalTimeSteps(int timesteps) {
+    if (_timestep != 0) {
         _timestep->setMinMax(1, timesteps);
         _timestep->setEnabled(timesteps > 1);
     }
-    if (_totalTimesteps != 0)
-    {
+    if (_totalTimesteps != 0) {
         _totalTimesteps->setText(QString("/%1").arg(timesteps));
         _totalTimesteps->setEnabled(timesteps > 1);
     }
 }
 
 GeneralToolBar::GeneralToolBar(const QString &title, MainUI *mainUI, QWidget *parent)
-    : QToolBar(title, parent),
-      _mainUI(mainUI)
-{
+    : QToolBar(title, parent), _mainUI(mainUI) {
     setIconSize(QSize(20, 20));
 
     _open = new QAction(tr("Open"), this);
@@ -421,7 +325,6 @@ GeneralToolBar::GeneralToolBar(const QString &title, MainUI *mainUI, QWidget *pa
     _mainUI->connectParameter("boundingBox", _boundingBox);
     _mainUI->connectParameter("lightEnabled", _lighting);
 
-
     addAction(_open);
     QAction *sepAct = new QAction(this);
     sepAct->setSeparator(true);
@@ -431,79 +334,60 @@ GeneralToolBar::GeneralToolBar(const QString &title, MainUI *mainUI, QWidget *pa
     addAction(_sideAxis);
     addAction(_boundingBox);
     addAction(_lighting);
-
 }
 
-MainUI::MainUI(const QString &workingPath)
-    : _workingPath(workingPath)
-{
+MainUI::MainUI(const QString &workingPath) : _workingPath(workingPath) {
     _renderEff = new RenderEffectPanel(this);
     connect(_renderEff, SIGNAL(actionTriggered(const QString &)), this, SIGNAL(actionTriggered(const QString &)));
-
     _generalToolBar = new GeneralToolBar(tr("General"), this);
-
     _tfEditor = new QTFEditor(1024);
 }
 
-MainUI::~MainUI()
-{
+MainUI::~MainUI() {
     qDebug("~MainUI()");
-
-    //delete _renderEff;        // don't need this
-    //delete _generalToolBar;   // don't need this
-
-    //delete _tfEditor;         // ???
 }
 
-void MainUI::setParameterSet(QParameterSet *ps)
-{
+void MainUI::setParameterSet(QParameterSet *ps) {
     _psc.unbind();
     _psc.bind(ps);
     _psc.update();
 }
 
-void MainUI::unsetParameterSet()
-{
+void MainUI::unsetParameterSet() {
     _psc.unbind();
 }
 
-void MainUI::connectParameter(const String &name, QAction *editor)
-{
+void MainUI::connectParameter(const String &name, QAction *editor) {
     _psc[name].setType(Parameter::BOOL_TYPE);
     connect(&_psc[name], SIGNAL(valueChanged(bool)), editor, SLOT(setChecked(bool)));
     connect(editor, SIGNAL(toggled(bool)), &_psc[name], SLOT(setValue(bool)));
 }
 
-void MainUI::connectParameter(const String &name, QCheckBox *editor)
-{
+void MainUI::connectParameter(const String &name, QCheckBox *editor) {
     _psc[name].setType(Parameter::BOOL_TYPE);
     QObject::connect(&_psc[name], SIGNAL(valueChanged(bool)), editor, SLOT(setChecked(bool)));
     QObject::connect(editor, SIGNAL(toggled(bool)), &_psc[name], SLOT(setValue(bool)));
 }
 
-void MainUI::connectParameter(const String &name, QComboBox *editor)
-{
+void MainUI::connectParameter(const String &name, QComboBox *editor) {
     _psc[name].setType(Parameter::INT_TYPE);
     QObject::connect(&_psc[name], SIGNAL(valueChanged(int)), editor, SLOT(setCurrentIndex(int)));
     QObject::connect(editor, SIGNAL(currentIndexChanged(int)), &_psc[name], SLOT(setValue(int)));
 }
 
-void MainUI::connectParameter(const String &name, ScalarEditor *editor)
-{
+void MainUI::connectParameter(const String &name, ScalarEditor *editor) {
     _psc[name].setType(Parameter::FLOAT_TYPE);
     QObject::connect(&_psc[name], SIGNAL(valueChanged(float)), editor, SLOT(setValue(float)));
     QObject::connect(editor, SIGNAL(valueChanged(float)), &_psc[name], SLOT(setValue(float)));
 }
 
-void MainUI::connectParameter(const String &name, IntScalarEditor *editor)
-{
+void MainUI::connectParameter(const String &name, IntScalarEditor *editor) {
     _psc[name].setType(Parameter::INT_TYPE);
     QObject::connect(&_psc[name], SIGNAL(valueChanged(int)), editor, SLOT(setValue(int)));
     QObject::connect(editor, SIGNAL(valueChanged(int)), &_psc[name], SLOT(setValue(int)));
 }
 
-void MainUI::connectParameter(const String &name, ButtonGroup *editor)
-{
+void MainUI::connectParameter(const String &name, ButtonGroup *editor) {
     _psc[name].setType(Parameter::INT_TYPE);
     QObject::connect(&_psc[name], SIGNAL(valueChanged(int)), editor, SLOT(toggle(int)));
     QObject::connect(editor, SIGNAL(buttonClicked(int)), &_psc[name], SLOT(setValue(int)));

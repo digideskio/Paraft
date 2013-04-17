@@ -14,16 +14,15 @@
 
 #include "MainInterface.h"
 
-class PluginInterface : public QObject
-{
+class PluginInterface : public QObject {
     Q_OBJECT
 
 public:
     virtual ~PluginInterface() {}
-    virtual void init() {}                                                          // implement this function to initialize the plugin
+    virtual void init() {}
     virtual void subWindowActivated(QWidget *widget) { Q_UNUSED(widget); }
-    virtual void subWindowClosed(QWidget *widget) { Q_UNUSED(widget); }             // implement this function to handle subWindowClosed event
-    virtual void keyPressEvent(QKeyEvent *event) { Q_UNUSED(event); }               ////// call mainInterface()->addKeyEventListener(this) first
+    virtual void subWindowClosed(QWidget *widget) { Q_UNUSED(widget); }
+    virtual void keyPressEvent(QKeyEvent *event) { Q_UNUSED(event); }
 
     QString getPluginName() const { return _pluginName; }
     QString getPluginVersion() const { return _pluginVersion; }

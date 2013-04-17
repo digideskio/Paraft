@@ -24,7 +24,7 @@ public:
     bool load(const VolumeMetadata &metadata);
     void unload();
     bool isLoaded() const { return (_data != nullptr); }
-    void remapping();
+    void remapping(float min, float max);
     void normalize(float min, float max);
     Vector2f getRange() const;  // x: min, y: max
 

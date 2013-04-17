@@ -1,6 +1,4 @@
 #include "VolumeModel.h"
-
-////
 #include <QtGui>
 
 VolumeModel::VolumeModel(const String &fileName) {

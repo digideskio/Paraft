@@ -2,21 +2,6 @@
 
 #define nullptr 0
 
-/*RayCastingRenderer::RayCastingRenderer()
-    : _dataTex(nullptr),
-      _tfTex(nullptr),
-      _shader(nullptr)
-{
-}*/
-
-/*RayCastingRenderer::RayCastingRenderer(QRenderWindow &renderWindow, QTFEditor &tfEditor, ParameterSet &ps, VolumeModel &model, const String &workingPath)
-    : _dataTex(nullptr),
-      _tfTex(nullptr),
-      _shader(nullptr)
-{
-    //init(renderWindow, tfEditor, ps, model, workingPath);
-}*/
-
 RayCastingRenderer::RayCastingRenderer(QRenderWindow &renderWindow,
                                        QTFEditor &tfEditor,
                                        ParameterSet &ps,
@@ -37,14 +22,10 @@ RayCastingRenderer::RayCastingRenderer(QRenderWindow &renderWindow,
                                        QTFEditor &tfEditor,
                                        ParameterSet &ps,
                                        VolumeModel &model)
-                                       //const String &vertShaderFileName,
-                                       //const String &fragShaderFileName)
     : _renderWindow(&renderWindow),
       _tfEditor(&tfEditor),
       _ps(&ps),
       _model(&model)
-      //_vertShaderFileName(vertShaderFileName),
-      //_fragShaderFileName(fragShaderFileName)
 {
 }
 

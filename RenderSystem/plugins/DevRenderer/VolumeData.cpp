@@ -127,25 +127,58 @@ bool RegularGridData::load(const VolumeMetadata &metadata) {
             return false;
     }
 
-//    remapping();
+    Vector2f range = metadata.rangeDefined() ? (Vector2f)metadata.range() : getRange();
 
-    Vector2f range;  // min, max
-    if (metadata.rangeDefined())
-        range = (Vector2f)metadata.range();
-    else
-        range = getRange();
-    normalize(range.x, range.y);
+    remapping(range.x, range.y);
 
     delete [] rawData;
 
     return true;
 }
 
-void RegularGridData::remapping() {
-    if (!isLoaded()) { return; }
-    size_t elemCount = _dim.x * _dim.y * _dim.z;
-    for (size_t i = 0; i < elemCount; i++) {
-        _data[i] = powf(_data[i], 0.1);
+bool compare(const std::pair<float, int> &lhs, const std::pair<float, int> &rhs) {
+    return lhs.second > rhs.second;  // descending order
+}
+
+void RegularGridData::remapping(float min, float max) {
+    if (!isLoaded()) {
+        return;
+    }
+
+    typedef std::map<float, int> HistMap;
+    typedef std::pair<float, int> HistPair;
+    typedef std::vector<HistPair> HistVector;
+
+    HistMap histMap;
+    int histLength = 1024;
+    int granularity = 20;
+    int binLength = histLength * granularity;
+
+    float range = max - min;
+    int elemCount = _dim.x * _dim.y * _dim.z;
+    int binIndex = 0;
+    for (int i = 0; i < elemCount; i++) {
+        _data[i] = (_data[i] - min) / range;  // normalize to [0,1]
+
+        binIndex = (int)(_data[i] * binLength);
+        if (histMap.find(binIndex) != histMap.end()) {
+            histMap[binIndex]++;
+        } else {
+            histMap[binIndex] = 1;
+        }
+    }
+
+    HistVector histVector(histMap.begin(), histMap.end());
+    std::sort(histVector.begin(), histVector.end(), &compare);
+
+    histMap.clear();
+    for (int i = 0; i < histLength; i++) {
+        histMap[histVector[i].first] = i;
+    }
+
+    for (int i = 0; i < elemCount; i++) {
+        binIndex = (int)(_data[i] * binLength);
+        _data[i] = (float)histMap[binIndex] / histLength;
     }
 }
 

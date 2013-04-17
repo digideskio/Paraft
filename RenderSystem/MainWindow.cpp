@@ -1,72 +1,45 @@
 #include "MainWindow.h"
 
-//#define PLUGINS_PATH "/plugins"
-
-//#ifdef Q_WS_MAC
-//#define PLUGINS_PATH (QDir::currentPath() + QString("/plugins"))
-//#else // Q_WS_WIN or other
 #define PLUGINS_PATH "./plugins"
-//#endif
-
-//#ifdef Q_WS_MAC
-//#define PLUGINS_LIST_FILE "plugins-mac.txt"
-//#else // Q_WS_WIN
 #define PLUGINS_LIST_FILE "plugins.txt"
-//#endif
-
-//qApp->applicationDirPath()
-
-//
-//MainWindow *MainWindow::mainWindow;
 
 PluginManager::PluginManager(MainWindow *mainWindow)
     : m_mainWindow(mainWindow),
-      m_pluginsPath(mainWindow->getPluginsPath())
-{
+      m_pluginsPath(mainWindow->getPluginsPath()) {
 }
 
-PluginManager::~PluginManager()
-{
+PluginManager::~PluginManager() {
     qDebug("~PluginManager()");
-    for (int i = 0; i < m_plugins.size(); i++)
-    {
+    for (int i = 0; i < m_plugins.size(); i++) {
         if (m_plugins[i].loaded)
             delete m_plugins[i].instance;
     }
 }
 
-bool PluginManager::loadPlugins()
-{
+bool PluginManager::loadPlugins() {
     bool dirty = false;
-    //QDir pluginsDir(m_pluginsDir);
-    for (int i = 0; i < m_plugins.size(); i++)
-    {
+    for (int i = 0; i < m_plugins.size(); i++) {
         Plugin &plugin = m_plugins[i];
         if (!plugin.enabled) continue;
-        //qDebug("Loading %s...", plugin->fileName.toAscii().constData());
         QPluginLoader pluginLoader(plugin.fileName);
         QObject *pluginInstance = pluginLoader.instance();
-        if (pluginInstance == NULL)
-        {
+        if (pluginInstance == NULL) {
             qDebug("Loading \"%s\" failed", plugin.fileName.toAscii().constData());
             continue;
         }
         plugin.instance = qobject_cast<PluginInterface *>(pluginInstance);
-        if (plugin.instance == NULL)
-        {
+        if (plugin.instance == NULL) {
             qDebug("Loading \"%s\" failed", plugin.fileName.toAscii().constData());
             continue;
         }
 
         plugin.instance->setMainInterface(m_mainWindow);
         plugin.instance->init();
-        if (plugin.name != plugin.instance->getPluginName())
-        {
+        if (plugin.name != plugin.instance->getPluginName()) {
             dirty = true;
             plugin.name = plugin.instance->getPluginName();
         }
-        if (plugin.version != plugin.instance->getPluginVersion())
-        {
+        if (plugin.version != plugin.instance->getPluginVersion()) {
             dirty = true;
             plugin.version = plugin.instance->getPluginVersion();
         }
@@ -74,8 +47,7 @@ bool PluginManager::loadPlugins()
 
         qDebug("Loading \"%s\" successful", plugin.fileName.toAscii().constData());
     }
-    if (dirty && !writeList())
-    {
+    if (dirty && !writeList()) {
         qDebug("Writing to plugins file failed.");
         return false;
     }
@@ -83,21 +55,18 @@ bool PluginManager::loadPlugins()
 }
 
 // read plugins list from "plugins.txt"
-bool PluginManager::readList(QString fileName)
-{
+bool PluginManager::readList(QString fileName) {
     if (fileName == "")
         fileName = QString(PLUGINS_LIST_FILE);
     QDir pluginsDir(m_pluginsPath);
     QFile file(pluginsDir.filePath(fileName));
-    if (!file.open(QIODevice::ReadOnly))
-    {
+    if (!file.open(QIODevice::ReadOnly)) {
         // no "plugins.txt", try every file in plugins directory
         foreach (QString fileName, pluginsDir.entryList(QDir::Files))
             m_plugins.append(Plugin(QString(""), QString(""), pluginsDir.filePath(fileName), true));
         return false;
     }
-    while (!file.atEnd())
-    {
+    while (!file.atEnd()) {
         QString line = file.readLine();
         if (line.contains(QRegExp("^\\s#"))) continue;  // comment
         QStringList list = line.split(",");
@@ -135,17 +104,6 @@ PluginInterface *PluginManager::getPlugin(const QString &name)
     }
     return 0;
 }
-
-
-/*void MdiSubWindow::focusInEvent(QFocusEvent *focusInEvent)
-{
-
-}
-
-void MdiSubWindow::focusOutEvent(QFocusEvent *focusOutEvent)
-{
-
-}*/
 
 void WindowAction::windowStateChanged(Qt::WindowStates oldState, Qt::WindowStates newState)
 {
