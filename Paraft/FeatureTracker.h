@@ -11,7 +11,7 @@ using namespace std;
 class FeatureTracker {
 
 public:
-    FeatureTracker(Vector3 size);
+    FeatureTracker(Vector3i size);
     ~FeatureTracker() ;
 
     void Reset();
@@ -83,19 +83,19 @@ private:
     list<DataPoint> surfacePoints;  // For edge points saving
     list<DataPoint> innerPoints;    // Hold the temp buffer of the voxel position
 
-    Vector3    centroid;       // center point of a single feature
-    Vector3    featureMin;    // min value of x,y,z of a single feature
-    Vector3    featureMax;    // max value of x,y,z of a single feature
-    Vector3    sumCoordinateValue;    // Sum of the voxel values of the feature
-    Vector3    delta;
+    Vector3i centroid;       // center point of a single feature
+    Vector3i featureMin;    // min value of x,y,z of a single feature
+    Vector3i featureMax;    // max value of x,y,z of a single feature
+    Vector3i sumCoordinateValue;    // Sum of the voxel values of the feature
+    Vector3i delta;
 
-    Vector3    sumBoundaryCoordinate[6];  // Sum of the voxel values on boundary surface
-    int         numVoxelonBoundary[6];
+    Vector3i sumBoundaryCoordinate[6];  // Sum of the voxel values on boundary surface
+    int numVoxelonBoundary[6];
 
     // 6 possible ghost area
-    Vector3    boundaryCentroid[6];// center point of the ghost area of a single feature
-    Vector3    boundaryMin[6];     // min value of (x,y)|(x,z)|(y,z) of the boundary surface
-    Vector3    boundaryMax[6];     // max value of (x,y)|(x,z)|(y,z) of the boundary surface
+    Vector3i boundaryCentroid[6];// center point of the ghost area of a single feature
+    Vector3i boundaryMin[6];     // min value of (x,y)|(x,z)|(y,z) of the boundary surface
+    Vector3i boundaryMax[6];     // max value of (x,y)|(x,z)|(y,z) of the boundary surface
     vector<int> touchedSurfaces;    // Which boundary the feature touches
 
     vector<Feature> currentFeaturesHolder; // Features info in current time step

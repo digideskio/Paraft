@@ -30,8 +30,8 @@ private:
     CSVWriter csv;
     Metadata meta;
 
-    Vector3 gridDim;     // #processes in each dimension (xyz)
-    Vector3 blockIdx;    // xyz coordinate of current processor
+    Vector3i gridDim;     // #processes in each dimension (xyz)
+    Vector3i blockIdx;    // xyz coordinate of current processor
 
     // for global graph
     int globalEdgeCount;

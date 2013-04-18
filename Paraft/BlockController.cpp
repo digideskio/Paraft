@@ -13,7 +13,7 @@ BlockController::~BlockController() {
     pFeatureTracker->~FeatureTracker();
 }
 
-void BlockController::InitParameters(Vector3 gridDim, Vector3 blockIdx, Metadata meta) {
+void BlockController::InitParameters(Vector3i gridDim, Vector3i blockIdx, Metadata meta) {
     initAdjacentBlocks(gridDim, blockIdx);
 
     pDataManager = new DataManager();
@@ -28,7 +28,7 @@ void BlockController::InitParameters(Vector3 gridDim, Vector3 blockIdx, Metadata
     pFeatureTracker->SetVolumeDataPointer(pDataManager->GetDataPointer(t));
 }
 
-void BlockController::TrackForward(Vector3 gridDim, Vector3 blockIdx, Metadata meta) {
+void BlockController::TrackForward(Vector3i gridDim, Vector3i blockIdx, Metadata meta) {
     pDataManager->PreloadDataSequence(gridDim, blockIdx, meta, t);
     pFeatureTracker->TrackFeature(pDataManager->GetDataPointer(t),
                                   LOW_THRESHOLD, HIGH_THRESHOLD,
@@ -58,7 +58,7 @@ void BlockController::ExtractAllFeatures() {
     pFeatureTracker->SaveExtractedFeatures(t);
 }
 
-void BlockController::initAdjacentBlocks(Vector3 gridDim, Vector3 blockIdx) {
+void BlockController::initAdjacentBlocks(Vector3i gridDim, Vector3i blockIdx) {
     int px = gridDim.x,   py = gridDim.y,   pz = gridDim.z;
     int x = blockIdx.x,   y = blockIdx.y,   z = blockIdx.z;
 
@@ -81,7 +81,7 @@ vector<int> BlockController::GetAdjacentBlocks() {
 }
 
 // todo: do we need blockID if blockIdx is given?
-void BlockController::UpdateLocalGraph(int blockID, Vector3 blockIdx) {
+void BlockController::UpdateLocalGraph(int blockID, Vector3i blockIdx) {
     localGraph.clear();
 
     vector<Feature> *pCurrentFeatures;
@@ -101,7 +101,7 @@ void BlockController::UpdateLocalGraph(int blockID, Vector3 blockIdx) {
                 continue;
             }
 
-            Vector3 centroid = feature.BoundaryCentroid[surface];
+            Vector3i centroid = feature.BoundaryCentroid[surface];
 
             Edge edge;
             edge.id         = feature.ID;

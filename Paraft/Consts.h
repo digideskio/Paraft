@@ -39,7 +39,7 @@ template<class T>
 class Range {
     T _begin, _end;
 public:
-    Range(T begin, T end) : _begin(begin), _end(end) { }
+    Range(T begin = 0, T end = 0) : _begin(begin), _end(end) { }
     T Begin() const { return _begin; }
     T End() const { return _end; }
     void SetRange(T begin, T end) { _begin = begin; _end = end; }
@@ -48,21 +48,18 @@ public:
 
 template<class T>
 class Vector3 {
-    T _x, _y, _z;
 public:
-    Vector3(T x = 0, T y = 0, T z = 0) : _x(x), _y(y), _z(z) { }
-    T X() { return _x; }
-    T Y() { return _y; }
-    T Z() { return _z; }
-    int* GetPointer() { return &_x; }
-    int Product() { return _x * _y * _z; }
+    T x, y, z;
+    Vector3(T x_ = 0, T y_ = 0, T z_ = 0) : x(x_), y(y_), z(z_) { }
+    int* GetPointer() { return &x; }
+    int Product() { return x * y * z; }
     float DistanceFrom(Vector3 const& rhs) const {
         Vector3 lhs(*this);
-        return sqrt((lhs.X() - rhs.X()) * (lhs.X() - rhs.X()) +
-                    (lhs.Y() - rhs.Y()) * (lhs.Y() - rhs.Y()) +
-                    (lhs.Z() - rhs.Z()) * (lhs.Z() - rhs.Z()));
+        return sqrt((lhs.x - rhs.x) * (lhs.x - rhs.x) +
+                    (lhs.y - rhs.y) * (lhs.y - rhs.y) +
+                    (lhs.z - rhs.z) * (lhs.z - rhs.z));
     }
-    Vector3 operator-() { return Vector3(-_x, -_y, -_z); }
+    Vector3 operator-() { return Vector3(-x, -y, -z); }
     Vector3 operator+(Vector3 const& rhs) const { Vector3 t(*this); t+=rhs; return t; }
     Vector3 operator-(Vector3 const& rhs) const { Vector3 t(*this); t-=rhs; return t; }
     Vector3 operator*(Vector3 const& rhs) const { Vector3 t(*this); t*=rhs; return t; }
@@ -75,52 +72,9 @@ public:
     Vector3& operator/=(Vector3 const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
     Vector3& operator*=(int scale) { x*=scale, y*=scale, z*=scale; return *this; }
     Vector3& operator/=(int scale) { x/=scale, y/=scale, z/=scale; return *this; }
-}; typedef Vector3 DataPoint;
-
-//class Vector3i {
-//public:
-//    int x, y, z;
-//    int *toArray() { return &x; }
-//    int volume() { return x*y*z; }
-//    float distanceFrom(Vector3i const& r) const { Vector3i l(*this);
-//        return sqrt((l.x-r.x)*(l.x-r.x)+(l.y-r.y)*(l.y-r.y)+(l.z-r.z)*(l.z-r.z));
-//    }
-//    Vector3i(int x_ = 0, int y_ = 0, int z_ = 0) : x(x_), y(y_), z(z_) {}
-//    Vector3i operator-() { return Vector3i(-x, -y, -z); }
-//    Vector3i operator+(Vector3i const& rhs) const { Vector3i t(*this); t+=rhs; return t; }
-//    Vector3i operator-(Vector3i const& rhs) const { Vector3i t(*this); t-=rhs; return t; }
-//    Vector3i operator*(Vector3i const& rhs) const { Vector3i t(*this); t*=rhs; return t; }
-//    Vector3i operator/(Vector3i const& rhs) const { Vector3i t(*this); t/=rhs; return t; }
-//    Vector3i operator*(int scale) const { Vector3i t(*this); t*=scale; return t; }
-//    Vector3i operator/(int scale) const { Vector3i t(*this); t/=scale; return t; }
-//    Vector3i& operator+=(Vector3i const& rhs) { x+=rhs.x, y+=rhs.y, z+=rhs.z; return *this; }
-//    Vector3i& operator-=(Vector3i const& rhs) { x-=rhs.x, y-=rhs.y, z-=rhs.z; return *this; }
-//    Vector3i& operator*=(Vector3i const& rhs) { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
-//    Vector3i& operator/=(Vector3i const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
-//    Vector3i& operator*=(int scale) { x*=scale, y*=scale, z*=scale; return *this; }
-//    Vector3i& operator/=(int scale) { x/=scale, y/=scale, z/=scale; return *this; }
-//}; typedef Vector3i DataPoint;
-
-//class Vector3f {
-//public:
-//    float x, y, z;
-//    float *toArray() { return &x; }
-//    float volume() { return x*y*z; }
-//    Vector3f(float x_ = .0f, float y_ = .0f, float z_ = .0f) : x(x_), y(y_), z(z_) {}
-//    Vector3f operator-() { return Vector3f(-x, -y, -z); }
-//    Vector3f operator+(Vector3f const& rhs) const { Vector3f t(*this); t+=rhs; return t; }
-//    Vector3f operator-(Vector3f const& rhs) const { Vector3f t(*this); t-=rhs; return t; }
-//    Vector3f operator*(Vector3f const& rhs) const { Vector3f t(*this); t*=rhs; return t; }
-//    Vector3f operator/(Vector3f const& rhs) const { Vector3f t(*this); t/=rhs; return t; }
-//    Vector3f operator*(float scale) const { Vector3f t(*this); t*=scale; return t; }
-//    Vector3f operator/(float scale) const { Vector3f t(*this); t/=scale; return t; }
-//    Vector3f& operator+=(Vector3f const& rhs) { x+=rhs.x, y+=rhs.y, z+=rhs.z; return *this; }
-//    Vector3f& operator-=(Vector3f const& rhs) { x-=rhs.x, y-=rhs.y, z-=rhs.z; return *this; }
-//    Vector3f& operator*=(Vector3f const& rhs) { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
-//    Vector3f& operator/=(Vector3f const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
-//    Vector3f& operator*=(float scale) { x*=scale, y*=scale, z*=scale; return *this; }
-//    Vector3f& operator/=(float scale) { x/=scale, y/=scale, z/=scale; return *this; }
-//};
+};
+typedef Vector3<int> Vector3i, DataPoint;
+typedef Vector3<float> Vector3f;
 
 class Edge {
 public:
@@ -136,13 +90,13 @@ public:
 };    // start ---id---> end @ centroid
 
 struct Metadata {
-    Range   timeRange;
-    Range   valueRange;
-    string  prefix;
-    string  surfix;
-    string  path;
-    string  tf;
-    Vector3 volumeDim;
+    Range<int>      timeRange;
+    Range<float>    valueRange;
+    string          prefix;
+    string          surfix;
+    string          path;
+    string          tf;
+    Vector3i        volumeDim;
 };
 
 struct Feature {
@@ -151,17 +105,17 @@ struct Feature {
     list<DataPoint> SurfacePoints;  // Edge information of the feature
     list<DataPoint> InnerPoints;    // All the voxels in the feature
     list<float>     Uncertainty;    // Uncertainty measure of each edge points
-    Vector3        Centroid;       // Centers position of the feature
-    Vector3        Min;            // Minimum position (x,y,z) on boundary
-    Vector3        Max;            // Maximum position (x,y,z) on boundary
-    Vector3        BoundaryCentroid[6];   // center point on boundary surface
-    Vector3        BoundaryMin[6];    // min value on boundary surface
-    Vector3        BoundaryMax[6];    // max value on boundary surface
+    Vector3i        Centroid;       // Centers position of the feature
+    Vector3i        Min;            // Minimum position (x,y,z) on boundary
+    Vector3i        Max;            // Maximum position (x,y,z) on boundary
+    Vector3i        BoundaryCentroid[6];   // center point on boundary surface
+    Vector3i        BoundaryMin[6];    // min value on boundary surface
+    Vector3i        BoundaryMax[6];    // max value on boundary surface
     vector<int>     TouchedSurfaces;
 };
 
 typedef struct {
-    Vector3    gridDim;
+    Vector3i    gridDim;
     int         num_proc;
     int         num_feature;
     double      t1;
@@ -176,7 +130,7 @@ typedef hash_map<int, float> IndexValueMap;
 typedef hash_map<int, vector<int> > FeatureTable;
 typedef hash_map<int, float*> DataSequence;
 typedef hash_map<int, vector<Feature> > FeatureVectorSequence;
-typedef vector<Range> RangeVector;
+//typedef vector<Range> RangeVector;
 typedef unsigned int uint;
 
 template <class T>

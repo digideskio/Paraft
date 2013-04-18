@@ -1,5 +1,4 @@
-TEMPLATE = subdirs
-TARGET = ./Paraft
+TEMPLATE = app
 
 #### MPI ################
 QMAKE_CC = /usr/local/bin/mpicc

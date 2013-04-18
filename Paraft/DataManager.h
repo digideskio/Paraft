@@ -14,15 +14,15 @@ public:
     float* GetTFOpacityMap() { return pTFOpacityMap; }
     int GetTFResolution() { return tfResolution; }
 
-    Vector3 GetVolumeDimension() { return blockDim; }
+    Vector3i GetVolumeDimension() { return blockDim; }
 
     void CreateNewMaskVolume();
     void InitTFSettings(string filename);
-    void PreloadDataSequence(Vector3 gridDim, Vector3 blockIdx, Metadata metadata, int timestep);
+    void PreloadDataSequence(Vector3i gridDim, Vector3i blockIdx, Metadata metadata, int timestep);
 
 private:
     DataSequence dataSequence;
-    Vector3 blockDim;
+    Vector3i blockDim;
 
     int volumeSize;
     int tfResolution;

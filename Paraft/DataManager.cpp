@@ -45,10 +45,10 @@ void DataManager::InitTFSettings(string filename) {
     }
 }
 
-void DataManager::PreloadDataSequence(Vector3 gridDim, Vector3 blockIdx,
+void DataManager::PreloadDataSequence(Vector3i gridDim, Vector3i blockIdx,
                                       Metadata metadata, int timestep) {
     blockDim = metadata.volumeDim / gridDim;
-    volumeSize = blockDim.volume();
+    volumeSize = blockDim.Product();
 
     // delete if exsiting data is not within 2-neighbor of current timestep
     DataSequence::iterator it;
@@ -73,17 +73,16 @@ void DataManager::PreloadDataSequence(Vector3 gridDim, Vector3 blockIdx,
         string filePath;
         char timestep[21]; // hold up to 64-bits
         sprintf(timestep, "%08d", t);
-        filePath = metadata.path+metadata.prefix+timestep+metadata.surfix;
-//        filePath = metadata.path+"/"+metadata.prefix+timestep+"."+metadata.surfix;
+        filePath = metadata.path+"/"+metadata.prefix+timestep+"."+metadata.surfix;
 
         char *filename = new char[filePath.size() + 1];
         std::copy(filePath.begin(), filePath.end(), filename);
         filename[filePath.size()] = '\0';
 
         // 3. read corresponding file using mpi collective io
-        int *gsizes = (blockDim * gridDim).toArray();
-        int *subsizes = blockDim.toArray();
-        int *starts = (blockDim * blockIdx).toArray();
+        int *gsizes = (blockDim * gridDim).GetPointer();
+        int *subsizes = blockDim.GetPointer();
+        int *starts = (blockDim * blockIdx).GetPointer();
 
 //        cout << "+++++++++++++++++++++++" << endl;
 
@@ -126,7 +125,8 @@ void DataManager::PreloadDataSequence(Vector3 gridDim, Vector3 blockIdx,
                                       MPI_INFO_NULL, &file);
         if (not_exist) printf("%s not exist.\n", filename);
 
-        MPI_File_set_view(file, 0, MPI_FLOAT, filetype, "native", MPI_INFO_NULL);
+        char* native = "native";
+        MPI_File_set_view(file, 0, MPI_FLOAT, filetype, native, MPI_INFO_NULL);
         MPI_File_read_all(file, dataSequence[t], volumeSize, MPI_FLOAT, MPI_STATUS_IGNORE);
 
         normalizeData(dataSequence[t], metadata);

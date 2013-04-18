@@ -16,19 +16,19 @@ void MpiController::InitWith(int argc, char **argv) {
     MPI_Type_contiguous(sizeof(Edge), MPI_BYTE, &MPI_TYPE_EDGE);
     MPI_Type_commit(&MPI_TYPE_EDGE);
 
-    gridDim = Vector3(atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
+    gridDim = Vector3i(atoi(argv[1]), atoi(argv[2]), atoi(argv[3]));
 
     blockIdx.z = myRank / (gridDim.x * gridDim.y);
     blockIdx.y = (myRank - blockIdx.z * gridDim.x * gridDim.y) / gridDim.x;
     blockIdx.x = myRank % gridDim.x;
 
-    meta.timeRange  = Range(100, 110);
-    meta.valueRange = Range(0.0f, 3.01309f);
-    meta.prefix   = "vort_";
-    meta.surfix   = "raw";
-    meta.path     = "/Users/Yang/Develop/Data/yubo_new/vorts";
-    meta.tf       = "config.tfe";
-    meta.volumeDim  = Vector3(256, 256, 256);
+    meta.timeRange  = Range<int>(100, 110);
+    meta.valueRange = Range<float>(0.0f, 3.01309f);
+    meta.prefix     = "vort_";
+    meta.surfix     = "raw";
+    meta.path       = "/Users/Yang/Develop/Data/yubo_new/vorts";
+    meta.tf         = "config.tfe";
+    meta.volumeDim  = Vector3i(256, 256, 256);
 
     csv.gridDim = gridDim;
     csv.num_proc = numProc;
@@ -255,7 +255,7 @@ void MpiController::mergeCorrespondentEdges(vector<Edge> edges) {
             // sync the id of feature if two matches
             if (ei.start == ej.end && ei.end == ej.start &&  // 0->1 | 1->0
                 (ei.start == myRank || ei.end == myRank) &&
-                ei.centroid.distanceFrom(ej.centroid) <= DIST_THRESHOLD) {
+                ei.centroid.DistanceFrom(ej.centroid) <= DIST_THRESHOLD) {
                 if (ei.id < ej.id) {    // use the smaller id
                     edges[j].id = ei.id;
                 } else {

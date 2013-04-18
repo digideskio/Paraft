@@ -1,10 +1,10 @@
 #include "FeatureTracker.h"
 
-FeatureTracker::FeatureTracker(Vector3 size) : xs(size.x), ys(size.y), zs(size.z) {
+FeatureTracker::FeatureTracker(Vector3i size) : xs(size.x), ys(size.y), zs(size.z) {
     maskValue = 0.0f;
     tfResolution = 0;
     pTFOpacityMap = NULL;
-    volumeSize = size.volume();
+    volumeSize = size.Product();
 
     pMaskVolumeCurrent = new float[volumeSize];
     pMaskVolumePrevious = new float[volumeSize];

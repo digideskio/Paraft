@@ -11,10 +11,10 @@ public:
     BlockController();
     ~BlockController();
 
-    void InitParameters(Vector3 gridDim, Vector3 blockIdx, Metadata meta);
-    void TrackForward(Vector3 gridDim, Vector3 blockIdx, Metadata meta);
+    void InitParameters(Vector3i gridDim, Vector3i blockIdx, Metadata meta);
+    void TrackForward(Vector3i gridDim, Vector3i blockIdx, Metadata meta);
     void ExtractAllFeatures();
-    void UpdateLocalGraph(int blockID, Vector3 blockIdx);
+    void UpdateLocalGraph(int blockID, Vector3i blockIdx);
     void SetCurrentTimestep(int timestep) { t = timestep; }
 
     // Feature Connectivity Graph
@@ -28,10 +28,10 @@ private:
 
     IntMap          adjacentBlocks;
     vector<Edge>    localGraph;
-    Vector3         blockDim;
+    Vector3i        blockDim;
     int             t;  // current timestep
 
-    void initAdjacentBlocks(Vector3 gridDim, Vector3 blockCoord);
+    void initAdjacentBlocks(Vector3i gridDim, Vector3i blockIdx);
 };
 
 #endif // DATABLOCKCONTROLLER_H
