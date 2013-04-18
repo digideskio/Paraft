@@ -2,41 +2,6 @@
 *.csv
 *.xlsx
 *.pptx
-ipdps/src/figure1.sketch/Data
-ipdps/src/figure1.sketch/QuickLook/Preview.png
-ipdps/src/figure1.sketch/QuickLook/Thumbnail.png
-ipdps/src/figure1.sketch/version
-ipdps/src/figureN copy.sketch/Data
-ipdps/src/figureN copy.sketch/QuickLook/Preview.png
-ipdps/src/figureN copy.sketch/QuickLook/Thumbnail.png
-ipdps/src/figureN copy.sketch/version
-ipdps/src/figureN.sketch/Data
-ipdps/src/figureN.sketch/QuickLook/Preview.png
-ipdps/src/figureN.sketch/QuickLook/Thumbnail.png
-ipdps/src/figureN.sketch/version
-ipdps/src/grid1d.sketch/Data
-ipdps/src/grid1d.sketch/QuickLook/Preview.png
-ipdps/src/grid1d.sketch/QuickLook/Thumbnail.png
-ipdps/src/grid1d.sketch/version
-ipdps/src/grid2d.sketch/Data
-ipdps/src/grid2d.sketch/QuickLook/Preview.png
-ipdps/src/grid2d.sketch/QuickLook/Thumbnail.png
-ipdps/src/grid2d.sketch/version
-Paraft
-Paraft.pro.user
-config1.tfe
-config2.tfe
-Paraft.pro
-Makefile
-ipdps/ipdps_2013.aux
-ipdps/ipdps_2013.fdb_latexmk
-ipdps/ipdps_2013.fls
-ipdps/ipdps_2013.log
-ipdps/ipdps_2013.synctex.gz
-Makefile
-Paraft.pro
-ipdps/images/temp.png
-ipdps/ipdps_2013.blg
 *.dylib
 *moc*
 *.app*
