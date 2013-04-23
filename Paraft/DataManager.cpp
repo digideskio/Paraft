@@ -45,14 +45,25 @@ void DataManager::InitTFSettings(string filename) {
     }
 }
 
-void DataManager::PreloadDataSequence(Vector3i gridDim, Vector3i blockIdx,
-                                      Metadata metadata, int timestep) {
-    blockDim = metadata.volumeDim / gridDim;
+// load data by given volume data pointers, for in-situ mode
+void DataManager::InSituLoadDataSequence(int timestep, float *pData) {
+    // delete if data is not within [t-2, t+2] of current timestep t
+    for (DataSequence::iterator it = dataSequence.begin(); it != dataSequence.end(); it++) {
+        if (it->first < timestep-2 || it->first > timestep+2) {
+            delete [] it->second;
+            dataSequence.erase(it);
+        }
+    }
+    dataSequence[timestep] = pData;
+}
+
+// collectively load volume data from disk, for batch mode
+void DataManager::CollectiveLoadDataSequence(Vector3i gridDim, Vector3i blockIdx, Metadata meta, int timestep) {
+    blockDim = meta.volumeDim / gridDim;
     volumeSize = blockDim.Product();
 
-    // delete if exsiting data is not within 2-neighbor of current timestep
-    DataSequence::iterator it;
-    for (it = dataSequence.begin(); it != dataSequence.end(); it++) {
+    // delete if data is not within [t-2, t+2] of current timestep t
+    for (DataSequence::iterator it = dataSequence.begin(); it != dataSequence.end(); it++) {
         if (it->first < timestep-2 || it->first > timestep+2) {
             delete [] it->second;
             dataSequence.erase(it);
@@ -60,7 +71,7 @@ void DataManager::PreloadDataSequence(Vector3i gridDim, Vector3i blockIdx,
     }
 
     for (int t = timestep-2; t <= timestep+3; t++) {
-        if (t < metadata.timeRange.Begin() || t > metadata.timeRange.End()) {
+        if (t < meta.timeRange.Begin() || t > meta.timeRange.End()) {
             continue;  // only [t-2, t-1, t, t+1, t+2]
         }
 
@@ -71,9 +82,9 @@ void DataManager::PreloadDataSequence(Vector3i gridDim, Vector3i blockIdx,
 
         // 2. get file name from time index
         string filePath;
-        char timestep[21]; // hold up to 64-bits
-        sprintf(timestep, "%08d", t);
-        filePath = metadata.path+"/"+metadata.prefix+timestep+"."+metadata.surfix;
+        char timestep[21];  // hold up to 64-bits
+        sprintf(timestep, "%03d", t);
+        filePath = meta.path+"/"+meta.prefix+timestep+"."+meta.surfix;
 
         char *filename = new char[filePath.size() + 1];
         std::copy(filePath.begin(), filePath.end(), filename);
@@ -84,65 +95,69 @@ void DataManager::PreloadDataSequence(Vector3i gridDim, Vector3i blockIdx,
         int *subsizes = blockDim.GetPointer();
         int *starts = (blockDim * blockIdx).GetPointer();
 
-//        cout << "+++++++++++++++++++++++" << endl;
-
-//        cout << "blockSize: " << blockSize.x << "," << blockSize.y << "," << blockSize.z << endl;
-//        cout << "partition: " << partition.x << "," << partition.y << "," << partition.z << endl;
-//        cout << "blockCoord: " << blockCoord.x << "," << blockCoord.y << "," << blockCoord.z << endl;
-
-//        cout << "gsizes: " << gsizes[0] << "," << gsizes[1] << "," << gsizes[2] << endl;
-//        cout << "subsizes: " << subsizes[0] << "," << subsizes[1] << "," << subsizes[2] << endl;
-//        cout << "starts: " << starts[0] << "," << starts[1] << "," << starts[2] << endl;
-
-//        int gsizes[3];
-//        int subsizes[3];
-//        int starts[3];
-
-        gsizes[0]   = blockDim.x * gridDim.x;
-        subsizes[0] = blockDim.x;
-        starts[0]   = blockDim.x * blockIdx.x;
-
-        gsizes[1]   = blockDim.y * gridDim.y;
-        subsizes[1] = blockDim.y;
-        starts[1]   = blockDim.y * blockIdx.y;
-
-        gsizes[2]   = blockDim.z * gridDim.z;
-        subsizes[2] = blockDim.z;
-        starts[2]   = blockDim.z * blockIdx.z;
-
-//        cout << "----------------------" << endl;
-//        cout << "gsizes: " << gsizes[0] << "," << gsizes[1] << "," << gsizes[2] << endl;
-//        cout << "subsizes: " << subsizes[0] << "," << subsizes[1] << "," << subsizes[2] << endl;
-//        cout << "starts: " << starts[0] << "," << starts[1] << "," << starts[2] << endl;
-
         MPI_Datatype filetype;
-        MPI_Type_create_subarray(3, gsizes, subsizes, starts, MPI_ORDER_FORTRAN,
-                                 MPI_FLOAT, &filetype);
+        MPI_Type_create_subarray(3, gsizes, subsizes, starts, MPI_ORDER_FORTRAN, MPI_FLOAT, &filetype);
         MPI_Type_commit(&filetype);
 
         MPI_File file;
-        int not_exist = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY,
-                                      MPI_INFO_NULL, &file);
+        int not_exist = MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &file);
         if (not_exist) printf("%s not exist.\n", filename);
 
         char* native = "native";
         MPI_File_set_view(file, 0, MPI_FLOAT, filetype, native, MPI_INFO_NULL);
         MPI_File_read_all(file, dataSequence[t], volumeSize, MPI_FLOAT, MPI_STATUS_IGNORE);
 
-        normalizeData(dataSequence[t], metadata);
+        cout << "t: " << t << "\t";
+        equalizeData(dataSequence[t]);
 
         MPI_File_close(&file);
         MPI_Type_free(&filetype);
         delete[] filename;
-
     }
 }
 
-void DataManager::normalizeData(float *pData, Metadata meta) {
-    float range = meta.valueRange.End() - meta.valueRange.Begin();
+bool compare(const std::pair<float, int> &lhs, const std::pair<float, int> &rhs) {
+    return lhs.second > rhs.second;  // descending order
+}
+
+void DataManager::equalizeData(float *pData) {
+    std::map<float, int> histMap;
+    int granularity = 10;
+    int binLength = tfResolution * granularity;
+
+    float min = pData[0], max = pData[0];
+    for (int i = 1; i < volumeSize; i++) {
+        min = min < pData[i] ? min : pData[i];
+        max = max > pData[i] ? max : pData[i];
+    }
+
+    MPI_Allreduce(&min, &min, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+    MPI_Allreduce(&max, &max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+//    std::cout << "g: min: " << min << " max: " << max << endl;
+
+    float range = max - min;
+    int binIndex = 0;
+
     for (int i = 0; i < volumeSize; i++) {
-        if (IS_BIG_ENDIAN) ReverseEndian(&pData[i]);
-        pData[i] -= meta.valueRange.Begin();
-        pData[i] /= range;
+//        if (IS_BIG_ENDIAN) ReverseEndian(&pData[i]);
+        pData[i] = (pData[i] - min) / range;
+        binIndex = (int)(pData[i] * binLength);
+        if (histMap.find(binIndex) != histMap.end()) {
+            histMap[binIndex]++;
+        } else {
+            histMap[binIndex] = 1;
+        }
+    }
+
+    vector<pair<float, int> > histVector(histMap.begin(), histMap.end());
+    std::sort(histVector.begin(), histVector.end(), &compare);
+
+    histMap.clear();
+    for (int i = 0; i < tfResolution; i++) {
+        histMap[histVector[i].first] = i;
+    }
+    for (int i = 0; i < volumeSize; i++) {
+        binIndex = (int)(pData[i] * binLength);
+        pData[i] = (float)histMap[binIndex] / tfResolution;
     }
 }

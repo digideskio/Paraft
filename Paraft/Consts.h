@@ -46,35 +46,33 @@ public:
     void PrintRange() { cout << "(" << _begin << "," << _end << endl; }
 };
 
-template<class T>
-class Vector3 {
-public:
-    T x, y, z;
-    Vector3(T x_ = 0, T y_ = 0, T z_ = 0) : x(x_), y(y_), z(z_) { }
-    int* GetPointer() { return &x; }
-    int Product() { return x * y * z; }
-    float DistanceFrom(Vector3 const& rhs) const {
-        Vector3 lhs(*this);
-        return sqrt((lhs.x - rhs.x) * (lhs.x - rhs.x) +
-                    (lhs.y - rhs.y) * (lhs.y - rhs.y) +
-                    (lhs.z - rhs.z) * (lhs.z - rhs.z));
-    }
-    Vector3 operator-() { return Vector3(-x, -y, -z); }
-    Vector3 operator+(Vector3 const& rhs) const { Vector3 t(*this); t+=rhs; return t; }
-    Vector3 operator-(Vector3 const& rhs) const { Vector3 t(*this); t-=rhs; return t; }
-    Vector3 operator*(Vector3 const& rhs) const { Vector3 t(*this); t*=rhs; return t; }
-    Vector3 operator/(Vector3 const& rhs) const { Vector3 t(*this); t/=rhs; return t; }
-    Vector3 operator*(int scale) const { Vector3 t(*this); t*=scale; return t; }
-    Vector3 operator/(int scale) const { Vector3 t(*this); t/=scale; return t; }
-    Vector3& operator+=(Vector3 const& rhs) { x+=rhs.x, y+=rhs.y, z+=rhs.z; return *this; }
-    Vector3& operator-=(Vector3 const& rhs) { x-=rhs.x, y-=rhs.y, z-=rhs.z; return *this; }
-    Vector3& operator*=(Vector3 const& rhs) { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
-    Vector3& operator/=(Vector3 const& rhs) { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
-    Vector3& operator*=(int scale) { x*=scale, y*=scale, z*=scale; return *this; }
-    Vector3& operator/=(int scale) { x/=scale, y/=scale, z/=scale; return *this; }
-};
-typedef Vector3<int> Vector3i, DataPoint;
-typedef Vector3<float> Vector3f;
+namespace util {
+    template<class T>
+    class Vector3 {
+    public:
+        T x, y, z;
+        Vector3(T x_ = 0, T y_ = 0, T z_ = 0) : x(x_), y(y_), z(z_) { }
+        int*     GetPointer()                           { return &x; }
+        int      Product()                              { return x * y * z; }
+        float    Magnitute()                            { return sqrt(x*x + y*y + z*z); }
+        float    DistanceFrom(Vector3 const& rhs) const { return (*this - rhs).Magnitute(); }
+        Vector3  operator -  ()                         { return Vector3(-x, -y, -z); }
+        Vector3  operator +  (Vector3 const& rhs) const { Vector3 t(*this); t+=rhs; return t; }
+        Vector3  operator -  (Vector3 const& rhs) const { Vector3 t(*this); t-=rhs; return t; }
+        Vector3  operator *  (Vector3 const& rhs) const { Vector3 t(*this); t*=rhs; return t; }
+        Vector3  operator /  (Vector3 const& rhs) const { Vector3 t(*this); t/=rhs; return t; }
+        Vector3  operator *  (int scale)          const { Vector3 t(*this); t*=scale; return t; }
+        Vector3  operator /  (int scale)          const { Vector3 t(*this); t/=scale; return t; }
+        Vector3& operator += (Vector3 const& rhs)       { x+=rhs.x, y+=rhs.y, z+=rhs.z; return *this; }
+        Vector3& operator -= (Vector3 const& rhs)       { x-=rhs.x, y-=rhs.y, z-=rhs.z; return *this; }
+        Vector3& operator *= (Vector3 const& rhs)       { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
+        Vector3& operator /= (Vector3 const& rhs)       { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
+        Vector3& operator *= (int scale)                { x*=scale, y*=scale, z*=scale; return *this; }
+        Vector3& operator /= (int scale)                { x/=scale, y/=scale, z/=scale; return *this; }
+    };
+}
+
+typedef util::Vector3<int> Vector3i, DataPoint;
 
 class Edge {
 public:
@@ -91,12 +89,12 @@ public:
 
 struct Metadata {
     Range<int>      timeRange;
-    Range<float>    valueRange;
     string          prefix;
     string          surfix;
     string          path;
     string          tf;
     Vector3i        volumeDim;
+    int             tsLength;
 };
 
 struct Feature {
@@ -116,22 +114,19 @@ struct Feature {
 
 typedef struct {
     Vector3i    gridDim;
-    int         num_proc;
-    int         num_feature;
+    int         numProc;
+    int         numFeature;
     double      t1;
     double      t2;
     double      t3;
     double      t4;
 } CSVWriter;
 
-typedef struct { float x; float y; } Vector2f;
 typedef hash_map<int, int> IntMap;
 typedef hash_map<int, float> IndexValueMap;
 typedef hash_map<int, vector<int> > FeatureTable;
 typedef hash_map<int, float*> DataSequence;
 typedef hash_map<int, vector<Feature> > FeatureVectorSequence;
-//typedef vector<Range> RangeVector;
-typedef unsigned int uint;
 
 template <class T>
 void ReverseEndian(T *pObject) {

@@ -17,7 +17,7 @@ void BlockController::InitParameters(Vector3i gridDim, Vector3i blockIdx, Metada
     initAdjacentBlocks(gridDim, blockIdx);
 
     pDataManager = new DataManager();
-    pDataManager->PreloadDataSequence(gridDim, blockIdx, meta, t);
+    pDataManager->CollectiveLoadDataSequence(gridDim, blockIdx, meta, t);
     pDataManager->CreateNewMaskVolume();
     pDataManager->InitTFSettings(meta.tf);
 
@@ -29,9 +29,8 @@ void BlockController::InitParameters(Vector3i gridDim, Vector3i blockIdx, Metada
 }
 
 void BlockController::TrackForward(Vector3i gridDim, Vector3i blockIdx, Metadata meta) {
-    pDataManager->PreloadDataSequence(gridDim, blockIdx, meta, t);
-    pFeatureTracker->TrackFeature(pDataManager->GetDataPointer(t),
-                                  LOW_THRESHOLD, HIGH_THRESHOLD,
+    pDataManager->CollectiveLoadDataSequence(gridDim, blockIdx, meta, t);
+    pFeatureTracker->TrackFeature(pDataManager->GetDataPointer(t), LOW_THRESHOLD, HIGH_THRESHOLD,
                                   TRACKING_FORWARD, TRACKING_MODE_DIRECT);
     ExtractAllFeatures();
 }
@@ -49,8 +48,7 @@ void BlockController::ExtractAllFeatures() {
                 int tfIndex = (int)(pVolume[index] * (float)(tfRes-1));
                 float opacity = pFeatureTracker->GetTFOpacityMap()[tfIndex];
                 if (opacity >= LOW_THRESHOLD && opacity <= HIGH_THRESHOLD) {
-                    pFeatureTracker->FindNewFeature(DataPoint(x,y,z), LOW_THRESHOLD,
-                                                    HIGH_THRESHOLD);
+                    pFeatureTracker->FindNewFeature(DataPoint(x,y,z), LOW_THRESHOLD, HIGH_THRESHOLD);
                 }
             }
         }
@@ -72,7 +70,7 @@ void BlockController::initAdjacentBlocks(Vector3i gridDim, Vector3i blockIdx) {
 
 vector<int> BlockController::GetAdjacentBlocks() {
     vector<int> indices;
-    for (uint i = 0; i < adjacentBlocks.size(); i++) {
+    for (size_t i = 0; i < adjacentBlocks.size(); i++) {
         if (adjacentBlocks[i] != -1) {
             indices.push_back(adjacentBlocks[i]);
         }
@@ -90,11 +88,11 @@ void BlockController::UpdateLocalGraph(int blockID, Vector3i blockIdx) {
         return;
     }
 
-    for (uint i = 0; i < pCurrentFeatures->size(); i++) {
+    for (size_t i = 0; i < pCurrentFeatures->size(); i++) {
         Feature feature = pCurrentFeatures->at(i);
         vector<int> touchedSurfaces = feature.TouchedSurfaces;
 
-        for (uint j = 0; j < touchedSurfaces.size(); j++) {
+        for (size_t j = 0; j < touchedSurfaces.size(); j++) {
             int surface = touchedSurfaces[j];
             int adjacentBlock = adjacentBlocks[surface];
             if (adjacentBlock == -1) {

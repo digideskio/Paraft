@@ -23,16 +23,16 @@ void MpiController::InitWith(int argc, char **argv) {
     blockIdx.x = myRank % gridDim.x;
 
     meta.timeRange  = Range<int>(100, 110);
-    meta.valueRange = Range<float>(0.0f, 3.01309f);
-    meta.prefix     = "vort_";
+    meta.prefix     = "i2vgt_";
     meta.surfix     = "raw";
-    meta.path       = "/Users/Yang/Develop/Data/yubo_new/vorts";
-    meta.tf         = "config.tfe";
-    meta.volumeDim  = Vector3i(256, 256, 256);
+    meta.path       = "/Users/Yang/Develop/ffv/sandbox/raw/i2vgt";
+    meta.tf         = "ffvc.tfe";
+    meta.volumeDim  = Vector3i(400, 200, 200);
+    meta.tsLength   = 8;
 
     csv.gridDim = gridDim;
-    csv.num_proc = numProc;
-    csv.num_feature = 0;
+    csv.numProc = numProc;
+    csv.numFeature = 0;
     csv.t1 = 0.0;
     csv.t2 = 0.0;
     csv.t3 = 0.0;
@@ -115,7 +115,7 @@ void MpiController::TrackForward() {
     csv.t3 /= (double)numProc;
     csv.t4 /= (double)numProc;
 
-    csv.num_feature = featureTable.size();
+    csv.numFeature = featureTable.size();
 
     char np[21];
     sprintf(np, "%d", numProc);
@@ -126,7 +126,7 @@ void MpiController::TrackForward() {
     ofstream outf(result.c_str(), ios::out | ios::app);
 
     if (myRank == 0) {
-        outf << csv.num_proc << "," << csv.num_feature << "," << t << ","
+        outf << csv.numProc << "," << csv.numFeature << "," << t << ","
              << csv.t1 << "," << csv.t2 << "," << csv.t3 << "," << csv.t4 << endl;
     }
 
@@ -148,8 +148,7 @@ void MpiController::syncFeatureGraph() {
     sort(adjacentBlocks.begin(), adjacentBlocks.end());
     sort(blocksNeedRecv.begin(), blocksNeedRecv.end());
 
-    set_intersection(adjacentBlocks.begin(), adjacentBlocks.end(),
-                     blocksNeedRecv.begin(), blocksNeedRecv.end(),
+    set_intersection(adjacentBlocks.begin(), adjacentBlocks.end(), blocksNeedRecv.begin(), blocksNeedRecv.end(),
                      back_inserter(adjacentBlocksNeedRecv));
 
     need_to_send = adjacentBlocksNeedRecv.size() > 0 ? true : false;
@@ -164,20 +163,20 @@ void MpiController::syncFeatureGraph() {
             // 1. recv count
             MPI_Irecv(&srcEdgeCount, 1, MPI_INT, src, 100, MPI_COMM_WORLD, &request);
             // 2. recv content
-            if (srcEdgeCount != 0) {
-                vector<Edge> srcEdges(srcEdgeCount);
-                MPI_Irecv(&srcEdges.front(), srcEdgeCount, MPI_TYPE_EDGE, src, 101, MPI_COMM_WORLD, &request);
+            if (srcEdgeCount == 0) continue;
 
-                for (int i = 0; i < srcEdgeCount; i++) {
-                    bool isNew = true;
-                    for (size_t j = 0; j < adjacentGraph.size(); j++) {
-                        if (srcEdges[i] == adjacentGraph[j]) {
-                            isNew = false; break;
-                        }
+            vector<Edge> srcEdges(srcEdgeCount);
+            MPI_Irecv(&srcEdges.front(), srcEdgeCount, MPI_TYPE_EDGE, src, 101, MPI_COMM_WORLD, &request);
+
+            for (int i = 0; i < srcEdgeCount; i++) {
+                bool isNew = true;
+                for (size_t j = 0; j < adjacentGraph.size(); j++) {
+                    if (srcEdges[i] == adjacentGraph[j]) {
+                        isNew = false; break;
                     }
-                    if (isNew) {
-                        adjacentGraph.push_back(srcEdges[i]);
-                    }
+                }
+                if (isNew) {
+                    adjacentGraph.push_back(srcEdges[i]);
                 }
             }
         }
@@ -223,8 +222,7 @@ void MpiController::gatherGlobalGraph() {
 
     vector<int> globalEdgeCountVector(numProc);
 
-    MPI_Allgather(&localEdgeCount, 1, MPI_INT,
-                  &globalEdgeCountVector.front(), 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Allgather(&localEdgeCount, 1, MPI_INT, &globalEdgeCountVector.front(), 1, MPI_INT, MPI_COMM_WORLD);
 
     globalEdgeCount = 0;
     for (size_t i = 0; i < globalEdgeCountVector.size(); i++) {
@@ -239,9 +237,8 @@ void MpiController::gatherGlobalGraph() {
         displs[i] = globalEdgeCountVector[i-1] + displs[i-1];
     }
 
-    MPI_Allgatherv(&localEdges.front(), localEdgeCount, MPI_TYPE_EDGE,
-                   &globalEdges.front(), &globalEdgeCountVector.front(),
-                   displs, MPI_TYPE_EDGE, MPI_COMM_WORLD);
+    MPI_Allgatherv(&localEdges.front(), localEdgeCount, MPI_TYPE_EDGE, &globalEdges.front(),
+                   &globalEdgeCountVector.front(), displs, MPI_TYPE_EDGE, MPI_COMM_WORLD);
 
     mergeCorrespondentEdges(globalEdges);
 }

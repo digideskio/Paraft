@@ -30,7 +30,7 @@ FeatureTracker::~FeatureTracker() {
         FeatureVectorSequence::iterator it;
         for (it = featureSequence.begin(); it != featureSequence.end(); it++) {
             vector<Feature> featureVector = it->second;
-            for (uint i = 0; i < featureVector.size(); i++) {
+            for (size_t i = 0; i < featureVector.size(); i++) {
                 featureVector.at(i).SurfacePoints.clear();
                 featureVector.at(i).InnerPoints.clear();
                 featureVector.at(i).Uncertainty.clear();
@@ -118,7 +118,7 @@ void FeatureTracker::FindNewFeature(DataPoint point, float lowerValue, float upp
     expandRegion(maskValue);
     /////////////////////////////////
 
-    if (innerPoints.size() < (uint)FEATURE_MIN_VOXEL_NUM) {
+    if (innerPoints.size() < (size_t)FEATURE_MIN_VOXEL_NUM) {
         maskValue -= 1.0f;
         return;
     }
@@ -159,7 +159,7 @@ void FeatureTracker::TrackFeature(float* pDataSet, float lowerValue,
     std::copy(pMaskVolumeCurrent, pMaskVolumeCurrent+volumeSize, pMaskVolumePrevious);
     std::fill(pMaskVolumeCurrent, pMaskVolumeCurrent+volumeSize, 0);
 
-    for (uint i = 0; i < currentFeaturesHolder.size(); i++) {
+    for (size_t i = 0; i < currentFeaturesHolder.size(); i++) {
         Feature f = currentFeaturesHolder[i];
 
         resetFeatureBoundaryInfo();
@@ -318,8 +318,7 @@ inline void FeatureTracker::shrinkRegion(float maskValue) {
         dataPointList.pop_front();
 
         index = GetPointIndex(point);
-        if (getOpacity(pVolumeData[index]) < lowerThreshold ||
-            getOpacity(pVolumeData[index]) > upperThreshold) { // invisible
+        if (getOpacity(pVolumeData[index]) < lowerThreshold || getOpacity(pVolumeData[index]) > upperThreshold) {
             isPointOnEdge = false;
             /////////////////////////////////////////////////////////////////////
             // if point is invisible, mark its adjacent points as 0            //
@@ -447,7 +446,7 @@ void FeatureTracker::updateBoundaryMinMax(DataPoint point, int surface) {
 
 void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
     currentFeaturesHolder.clear();
-    for (uint i = 0; i < pFeatures->size(); i++) {
+    for (size_t i = 0; i < pFeatures->size(); i++) {
         currentFeaturesHolder.push_back(pFeatures->at(i));
     }
 

@@ -1,14 +1,9 @@
-TEMPLATE = app
-
 #### MPI ################
-QMAKE_CC = /usr/local/bin/mpicc
-QMAKE_CXX = /usr/local/bin/mpic++
+QMAKE_CC     = /usr/local/bin/mpicc
+QMAKE_CXX    = /usr/local/bin/mpic++
 INCLUDEPATH += /usr/local/include
-LIBS += -L/usr/local/lib -lmpi_cxx -lmpi -lopen-rte -lopen-pal -lutil
+LIBS        += -L/usr/local/lib -lmpi_cxx -lmpi -lopen-rte -lopen-pal -lutil
 #########################
-
-CONFIG -= app_bundle
-CONFIG += mpi
 
 SOURCES += \
     Main.cpp \
