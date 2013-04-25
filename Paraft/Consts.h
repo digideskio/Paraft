@@ -13,7 +13,6 @@ const int FEATURE_MIN_VOXEL_NUM = 10;
 
 const float LOW_THRESHOLD  = 0.2;
 const float HIGH_THRESHOLD = 1.0;
-const float DIST_THRESHOLD = 4.0;
 
 const int TRACKING_MODE_DIRECT = 0;
 const int TRACKING_MODE_LINEAR = 1;
@@ -21,17 +20,6 @@ const int TRACKING_MODE_POLYNO = 2;
 
 const int TRACKING_FORWARD  = 0;
 const int TRACKING_BACKWARD = 1;
-
-// Surface
-const int SURFACE_NULL   = -1;  // default
-const int SURFACE_LEFT   = 0;   // x = 0
-const int SURFACE_RIGHT  = 1;   // x = xs
-const int SURFACE_BOTTOM = 2;   // y = 0
-const int SURFACE_TOP    = 3;   // y = ys
-const int SURFACE_FRONT  = 4;   // z = 0
-const int SURFACE_BACK   = 5;   // z = zs
-
-const bool IS_BIG_ENDIAN = false;
 
 using namespace std;
 
@@ -74,19 +62,6 @@ namespace util {
 
 typedef util::Vector3<int> Vector3i, DataPoint;
 
-class Edge {
-public:
-    int id, start, end;
-    Vector3i centroid;
-
-    bool operator ==(Edge const& rhs) const {
-        Edge lhs(*this);
-        if (lhs.id==rhs.id && lhs.start==rhs.start && lhs.end==rhs.end) {
-            return true;
-        } else return false;
-    }
-};    // start ---id---> end @ centroid
-
 struct Metadata {
     int             start;
     int             end;
@@ -102,14 +77,9 @@ struct Feature {
     float           MaskValue;      // Used to record the color of the feature
     list<DataPoint> SurfacePoints;  // Edge information of the feature
     list<DataPoint> InnerPoints;    // All the voxels in the feature
-    list<float>     Uncertainty;    // Uncertainty measure of each edge points
     Vector3i        Centroid;       // Centers position of the feature
     Vector3i        Min;            // Minimum position (x,y,z) on boundary
     Vector3i        Max;            // Maximum position (x,y,z) on boundary
-    Vector3i        BoundaryCentroid[6];   // center point on boundary surface
-    Vector3i        BoundaryMin[6];    // min value on boundary surface
-    Vector3i        BoundaryMax[6];    // max value on boundary surface
-    vector<int>     TouchedSurfaces;
 };
 
 typedef struct {
@@ -122,17 +92,8 @@ typedef struct {
     double      t4;
 } CSVWriter;
 
-typedef hash_map<int, int> IntMap;
 typedef hash_map<int, float> IndexValueMap;
-typedef hash_map<int, vector<int> > FeatureTable;
 typedef hash_map<int, float*> DataSequence;
 typedef hash_map<int, vector<Feature> > FeatureVectorSequence;
-typedef hash_map<float, int> Histogram;
-
-template <class T>
-void ReverseEndian(T *pObject) {
-    unsigned char *pChar = reinterpret_cast<unsigned char*>(pObject);
-    std::reverse(pChar, pChar + sizeof(T));
-}
 
 #endif // CONSTS_H

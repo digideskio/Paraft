@@ -1,28 +1,32 @@
-#include "MpiController.h"
-#include "SeqController.h"
-#include <iostream>
-
-using namespace std;
+#include "Consts.h"
+#include "BlockController.h"
 
 int main (int argc, char** argv) {
+    Metadata *meta = new Metadata(); {
+        meta->start      = 50;
+        meta->end        = 60;
+        meta->prefix     = "vorts";
+        meta->surfix     = "data";
+        meta->path       = "/Users/Yang/Develop/Data/vorts8x";
+        meta->tfPath     = "vorts8x.tfe";
+        meta->volumeDim  = Vector3i(256, 256, 256);
+    }
 
-//    if (argc != 4) {
-//        cout << "argv[0]: " << argv[0] << endl;
-//        cout << "argv[1]: " << argv[1] << endl;
-//        cout << "argv[2]: " << argv[2] << endl;
-//        cout << "argv[3]: " << argv[3] << endl;
-//        cout << "Usage : " << argv[0] << " npx npy npz" << endl;
-//        return 0;
-//    }
+    int currentTimestep = meta->start;
 
-//    MpiController *mc = new MpiController;
-//    mc->InitWith(argc, argv);
-//    mc->Start();
-//    delete mc;
-    SeqController *sc = new SeqController;
-    sc->Init();
-    sc->Start();
+    BlockController *pBlockController = new BlockController();
+    pBlockController->SetCurrentTimestep(currentTimestep);
+    pBlockController->InitParameters(meta);
+    pBlockController->ExtractAllFeatures();
 
-    delete sc;
+    while (currentTimestep++ < meta->end) {
+        pBlockController->SetCurrentTimestep(currentTimestep);
+        pBlockController->TrackForward(meta);
+        cout << currentTimestep << " done." << endl;
+    }
+
+    delete meta;
+    delete pBlockController;
+
     return 0;
 }

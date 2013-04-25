@@ -12,31 +12,15 @@ public:
     ~BlockController();
 
     void InitParameters(Metadata *meta);
-    void InitParameters(Vector3i gridDim, Vector3i blockIdx, Metadata *meta);
-
     void TrackForward(Metadata *meta);
-    void TrackForward(Vector3i gridDim, Vector3i blockIdx, Metadata *meta);
-
     void ExtractAllFeatures();
-    void UpdateLocalGraph(int blockID, Vector3i blockIdx);
-
-    void SetCurrentTimestep(int timestep) { currentTimestep = timestep; }
-
-    // Feature Connectivity Graph
-    vector<int> GetAdjacentBlocks();
-    vector<Edge> GetLocalGraph() { return localGraph; }
-    void SetLocalGraph(vector<Edge> graph) { localGraph = graph; }
+    void SetCurrentTimestep(int t) { currentTimestep = t; }
 
 private:
-    DataManager     *pDataManager;
-    FeatureTracker  *pFeatureTracker;
-
-    IntMap          adjacentBlocks;
-    vector<Edge>    localGraph;
+    DataManager    *pDataManager;
+    FeatureTracker *pFeatureTracker;
     Vector3i        blockDim;
     int             currentTimestep;
-
-    void initAdjacentBlocks(Vector3i gridDim, Vector3i blockIdx);
 };
 
 #endif // DATABLOCKCONTROLLER_H

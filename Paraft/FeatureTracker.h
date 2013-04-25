@@ -1,9 +1,6 @@
 #ifndef FEATURETRACKER_H
 #define FEATURETRACKER_H
 
-#include <math.h>
-#include <vector>
-#include <list>
 #include "Consts.h"
 
 using namespace std;
@@ -20,10 +17,10 @@ public:
     // 1. Do region growing at the current time step
     // 2. Adding a center point into the center point list
     // 3. Adding edge points into the edge list
-    void FindNewFeature(DataPoint point, float lowerValue, float upperValue);
+    void FindNewFeature(DataPoint point);
 
     // Track forward one time step based on the center points of the features at the last time step
-    void TrackFeature(float* pDataSet, float lowerValue, float upperValue, int direction, int mode);
+    void TrackFeature(float* pData, int direction, int mode);
 
     // Get mask matrix of current time step
     float *GetMaskVolumePointer() { return pMaskVolumeCurrent; }
@@ -31,10 +28,11 @@ public:
     void SaveExtractedFeatures(int index);
 
     // accessor
-    void SetVolumeDataPointer(float* pData) { pVolumeData = pData; }
+    void SetDataPointer(float* pData) { pVolumeData = pData; }
     void SetTFOpacityMap(float* map) { pTFOpacityMap = map; }
     void SetTFResolution(int res) { tfResolution = res; }
-    int GetPointIndex(DataPoint point) { return xs*ys*point.z+xs*point.y+point.x; }
+    void SetThresholds(float lower, float upper) { lowerThreshold = lower; upperThreshold = upper; }
+    int GetPointIndex(const DataPoint &point) { return xs*ys*point.z+xs*point.y+point.x; }
     int GetTFResolution() { return tfResolution; }
     float* GetTFOpacityMap() { return pTFOpacityMap; }
     IndexValueMap GetDiffPoints() { return diffPoints; }
@@ -55,19 +53,16 @@ private:
 
     float getOpacity(float value);
 
-    void resetFeatureBoundaryInfo();
     void updateDiffPointList(int index, float valule);
-    void updateFeatureMinMax(DataPoint point);
-    void updateBoundaryMinMax(DataPoint point, int surface);
-    void updateTouchedSurfaces();
 
-    float* pMaskVolumeCurrent;   // Mask volume, same size with a time step data
-    float* pMaskVolumePrevious;  // Mask volume, for backward time step when tracking forward & backward
-    float* pVolumeData;         // Volume intensity value
+    float* pMaskVolumeCurrent;  // Mask volume, same size with a time step data
+    float* pMaskVolumePrevious; // Mask volume, for backward time step when tracking forward & backward
+    float* pVolumeData;         // Raw volume intensity value
     float* pTFOpacityMap;
-    float lowerThreshold, upperThreshold;
+    float lowerThreshold;
+    float upperThreshold;
     int tfResolution;
-    int numVoxelinFeature;      // Used to calculate the number of voxel in the feature
+    int numVoxelinFeature;      // # voxel in the feature
     int xs,ys,zs;               // Dimension of the dataset
 
     float maskValue;
@@ -87,15 +82,6 @@ private:
     Vector3i featureMax;    // max value of x,y,z of a single feature
     Vector3i sumCoordinateValue;    // Sum of the voxel values of the feature
     Vector3i delta;
-
-    Vector3i sumBoundaryCoordinate[6];  // Sum of the voxel values on boundary surface
-    int numVoxelonBoundary[6];
-
-    // 6 possible ghost area
-    Vector3i boundaryCentroid[6];// center point of the ghost area of a single feature
-    Vector3i boundaryMin[6];     // min value of (x,y)|(x,z)|(y,z) of the boundary surface
-    Vector3i boundaryMax[6];     // max value of (x,y)|(x,z)|(y,z) of the boundary surface
-    vector<int> touchedSurfaces;    // Which boundary the feature touches
 
     vector<Feature> currentFeaturesHolder; // Features info in current time step
     vector<Feature> backup1FeaturesHolder; // ... in the 1st backup time step
