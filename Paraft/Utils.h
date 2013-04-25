@@ -23,17 +23,6 @@ const int TRACKING_BACKWARD = 1;
 
 using namespace std;
 
-template<class T>
-class Range {
-    T _begin, _end;
-public:
-    Range(T begin = 0, T end = 0) : _begin(begin), _end(end) { }
-    T Begin() const { return _begin; }
-    T End() const { return _end; }
-    void SetRange(T begin, T end) { _begin = begin; _end = end; }
-    void PrintRange() { cout << "(" << _begin << "," << _end << endl; }
-};
-
 namespace util {
     template<class T>
     class Vector3 {
@@ -81,16 +70,6 @@ struct Feature {
     Vector3i        Min;            // Minimum position (x,y,z) on boundary
     Vector3i        Max;            // Maximum position (x,y,z) on boundary
 };
-
-typedef struct {
-    Vector3i    gridDim;
-    int         numProc;
-    int         numFeature;
-    double      t1;
-    double      t2;
-    double      t3;
-    double      t4;
-} CSVWriter;
 
 typedef hash_map<int, float> IndexValueMap;
 typedef hash_map<int, float*> DataSequence;

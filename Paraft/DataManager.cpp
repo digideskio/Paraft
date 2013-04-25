@@ -37,8 +37,8 @@ void DataManager::InitTFSettings(string filename) {
     inf.close();
 }
 
-void DataManager::LoadDataSequence(Metadata *meta, int timestep) {
-    blockDim = meta->volumeDim;
+void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
+    blockDim = meta.volumeDim;
     volumeSize = blockDim.Product();
 
     // delete if data is not within [t-2, t+2] of current timestep t
@@ -50,23 +50,34 @@ void DataManager::LoadDataSequence(Metadata *meta, int timestep) {
     }
 
     for (int t = timestep-2; t <= timestep+2; t++) {
-        if (t < meta->start || t > meta->end || dataSequence[t] != NULL) {
+        if (t < meta.start || t > meta.end || dataSequence[t] != NULL) {
             continue;
         }
 
         char timestamp[21];  // up to 64-bit #
-        sprintf(timestamp, "%03d", t);
-        string fpath = meta->path + "/" + meta->prefix + timestamp + "." + meta->surfix;
+        sprintf(timestamp, "%08d", t);
+        string fpath = meta.path + "/" + meta.prefix + timestamp + "." + meta.surfix;
 
         ifstream inf(fpath.c_str(), ios::binary);
         if (!inf) { cout << "cannot read file: " + fpath << endl; exit(1); }
 
-        float *pData = new float[volumeSize];
-        inf.read(reinterpret_cast<char*>(pData), volumeSize*sizeof(float));
+        dataSequence[t] = new float[volumeSize];
+        inf.read(reinterpret_cast<char*>(dataSequence[t]), volumeSize*sizeof(float));
         inf.close();
 
-        nomalize(pData);
-        dataSequence[t] = pData;
+//        for (int i = 0; i < 1024; i++) {
+//            cout << dataSequence[t][i];
+//        } cout << endl;
+
+        nomalize(dataSequence[t]);
+//        cout << "----------------" << endl;
+//        cout << fpath << endl;
+
+//        for (int i = 0; i < 100; i++) {
+//            printf("%f\t", dataSequence[t][i]);
+//        }
+
+//        dataSequence[t] = pData;
     }
 }
 

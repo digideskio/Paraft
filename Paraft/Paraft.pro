@@ -12,7 +12,7 @@ SOURCES += \
     BlockController.cpp
 
 HEADERS += \
-    Consts.h \
     DataManager.h \
     FeatureTracker.h \
-    BlockController.h
+    BlockController.h \
+    Utils.h

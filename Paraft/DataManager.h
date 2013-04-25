@@ -1,8 +1,7 @@
 #ifndef DATAMANAGER_H
 #define DATAMANAGER_H
 
-#include <mpi.h>
-#include "Consts.h"
+#include "Utils.h"
 
 class DataManager {
 
@@ -13,11 +12,11 @@ public:
     float* GetDataPointer(int index) { return dataSequence[index]; }
     float* GetTFOpacityMap()         { return pTFOpacityMap; }
     int GetTFResolution()            { return tfResolution; }
-    Vector3i GetVolumeDimension()    { return blockDim; }
+    Vector3i GetBlockDimension()    { return blockDim; }
 
     void CreateNewMaskVolume();
     void InitTFSettings(string filename);
-    void LoadDataSequence(Metadata *meta, int timestep);
+    void LoadDataSequence(const Metadata &meta, const int timestep);
 
 private:
     void nomalize(float *pData);
