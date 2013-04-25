@@ -13,24 +13,44 @@ BlockController::~BlockController() {
     pFeatureTracker->~FeatureTracker();
 }
 
-void BlockController::InitParameters(Vector3i gridDim, Vector3i blockIdx, Metadata meta) {
-    initAdjacentBlocks(gridDim, blockIdx);
-
+void BlockController::InitParameters(Metadata *meta) {
     pDataManager = new DataManager();
-    pDataManager->CollectiveLoadDataSequence(gridDim, blockIdx, meta, t);
+    pDataManager->LoadDataSequence(meta, currentTimestep);
     pDataManager->CreateNewMaskVolume();
-    pDataManager->InitTFSettings(meta.tf);
+    pDataManager->InitTFSettings(meta->tfPath);
 
     blockDim = pDataManager->GetVolumeDimension();
     pFeatureTracker = new FeatureTracker(blockDim);
     pFeatureTracker->SetTFResolution(pDataManager->GetTFResolution());
     pFeatureTracker->SetTFOpacityMap(pDataManager->GetTFOpacityMap());
-    pFeatureTracker->SetVolumeDataPointer(pDataManager->GetDataPointer(t));
+    pFeatureTracker->SetVolumeDataPointer(pDataManager->GetDataPointer(currentTimestep));
 }
 
-void BlockController::TrackForward(Vector3i gridDim, Vector3i blockIdx, Metadata meta) {
-    pDataManager->CollectiveLoadDataSequence(gridDim, blockIdx, meta, t);
-    pFeatureTracker->TrackFeature(pDataManager->GetDataPointer(t), LOW_THRESHOLD, HIGH_THRESHOLD,
+void BlockController::InitParameters(Vector3i gridDim, Vector3i blockIdx, Metadata *meta) {
+    initAdjacentBlocks(gridDim, blockIdx);
+
+    pDataManager = new DataManager();
+    pDataManager->CollectiveLoadDataSequence(gridDim, blockIdx, meta, currentTimestep);
+    pDataManager->CreateNewMaskVolume();
+    pDataManager->InitTFSettings(meta->tfPath);
+
+    blockDim = pDataManager->GetVolumeDimension();
+    pFeatureTracker = new FeatureTracker(blockDim);
+    pFeatureTracker->SetTFResolution(pDataManager->GetTFResolution());
+    pFeatureTracker->SetTFOpacityMap(pDataManager->GetTFOpacityMap());
+    pFeatureTracker->SetVolumeDataPointer(pDataManager->GetDataPointer(currentTimestep));
+}
+
+void BlockController::TrackForward(Metadata *meta) {
+    pDataManager->LoadDataSequence(meta, currentTimestep);
+    pFeatureTracker->TrackFeature(pDataManager->GetDataPointer(currentTimestep), LOW_THRESHOLD, HIGH_THRESHOLD,
+                                  TRACKING_FORWARD, TRACKING_MODE_DIRECT);
+    ExtractAllFeatures();
+}
+
+void BlockController::TrackForward(Vector3i gridDim, Vector3i blockIdx, Metadata *meta) {
+    pDataManager->CollectiveLoadDataSequence(gridDim, blockIdx, meta, currentTimestep);
+    pFeatureTracker->TrackFeature(pDataManager->GetDataPointer(currentTimestep), LOW_THRESHOLD, HIGH_THRESHOLD,
                                   TRACKING_FORWARD, TRACKING_MODE_DIRECT);
     ExtractAllFeatures();
 }
@@ -44,7 +64,7 @@ void BlockController::ExtractAllFeatures() {
                 if (pFeatureTracker->GetMaskVolumePointer()[index] != 0) {
                     continue;
                 }
-                float *pVolume = pDataManager->GetDataPointer(t);
+                float *pVolume = pDataManager->GetDataPointer(currentTimestep);
                 int tfIndex = (int)(pVolume[index] * (float)(tfRes-1));
                 float opacity = pFeatureTracker->GetTFOpacityMap()[tfIndex];
                 if (opacity >= LOW_THRESHOLD && opacity <= HIGH_THRESHOLD) {
@@ -53,7 +73,7 @@ void BlockController::ExtractAllFeatures() {
             }
         }
     }
-    pFeatureTracker->SaveExtractedFeatures(t);
+    pFeatureTracker->SaveExtractedFeatures(currentTimestep);
 }
 
 void BlockController::initAdjacentBlocks(Vector3i gridDim, Vector3i blockIdx) {
@@ -83,7 +103,7 @@ void BlockController::UpdateLocalGraph(int blockID, Vector3i blockIdx) {
     localGraph.clear();
 
     vector<Feature> *pCurrentFeatures;
-    pCurrentFeatures = pFeatureTracker->GetFeatureVectorPointer(t);
+    pCurrentFeatures = pFeatureTracker->GetFeatureVectorPointer(currentTimestep);
     if (pCurrentFeatures->size() == 0) {
         return;
     }

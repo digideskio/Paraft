@@ -25,10 +25,10 @@ private:
 
     int myRank;
     int numProc;
-    int t;  // current timestep
+    int currentTimestep;  // current timestep
 
     CSVWriter csv;
-    Metadata meta;
+    Metadata *meta;
 
     Vector3i gridDim;     // #processes in each dimension (xyz)
     Vector3i blockIdx;    // xyz coordinate of current processor

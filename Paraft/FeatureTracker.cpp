@@ -122,7 +122,7 @@ void FeatureTracker::FindNewFeature(DataPoint point, float lowerValue, float upp
         maskValue -= 1.0f;
         return;
     }
-
+    cout << "41" << endl;
     updateTouchedSurfaces();
 
     Feature newFeature; {
@@ -138,7 +138,7 @@ void FeatureTracker::FindNewFeature(DataPoint point, float lowerValue, float upp
             newFeature.BoundaryCentroid[i]  = boundaryCentroid[i];
         }
     }
-
+    cout << "51" << endl;
     currentFeaturesHolder.push_back(newFeature);
     backup1FeaturesHolder = currentFeaturesHolder;
     backup2FeaturesHolder = currentFeaturesHolder;

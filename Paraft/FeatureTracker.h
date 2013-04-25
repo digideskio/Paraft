@@ -20,7 +20,6 @@ public:
     // 1. Do region growing at the current time step
     // 2. Adding a center point into the center point list
     // 3. Adding edge points into the edge list
-//    void FindNewFeature(int x, int y, int z, float lowerValue, float upperValue);
     void FindNewFeature(DataPoint point, float lowerValue, float upperValue);
 
     // Track forward one time step based on the center points of the features at the last time step

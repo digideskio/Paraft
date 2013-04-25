@@ -22,13 +22,13 @@ void MpiController::InitWith(int argc, char **argv) {
     blockIdx.y = (myRank - blockIdx.z * gridDim.x * gridDim.y) / gridDim.x;
     blockIdx.x = myRank % gridDim.x;
 
-    meta.timeRange  = Range<int>(100, 110);
-    meta.prefix     = "i2vgt_";
-    meta.surfix     = "raw";
-    meta.path       = "/Users/Yang/Develop/ffv/sandbox/raw/i2vgt";
-    meta.tf         = "ffvc.tfe";
-    meta.volumeDim  = Vector3i(400, 200, 200);
-    meta.tsLength   = 8;
+    meta->start      = 100;
+    meta->end        = 102;
+    meta->prefix     = "i2vgt_";
+    meta->surfix     = "raw";
+    meta->path       = "/Users/Yang/Develop/ffv/sandbox/raw/i2vgt";
+    meta->tfPath     = "ffvc.tfe";
+    meta->volumeDim  = Vector3i(400, 200, 200);
 
     csv.gridDim = gridDim;
     csv.numProc = numProc;
@@ -42,31 +42,25 @@ void MpiController::InitWith(int argc, char **argv) {
 void MpiController::Start() {
     initBlockController();
 
-    for (int i = meta.timeRange.Begin(); i < meta.timeRange.End(); i++) {
+    while (currentTimestep < meta->end) {
         TrackForward();
-        if (myRank == 0) cout << i+1 << " done." << endl;
+        if (myRank == 0) cout << currentTimestep << " done." << endl;
+        currentTimestep++;
     }
 
     if (myRank == 0) cout << myRank << " over." << endl;
 }
 
 void MpiController::initBlockController() {
-    t = meta.timeRange.Begin();
+    currentTimestep = meta->start;
     pBlockController = new BlockController();
-    pBlockController->SetCurrentTimestep(t);
+    pBlockController->SetCurrentTimestep(currentTimestep);
     pBlockController->InitParameters(gridDim, blockIdx, meta);
     pBlockController->ExtractAllFeatures();
 }
 
 void MpiController::TrackForward() {
-    t++;
-    if (t > meta.timeRange.End()) {
-        t = meta.timeRange.End();
-        cout << "already last timestep." << endl;
-        return;
-    }
-
-    pBlockController->SetCurrentTimestep(t);
+    pBlockController->SetCurrentTimestep(currentTimestep);
     MPI_Barrier(MPI_COMM_WORLD);
     double t0 = MPI_Wtime();
 
@@ -96,7 +90,7 @@ void MpiController::TrackForward() {
     MPI_Barrier(MPI_COMM_WORLD);
     double t4 = MPI_Wtime();
 
-    featureTableVector[t] = featureTable;
+    featureTableVector[currentTimestep] = featureTable;
 
     double delta = t1 - t0;
     MPI_Allreduce(&delta, &csv.t1, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -126,7 +120,7 @@ void MpiController::TrackForward() {
     ofstream outf(result.c_str(), ios::out | ios::app);
 
     if (myRank == 0) {
-        outf << csv.numProc << "," << csv.numFeature << "," << t << ","
+        outf << csv.numProc << "," << csv.numFeature << "," << currentTimestep << ","
              << csv.t1 << "," << csv.t2 << "," << csv.t3 << "," << csv.t4 << endl;
     }
 

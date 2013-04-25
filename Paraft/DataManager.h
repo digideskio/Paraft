@@ -17,11 +17,14 @@ public:
 
     void CreateNewMaskVolume();
     void InitTFSettings(string filename);
-    void CollectiveLoadDataSequence(Vector3i gridDim, Vector3i blockIdx, Metadata meta, int timestep);
+
+    void LoadDataSequence(Metadata *meta, int timestep);
     void InSituLoadDataSequence(int timestep, float *pData);
+    void CollectiveLoadDataSequence(Vector3i gridDim, Vector3i blockIdx, Metadata *meta, int timestep);
 
 private:
-    void equalizeData(float *pData);
+    void equalize(float *pData);
+    void nomalize(float *pData);
 
     DataSequence dataSequence;
     Vector3i blockDim;

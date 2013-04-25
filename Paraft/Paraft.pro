@@ -10,11 +10,13 @@ SOURCES += \
     DataManager.cpp \
     FeatureTracker.cpp \
     BlockController.cpp \
-    MpiController.cpp
+    MpiController.cpp \
+    SeqController.cpp
 
 HEADERS += \
     Consts.h \
     DataManager.h \
     FeatureTracker.h \
     BlockController.h \
-    MpiController.h
+    MpiController.h \
+    SeqController.h

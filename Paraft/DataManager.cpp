@@ -8,9 +8,8 @@ DataManager::DataManager() {
 
 DataManager::~DataManager() {
     if (!dataSequence.empty()) {
-        DataSequence::iterator it;
-        for (it = dataSequence.begin(); it != dataSequence.end(); it++) {
-            delete [] it->second;   // pointer to each timestep
+        for (DataSequence::iterator it = dataSequence.begin(); it != dataSequence.end(); it++) {
+            delete [] it->second;   // pointer to each volume
         }
     }
 
@@ -45,6 +44,41 @@ void DataManager::InitTFSettings(string filename) {
     }
 }
 
+void DataManager::LoadDataSequence(Metadata *meta, int timestep) {
+    blockDim = meta->volumeDim;
+    volumeSize = blockDim.Product();
+
+    cout << blockDim.x << ", " << blockDim.y << ", " << blockDim.z << endl;
+
+    // delete if data is not within [t-2, t+2] of current timestep t
+    for (DataSequence::iterator it = dataSequence.begin(); it != dataSequence.end(); it++) {
+        if (it->first < timestep-2 || it->first > timestep+2) {
+            delete [] it->second;
+            dataSequence.erase(it);
+        }
+    }
+
+    for (int t = timestep-2; t <= timestep+2; t++) {
+        if (t < meta->start || t > meta->end || dataSequence[t] != NULL) {
+            continue;
+        }
+
+        char timestamp[21];  // up to 64-bit #
+        sprintf(timestamp, "%03d", t);
+        string fpath = meta->path + "/" + meta->prefix + timestamp + "." + meta->surfix;
+
+        ifstream inf(fpath.c_str(), ios::binary);
+        if (!inf) { cout << "cannot read file: " + fpath << endl; exit(1); }
+
+        float *pData = new float[volumeSize];
+        inf.read(reinterpret_cast<char*>(pData), volumeSize*sizeof(float));
+        inf.close();
+
+        nomalize(pData);
+        dataSequence[t] = pData;
+    }
+}
+
 // load data by given volume data pointers, for in-situ mode
 void DataManager::InSituLoadDataSequence(int timestep, float *pData) {
     // delete if data is not within [t-2, t+2] of current timestep t
@@ -58,8 +92,8 @@ void DataManager::InSituLoadDataSequence(int timestep, float *pData) {
 }
 
 // collectively load volume data from disk, for batch mode
-void DataManager::CollectiveLoadDataSequence(Vector3i gridDim, Vector3i blockIdx, Metadata meta, int timestep) {
-    blockDim = meta.volumeDim / gridDim;
+void DataManager::CollectiveLoadDataSequence(Vector3i gridDim, Vector3i blockIdx, Metadata *meta, int timestep) {
+    blockDim = meta->volumeDim / gridDim;
     volumeSize = blockDim.Product();
 
     // delete if data is not within [t-2, t+2] of current timestep t
@@ -70,8 +104,8 @@ void DataManager::CollectiveLoadDataSequence(Vector3i gridDim, Vector3i blockIdx
         }
     }
 
-    for (int t = timestep-2; t <= timestep+3; t++) {
-        if (t < meta.timeRange.Begin() || t > meta.timeRange.End()) {
+    for (int t = timestep-2; t <= timestep+2; t++) {
+        if (t < meta->start || t > meta->end) {
             continue;  // only [t-2, t-1, t, t+1, t+2]
         }
 
@@ -84,7 +118,7 @@ void DataManager::CollectiveLoadDataSequence(Vector3i gridDim, Vector3i blockIdx
         string filePath;
         char timestep[21];  // hold up to 64-bits
         sprintf(timestep, "%03d", t);
-        filePath = meta.path+"/"+meta.prefix+timestep+"."+meta.surfix;
+        filePath = meta->path+"/"+meta->prefix+timestep+"."+meta->surfix;
 
         char *filename = new char[filePath.size() + 1];
         std::copy(filePath.begin(), filePath.end(), filename);
@@ -108,7 +142,7 @@ void DataManager::CollectiveLoadDataSequence(Vector3i gridDim, Vector3i blockIdx
         MPI_File_read_all(file, dataSequence[t], volumeSize, MPI_FLOAT, MPI_STATUS_IGNORE);
 
         cout << "t: " << t << "\t";
-        equalizeData(dataSequence[t]);
+        equalize(dataSequence[t]);
 
         MPI_File_close(&file);
         MPI_Type_free(&filetype);
@@ -116,11 +150,22 @@ void DataManager::CollectiveLoadDataSequence(Vector3i gridDim, Vector3i blockIdx
     }
 }
 
+void DataManager::nomalize(float *pData) {
+    float min = pData[0], max = pData[0];
+    for (int i = 1; i < volumeSize; i++) {
+        min = min < pData[i] ? min : pData[i];
+        max = max > pData[i] ? max : pData[i];
+    }
+    for (int i = 0; i < volumeSize; i++) {
+        pData[i] = (pData[i] - min) / (max - min);
+    }
+}
+
 bool compare(const std::pair<float, int> &lhs, const std::pair<float, int> &rhs) {
     return lhs.second > rhs.second;  // descending order
 }
 
-void DataManager::equalizeData(float *pData) {
+void DataManager::equalize(float *pData) {
     std::map<float, int> histMap;
     int granularity = 10;
     int binLength = tfResolution * granularity;
@@ -131,9 +176,9 @@ void DataManager::equalizeData(float *pData) {
         max = max > pData[i] ? max : pData[i];
     }
 
-    MPI_Allreduce(&min, &min, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
-    MPI_Allreduce(&max, &max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-//    std::cout << "g: min: " << min << " max: " << max << endl;
+//    MPI_Allreduce(&min, &min, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
+//    MPI_Allreduce(&max, &max, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    std::cout << "g: min: " << min << " max: " << max << endl;
 
     float range = max - min;
     int binIndex = 0;

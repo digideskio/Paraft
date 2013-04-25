@@ -12,7 +12,7 @@
 const int FEATURE_MIN_VOXEL_NUM = 10;
 
 const float LOW_THRESHOLD  = 0.2;
-const float HIGH_THRESHOLD = 0.8;
+const float HIGH_THRESHOLD = 1.0;
 const float DIST_THRESHOLD = 4.0;
 
 const int TRACKING_MODE_DIRECT = 0;
@@ -88,13 +88,13 @@ public:
 };    // start ---id---> end @ centroid
 
 struct Metadata {
-    Range<int>      timeRange;
+    int             start;
+    int             end;
     string          prefix;
     string          surfix;
     string          path;
-    string          tf;
+    string          tfPath;
     Vector3i        volumeDim;
-    int             tsLength;
 };
 
 struct Feature {
@@ -127,6 +127,7 @@ typedef hash_map<int, float> IndexValueMap;
 typedef hash_map<int, vector<int> > FeatureTable;
 typedef hash_map<int, float*> DataSequence;
 typedef hash_map<int, vector<Feature> > FeatureVectorSequence;
+typedef hash_map<float, int> Histogram;
 
 template <class T>
 void ReverseEndian(T *pObject) {

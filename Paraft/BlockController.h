@@ -11,11 +11,16 @@ public:
     BlockController();
     ~BlockController();
 
-    void InitParameters(Vector3i gridDim, Vector3i blockIdx, Metadata meta);
-    void TrackForward(Vector3i gridDim, Vector3i blockIdx, Metadata meta);
+    void InitParameters(Metadata *meta);
+    void InitParameters(Vector3i gridDim, Vector3i blockIdx, Metadata *meta);
+
+    void TrackForward(Metadata *meta);
+    void TrackForward(Vector3i gridDim, Vector3i blockIdx, Metadata *meta);
+
     void ExtractAllFeatures();
     void UpdateLocalGraph(int blockID, Vector3i blockIdx);
-    void SetCurrentTimestep(int timestep) { t = timestep; }
+
+    void SetCurrentTimestep(int timestep) { currentTimestep = timestep; }
 
     // Feature Connectivity Graph
     vector<int> GetAdjacentBlocks();
@@ -29,7 +34,7 @@ private:
     IntMap          adjacentBlocks;
     vector<Edge>    localGraph;
     Vector3i        blockDim;
-    int             t;  // current timestep
+    int             currentTimestep;
 
     void initAdjacentBlocks(Vector3i gridDim, Vector3i blockIdx);
 };
