@@ -65,19 +65,7 @@ void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
         inf.read(reinterpret_cast<char*>(dataSequence[t]), volumeSize*sizeof(float));
         inf.close();
 
-//        for (int i = 0; i < 1024; i++) {
-//            cout << dataSequence[t][i];
-//        } cout << endl;
-
         nomalize(dataSequence[t]);
-//        cout << "----------------" << endl;
-//        cout << fpath << endl;
-
-//        for (int i = 0; i < 100; i++) {
-//            printf("%f\t", dataSequence[t][i]);
-//        }
-
-//        dataSequence[t] = pData;
     }
 }
 

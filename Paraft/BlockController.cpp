@@ -16,7 +16,6 @@ void BlockController::InitParameters(const Metadata &meta) {
     pFeatureTracker->SetThresholds(LOW_THRESHOLD, HIGH_THRESHOLD);
     pFeatureTracker->SetTFResolution(pDataManager->GetTFResolution());
     pFeatureTracker->SetTFOpacityMap(pDataManager->GetTFOpacityMap());
-
     pFeatureTracker->SetDataPointer(pDataManager->GetDataPointer(currentTimestep));
 
 }
@@ -24,6 +23,6 @@ void BlockController::InitParameters(const Metadata &meta) {
 void BlockController::TrackForward(const Metadata &meta) {
     pDataManager->LoadDataSequence(meta, currentTimestep);
     pFeatureTracker->ExtractAllFeatures();
-    pFeatureTracker->TrackFeature(pDataManager->GetDataPointer(currentTimestep),
-                                  TRACKING_FORWARD, TRACKING_MODE_DIRECT);
+    pFeatureTracker->TrackFeature(pDataManager->GetDataPointer(currentTimestep), FT_FORWARD, FT_DIRECT);
+    pFeatureTracker->SaveExtractedFeatures(currentTimestep);
 }

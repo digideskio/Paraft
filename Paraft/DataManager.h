@@ -12,7 +12,7 @@ public:
     float* GetDataPointer(int index) { return dataSequence[index]; }
     float* GetTFOpacityMap()         { return pTFOpacityMap; }
     int GetTFResolution()            { return tfResolution; }
-    Vector3i GetBlockDimension()    { return blockDim; }
+    Vector3i GetBlockDimension()     { return blockDim; }
 
     void CreateNewMaskVolume();
     void InitTFSettings(string filename);

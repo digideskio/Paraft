@@ -14,12 +14,11 @@ const int FEATURE_MIN_VOXEL_NUM = 10;
 const float LOW_THRESHOLD  = 0.2;
 const float HIGH_THRESHOLD = 1.0;
 
-const int TRACKING_MODE_DIRECT = 0;
-const int TRACKING_MODE_LINEAR = 1;
-const int TRACKING_MODE_POLYNO = 2;
-
-const int TRACKING_FORWARD  = 0;
-const int TRACKING_BACKWARD = 1;
+const int FT_DIRECT = 0;
+const int FT_LINEAR = 1;
+const int FT_POLYNO = 2;
+const int FT_FORWARD  = 0;
+const int FT_BACKWARD = 1;
 
 using namespace std;
 
@@ -49,7 +48,7 @@ namespace util {
     };
 }
 
-typedef util::Vector3<int> Vector3i, DataPoint;
+typedef util::Vector3<int> Vector3i;
 
 struct Metadata {
     int             start;
@@ -64,8 +63,8 @@ struct Metadata {
 struct Feature {
     int             ID;             // Unique ID for each feature
     float           MaskValue;      // Used to record the color of the feature
-    list<DataPoint> SurfacePoints;  // Edge information of the feature
-    list<DataPoint> InnerPoints;    // All the voxels in the feature
+    list<Vector3i>  SurfacePoints;  // Edge information of the feature
+    list<Vector3i>  InnerPoints;    // All the voxels in the feature
     Vector3i        Centroid;       // Centers position of the feature
     Vector3i        Min;            // Minimum position (x,y,z) on boundary
     Vector3i        Max;            // Maximum position (x,y,z) on boundary

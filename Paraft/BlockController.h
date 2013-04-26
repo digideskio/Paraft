@@ -17,9 +17,10 @@ public:
     void SetCurrentTimestep(int t) { currentTimestep = t; }
 
 private:
-    DataManager    *pDataManager;
-    FeatureTracker *pFeatureTracker;
-    int             currentTimestep;
+    DataManager             *pDataManager;
+    FeatureTracker          *pFeatureTracker;
+    FeatureVectorSequence    featureSequence;
+    int                      currentTimestep;
 };
 
 #endif // DATABLOCKCONTROLLER_H

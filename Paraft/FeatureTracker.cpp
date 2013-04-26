@@ -21,7 +21,6 @@ FeatureTracker::~FeatureTracker() {
     dataPointList.clear();
     surfacePoints.clear();
     innerPoints.clear();
-    diffPoints.clear();
 
     if (featureSequence.size() > 0) {
         for (FeatureVectorSequence::iterator it = featureSequence.begin(); it != featureSequence.end(); it++) {
@@ -52,7 +51,6 @@ void FeatureTracker::Reset() {
     dataPointList.clear();
     surfacePoints.clear();
     innerPoints.clear();
-    diffPoints.clear();
 }
 
 void FeatureTracker::ExtractAllFeatures() {
@@ -64,16 +62,14 @@ void FeatureTracker::ExtractAllFeatures() {
                     continue;                   // most points should stop here
                 int tfIndex = (int)(pVolumeData[index] * (float)(tfRes-1));
                 if (pTfMap[tfIndex] >= LOW_THRESHOLD && pTfMap[tfIndex] <= HIGH_THRESHOLD) {
-                    FindNewFeature(DataPoint(x,y,z));
+                    FindNewFeature(Vector3i(x,y,z));
                 }
             }
         }
     }
-// TODO
-//    SaveExtractedFeatures(currentTimestep);
 }
 
-void FeatureTracker::FindNewFeature(DataPoint point) {
+void FeatureTracker::FindNewFeature(Vector3i point) {
     sumCoordinateValue = point;
 
     dataPointList.clear();
@@ -109,8 +105,6 @@ void FeatureTracker::FindNewFeature(DataPoint point) {
         newFeature.SurfacePoints    = surfacePoints;
         newFeature.InnerPoints      = innerPoints;
         newFeature.MaskValue        = maskValue;
-        newFeature.Min              = featureMin;
-        newFeature.Max              = featureMax;
     }
 
     currentFeaturesHolder.push_back(newFeature);
@@ -146,8 +140,6 @@ void FeatureTracker::TrackFeature(float* pData, int direction, int mode) {
         f.Centroid        = centroid;
         f.SurfacePoints   = surfacePoints;
         f.InnerPoints     = innerPoints;
-        f.Min             = featureMin;
-        f.Max             = featureMax;
         currentFeaturesHolder[i] = f;
         innerPoints.clear();
     }
@@ -157,7 +149,7 @@ void FeatureTracker::TrackFeature(float* pData, int direction, int mode) {
 }
 
 inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
-    int timestepsAvailable = direction == TRACKING_BACKWARD ? timestepsAvailableBackward : timestepsAvailableForward;
+    int timestepsAvailable = direction == FT_BACKWARD ? timestepsAvailableBackward : timestepsAvailableForward;
 
     delta.x = delta.y = delta.z = 0;
     Feature b1f = backup1FeaturesHolder[index];
@@ -166,11 +158,11 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
 
     int tmp;
     switch (mode) {
-        case TRACKING_MODE_DIRECT: // PREDICT_DIRECT
+        case FT_DIRECT: // PREDICT_DIRECT
             break;
-        case TRACKING_MODE_LINEAR: // PREDICT_LINEAR
+        case FT_LINEAR: // PREDICT_LINEAR
             if (timestepsAvailable > 1) {
-                if (direction == TRACKING_BACKWARD) {
+                if (direction == FT_BACKWARD) {
                     delta.x = b2f.Centroid.x - b1f.Centroid.x;
                     delta.y = b2f.Centroid.y - b1f.Centroid.y;
                     delta.z = b2f.Centroid.z - b1f.Centroid.z;
@@ -180,21 +172,21 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
                     delta.z = b3f.Centroid.z - b2f.Centroid.z;
                 }
 
-                for (list<DataPoint>::iterator p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); p++) {
+                for (list<Vector3i>::iterator p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); p++) {
                     tmp = (*p).x + (int)floor(delta.x); (*p).x = tmp <= 0 ? 0 : (tmp < blockDim.x ? tmp : blockDim.x-1);
                     tmp = (*p).y + (int)floor(delta.y); (*p).y = tmp <= 0 ? 0 : (tmp < blockDim.y ? tmp : blockDim.y-1);
                     tmp = (*p).z + (int)floor(delta.z); (*p).z = tmp <= 0 ? 0 : (tmp < blockDim.z ? tmp : blockDim.z-1);
                 }
             }
         break;
-        case TRACKING_MODE_POLYNO: // PREDICT_POLY
+        case FT_POLYNO: // PREDICT_POLY
             if (timestepsAvailable > 1) {
                 if (timestepsAvailable > 2) {
                     delta.x = b3f.Centroid.x*2 - b2f.Centroid.x*3 + b1f.Centroid.x;
                     delta.y = b3f.Centroid.y*2 - b2f.Centroid.y*3 + b1f.Centroid.y;
                     delta.z = b3f.Centroid.z*2 - b2f.Centroid.z*3 + b1f.Centroid.z;
                 } else {    // [1,2)
-                    if (direction == TRACKING_BACKWARD) {
+                    if (direction == FT_BACKWARD) {
                         delta.x = b2f.Centroid.x - b1f.Centroid.x;
                         delta.y = b2f.Centroid.y - b1f.Centroid.y;
                         delta.z = b2f.Centroid.z - b1f.Centroid.z;
@@ -205,7 +197,7 @@ inline void FeatureTracker::predictRegion(int index, int direction, int mode) {
                     }
                 }
 
-                for (list<DataPoint>::iterator p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); p++) {
+                for (list<Vector3i>::iterator p = b3f.SurfacePoints.begin(); p != b3f.SurfacePoints.end(); p++) {
                     tmp = (*p).x + (int)floor(delta.x); (*p).x = tmp <= 0 ? 0 : (tmp < blockDim.x ? tmp : blockDim.x-1);
                     tmp = (*p).y + (int)floor(delta.y); (*p).y = tmp <= 0 ? 0 : (tmp < blockDim.y ? tmp : blockDim.y-1);
                     tmp = (*p).z + (int)floor(delta.z); (*p).z = tmp <= 0 ? 0 : (tmp < blockDim.z ? tmp : blockDim.z-1);
@@ -223,14 +215,13 @@ inline void FeatureTracker::fillRegion(float maskValue) {
     int index = 0;
     int indexPrev = 0;
 
-    list<DataPoint>::iterator p;
+    list<Vector3i>::iterator p;
 
     // predicted to be on edge
     for (p = surfacePoints.begin(); p != surfacePoints.end(); p++) {
         index = GetVoxelIndex(*p);
         if (pMaskCurrent[index] == 0) {
             pMaskCurrent[index] = maskValue;
-            updateDiffPointList(index, maskValue);
         }
         sumCoordinateValue += (*p);
         innerPoints.push_back(*p);
@@ -249,8 +240,6 @@ inline void FeatureTracker::fillRegion(float maskValue) {
 
             // Mark all points: 1. currently = 1; 2. currently = 0 but previously = 1;
             pMaskCurrent[index] = maskValue;
-            updateDiffPointList(index, maskValue);
-
             sumCoordinateValue += (*p);
             innerPoints.push_back(*p);
             numVoxelinFeature++;
@@ -263,7 +252,7 @@ inline void FeatureTracker::fillRegion(float maskValue) {
 }
 
 inline void FeatureTracker::shrinkRegion(float maskValue) {
-    DataPoint point;
+    Vector3i point;
     int index = 0;
     int indexCurr = 0;
     bool isPointOnEdge;
@@ -295,7 +284,7 @@ inline void FeatureTracker::shrinkRegion(float maskValue) {
         if (isPointOnEdge == true) { surfacePoints.push_back(point); }
     }
 
-    for (list<DataPoint>::iterator p = surfacePoints.begin(); p != surfacePoints.end(); ++p) {
+    for (list<Vector3i>::iterator p = surfacePoints.begin(); p != surfacePoints.end(); ++p) {
         index = GetVoxelIndex((*p));
         indexCurr = GetVoxelIndex(point);
         if (pMaskCurrent[indexCurr] != maskValue) {
@@ -303,7 +292,6 @@ inline void FeatureTracker::shrinkRegion(float maskValue) {
             innerPoints.push_back(*p);
             numVoxelinFeature++;
             pMaskCurrent[indexCurr] = maskValue;
-            updateDiffPointList(index, maskValue);
         }
     }
 
@@ -311,13 +299,13 @@ inline void FeatureTracker::shrinkRegion(float maskValue) {
     centroid = sumCoordinateValue / numVoxelinFeature;
 }
 
-inline void FeatureTracker::shrinkEdge(DataPoint point, float maskValue) {
+inline void FeatureTracker::shrinkEdge(Vector3i point, float maskValue) {
     int index = GetVoxelIndex(point);
     if (pMaskCurrent[index] == maskValue) {
         pMaskCurrent[index] = 0;    // shrink
         sumCoordinateValue -= point;
         numVoxelinFeature--;
-        for (list<DataPoint>::iterator p = innerPoints.begin(); p != innerPoints.end(); p++) {
+        for (list<Vector3i>::iterator p = innerPoints.begin(); p != innerPoints.end(); p++) {
             if (point.x == (*p).x && point.y == (*p).y && point.z == (*p).z) {
                 innerPoints.erase(p); break;
             }
@@ -337,7 +325,7 @@ inline void FeatureTracker::expandRegion(float maskValue) {
     } // edgePointList should be empty
 
     while (dataPointList.empty() == false) {
-        DataPoint point = dataPointList.front();
+        Vector3i point = dataPointList.front();
         dataPointList.pop_front();
         bool onBoundary = false;
         if (++point.x < blockDim.x) { onBoundary |= expandEdge(point, maskValue); } point.x--;  // right
@@ -353,7 +341,7 @@ inline void FeatureTracker::expandRegion(float maskValue) {
     centroid = sumCoordinateValue / numVoxelinFeature;
 }
 
-inline bool FeatureTracker::expandEdge(DataPoint point, float maskValue) {
+inline bool FeatureTracker::expandEdge(Vector3i point, float maskValue) {
     int index = GetVoxelIndex(point);
     if (pMaskCurrent[index] != 0) {
         return false;   // not on edge, inside feature, no need to adjust
@@ -361,7 +349,6 @@ inline bool FeatureTracker::expandEdge(DataPoint point, float maskValue) {
 
     if (getOpacity(pVolumeData[index]) >= lowerThreshold && getOpacity(pVolumeData[index]) <= upperThreshold) {
         pMaskCurrent[index] = maskValue;
-        updateDiffPointList(index, maskValue);
         dataPointList.push_back(point);
         innerPoints.push_back(point);
         sumCoordinateValue += point;
@@ -385,35 +372,16 @@ void FeatureTracker::SetCurrentFeatureInfo(vector<Feature> *pFeatures) {
     timestepsAvailableBackward = 0;
 }
 
-void FeatureTracker::updateDiffPointList(int index, float value) {
-    IndexValueMap::iterator it = diffPoints.find(index);
-    if (it == diffPoints.end()) {   // !contain
-        diffPoints[index] = value;
-    } else if (diffPoints[index] != value) {
-        diffPoints[index] = value;
-    } else {
-        diffPoints.erase(it);
-    }
- }
-
 void FeatureTracker::backupFeatureInfo(int direction) {
-    if (direction != TRACKING_FORWARD && direction != TRACKING_BACKWARD) {
-        cout << "Direction is neither FORWARD or BACKWARD?" << endl;
-        return;
-    }
     backup1FeaturesHolder = backup2FeaturesHolder;
     backup2FeaturesHolder = backup3FeaturesHolder;
     backup3FeaturesHolder = currentFeaturesHolder;
 
-    if (direction == TRACKING_FORWARD) {
+    if (direction == FT_FORWARD) {
         if (timestepsAvailableForward  < 3) timestepsAvailableForward++;
         if (timestepsAvailableBackward > 0) timestepsAvailableBackward--;
     } else {    // direction is either FORWARD or BACKWARD
         if (timestepsAvailableForward  > 0) timestepsAvailableForward--;
         if (timestepsAvailableBackward < 3) timestepsAvailableBackward++;
     }
-}
-
-void FeatureTracker::SaveExtractedFeatures(int index) {
-    featureSequence[index] = currentFeaturesHolder;
 }
