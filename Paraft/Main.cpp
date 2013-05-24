@@ -1,15 +1,15 @@
 #include "BlockController.h"
 
 int main (int argc, char** argv) {
-
     Metadata meta; {
-        meta.start      = 100;
-        meta.end        = 110;
-        meta.prefix     = "vort_";
+        meta.start      = 0;
+        meta.end        = 5;
+        meta.prefix     = "ball_64_";
         meta.surfix     = "raw";
-        meta.path       = "/Users/Yang/Develop/Data/yubo_new/vorts";
-        meta.tfPath     = "vorts8x.tfe";
-        meta.volumeDim  = Vector3i(256, 256, 256);
+        meta.path       = "/Users/Yang/Develop/Data/ball5";
+        meta.tfPath     = "/Users/Yang/Develop/Data/ball5/ball.tfe";
+        meta.timeFormat = "%d";
+        meta.volumeDim  = Vector3i(64, 64, 64);
     }
 
     int currentTimestep = meta.start;
@@ -17,7 +17,6 @@ int main (int argc, char** argv) {
     BlockController *pBlockController = new BlockController();
     pBlockController->SetCurrentTimestep(currentTimestep);
     pBlockController->InitParameters(meta);
-//    pBlockController->ExtractAllFeatures();
 
     while (currentTimestep++ < meta.end) {
         pBlockController->SetCurrentTimestep(currentTimestep);
