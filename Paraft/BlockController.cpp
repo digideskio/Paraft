@@ -13,7 +13,6 @@ void BlockController::InitParameters(const Metadata &meta) {
     pDataManager->InitTFSettings(meta.tfPath);
 
     pFeatureTracker = new FeatureTracker(pDataManager->GetBlockDimension());
-    pFeatureTracker->SetThresholds(LOW_THRESHOLD, HIGH_THRESHOLD);
     pFeatureTracker->SetTFResolution(pDataManager->GetTFResolution());
     pFeatureTracker->SetTFOpacityMap(pDataManager->GetTFOpacityMap());
     pFeatureTracker->SetDataPointer(pDataManager->GetDataPointer(currentTimestep));

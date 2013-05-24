@@ -5,6 +5,7 @@ FeatureTracker::FeatureTracker(Vector3i dim) : blockDim(dim) {
     tfRes = 0;
     pTfMap = NULL;
     volumeSize = blockDim.Product();
+    threshold = OPACITY_THRESHOLD;
 
     pMaskCurrent = new float[volumeSize]();
     pMaskPrevious = new float[volumeSize]();
@@ -58,7 +59,7 @@ void FeatureTracker::ExtractAllFeatures() {
                     continue;                   // most points should stop here
                 }
                 int tfIndex = (int)(pVolumeData[index] * (float)(tfRes-1));
-                if (pTfMap[tfIndex] >= LOW_THRESHOLD && pTfMap[tfIndex] <= HIGH_THRESHOLD) {
+                if (pTfMap[tfIndex] >= threshold) {
                     FindNewFeature(Vector3i(x,y,z));
                 }
             }
@@ -72,7 +73,7 @@ void FeatureTracker::FindNewFeature(Vector3i seed) {
     innerPoints.clear();
 
     /////////////////////////////////
-    // Only one point now, take as surface point
+    // Only one point now, use as surface point
     numVoxelinFeature = 1;
     surfacePoints.push_back(seed);
     /////////////////////////////////
@@ -82,7 +83,7 @@ void FeatureTracker::FindNewFeature(Vector3i seed) {
 
     expandRegion(maskValue);
 
-    if (innerPoints.size() < (size_t)FEATURE_MIN_VOXEL_NUM) {
+    if (innerPoints.size() < (size_t)MIN_NUM_VOXEL_IN_FEATURE) {
         maskValue -= 1.0f; return;
     }
 
@@ -104,11 +105,10 @@ void FeatureTracker::FindNewFeature(Vector3i seed) {
 }
 
 void FeatureTracker::TrackFeature(float* pData, int direction, int mode) {
-    pVolumeData = pData;
-
     if (pTfMap == NULL || tfRes <= 0) {
         cout << "Set TF pointer first." << endl; exit(3);
     }
+    pVolumeData = pData;
 
     // save current 0-1 matrix to previous, then clear current maxtrix
     std::copy(pMaskCurrent, pMaskCurrent+volumeSize, pMaskPrevious);
@@ -244,7 +244,7 @@ inline void FeatureTracker::shrinkRegion(float maskValue) {
         dataPointList.pop_front();
 
         int index = GetVoxelIndex(point);
-        if (getOpacity(pVolumeData[index]) < lowerThreshold || getOpacity(pVolumeData[index]) > upperThreshold) {
+        if (getOpacity(pVolumeData[index]) < threshold) {
             isPointOnEdge = false;
             // if point is invisible, mark its adjacent points as 0
             shrinkEdge(point, maskValue);                                              // center
@@ -317,7 +317,7 @@ inline bool FeatureTracker::expandEdge(const Vector3i point, float maskValue) {
         return false;   // not on edge, inside feature, no need to adjust
     }
 
-    if (getOpacity(pVolumeData[index]) >= lowerThreshold && getOpacity(pVolumeData[index]) <= upperThreshold) {
+    if (getOpacity(pVolumeData[index]) >= threshold) {
         pMaskCurrent[index] = maskValue;
         dataPointList.push_back(point);
         innerPoints.push_back(point);

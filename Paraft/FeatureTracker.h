@@ -26,7 +26,6 @@ public:
     void SetDataPointer(float* pData)               { pVolumeData = pData; }
     void SetTFOpacityMap(float* map)                { pTfMap = map; }
     void SetTFResolution(int res)                   { tfRes = res; }
-    void SetThresholds(float lower, float upper)    { lowerThreshold = lower; upperThreshold = upper; }
     float* GetMaskPointer()                         { return pMaskCurrent; }
     float* GetTFOpacityMap()                        { return pTfMap; }
     int GetTFResolution()                           { return tfRes; }
@@ -41,8 +40,8 @@ private:
     void fillRegion(float maskValue);                       // scanline algorithm - fills everything inside edge
     void expandRegion(float maskValue);                     // grows edge where possible
     void shrinkRegion(float maskValue);                     // shrinks edge where nescessary
-    bool expandEdge(const Vector3i point, float maskValue);      // sub-func inside expandRegion
-    void shrinkEdge(const Vector3i point, float maskValue);      // sub-func inside shrinkRegion
+    bool expandEdge(const Vector3i point, float maskValue); // sub-func inside expandRegion
+    void shrinkEdge(const Vector3i point, float maskValue); // sub-func inside shrinkRegion
     void backupFeatureInfo(int direction);                  // Update the feature vectors information after tracking
 
     float getOpacity(float value) { return pTfMap[(int)(value * (tfRes-1))]; }
@@ -51,9 +50,8 @@ private:
     float* pMaskPrevious;       // Mask volume, for backward time step when tracking forward & backward
     float* pVolumeData;         // Raw volume intensity value
     float* pTfMap;
-    float lowerThreshold;
-    float upperThreshold;
-    float maskValue;
+    float  threshold;
+    float  maskValue;
 
     int tfRes;
     int volumeSize;
