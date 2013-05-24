@@ -34,7 +34,7 @@ void FeatureTracker::Reset() {
     numVoxelinFeature = 0;
     timestepsAvailableForward = 0;
     timestepsAvailableBackward = 0;
-    sumCoordinateValue.x = sumCoordinateValue.y = sumCoordinateValue.z = 0;
+    sumCoordinateValue = Vector3i();
 
     std::fill(pMaskCurrent, pMaskCurrent+volumeSize, 0);
     std::fill(pMaskPrevious, pMaskPrevious+volumeSize, 0);
@@ -67,8 +67,6 @@ void FeatureTracker::ExtractAllFeatures() {
 }
 
 void FeatureTracker::FindNewFeature(Vector3i seed) {
-    sumCoordinateValue = seed;
-
     dataPointList.clear();
     surfacePoints.clear();
     innerPoints.clear();
@@ -107,7 +105,6 @@ void FeatureTracker::FindNewFeature(Vector3i seed) {
 
 void FeatureTracker::TrackFeature(float* pData, int direction, int mode) {
     pVolumeData = pData;
-    innerPoints.clear();
 
     if (pTfMap == NULL || tfRes <= 0) {
         cout << "Set TF pointer first." << endl; exit(3);
@@ -120,7 +117,8 @@ void FeatureTracker::TrackFeature(float* pData, int direction, int mode) {
     for (size_t i = 0; i < currentFeaturesHolder.size(); i++) {
         Feature f = currentFeaturesHolder[i];
 
-//        surfacePoints = f.SurfacePoints;
+        surfacePoints = f.SurfacePoints;
+        innerPoints.clear();
 
         predictRegion(i, direction, mode);
         fillRegion(f.MaskValue);
@@ -131,8 +129,8 @@ void FeatureTracker::TrackFeature(float* pData, int direction, int mode) {
         f.Centroid        = centroid;
         f.SurfacePoints   = surfacePoints;
         f.InnerPoints     = innerPoints;
+
         currentFeaturesHolder[i] = f;
-        innerPoints.clear();
     }
 
     backupFeatureInfo(direction);
