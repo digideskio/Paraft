@@ -24,7 +24,7 @@ public:
     void TrackFeature(float* pData, int direction, int mode);
     void SaveExtractedFeatures(int index)           { featureSequence[index] = currentFeaturesHolder; }
     void SetDataPointer(float* pData)               { pVolumeData = pData; }
-    void SetTFOpacityMap(float* map)                { pTfMap = map; }
+    void SetTFMap(float* map)                       { pTfMap = map; }
     void SetTFResolution(int res)                   { tfRes = res; }
     float* GetMaskPointer()                         { return pMaskCurrent; }
     float* GetTFOpacityMap()                        { return pTfMap; }
@@ -37,11 +37,11 @@ public:
 
 private:
     void predictRegion(int index, int direction, int mode); // predict region t based on direction
-    void fillRegion(float maskValue);                       // scanline algorithm - fills everything inside edge
-    void expandRegion(float maskValue);                     // grows edge where possible
-    void shrinkRegion(float maskValue);                     // shrinks edge where nescessary
-    bool expandEdge(const Vector3i point, float maskValue); // sub-func inside expandRegion
-    void shrinkEdge(const Vector3i point, float maskValue); // sub-func inside shrinkRegion
+    void fillRegion();                       // scanline algorithm - fills everything inside edge
+    void expandRegion();                     // grows edge where possible
+    void shrinkRegion();                     // shrinks edge where nescessary
+    bool expandEdge(const Vector3i &point); // sub-func inside expandRegion
+    void shrinkEdge(const Vector3i &point); // sub-func inside shrinkRegion
     void backupFeatureInfo(int direction);                  // Update the feature vectors information after tracking
 
     float getOpacity(float value) { return pTfMap[(int)(value * (tfRes-1))]; }
@@ -63,7 +63,6 @@ private:
     list<Vector3i> dataPointList;  // Active queue
     list<Vector3i> surfacePoints;  // For edge points saving
     list<Vector3i> innerPoints;    // Hold the temp buffer of the voxel position
-    list<Vector3i>::iterator p;
 
     Vector3i blockDim;
     Vector3i centroid;              // center point of a single feature

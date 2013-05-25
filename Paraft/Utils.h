@@ -2,6 +2,7 @@
 #define CONSTS_H
 
 #include <hash_map.h>
+#include <omp.h>
 #include <fstream>
 #include <iostream>
 #include <cmath>
@@ -43,7 +44,7 @@ namespace util {
         Vector3& operator *= (int scale)                { x*=scale, y*=scale, z*=scale; return *this; }
         Vector3& operator /= (int scale)                { x/=scale, y/=scale, z/=scale; return *this; }
         bool     operator == (Vector3 const& rhs) const { return x==rhs.x && y==rhs.y && z==rhs.z; }
-        bool     operator != (Vector3 const& rhs) const { return x!=rhs.x || y!=rhs.y || z!=rhs.z; }
+        bool     operator != (Vector3 const& rhs) const { return !(*this == rhs); }
     };
 }
 

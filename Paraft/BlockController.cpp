@@ -14,7 +14,7 @@ void BlockController::InitParameters(const Metadata &meta) {
 
     pFeatureTracker = new FeatureTracker(pDataManager->GetBlockDimension());
     pFeatureTracker->SetTFResolution(pDataManager->GetTFResolution());
-    pFeatureTracker->SetTFOpacityMap(pDataManager->GetTFOpacityMap());
+    pFeatureTracker->SetTFMap(pDataManager->GetTFOpacityMap());
     pFeatureTracker->SetDataPointer(pDataManager->GetDataPointer(currentTimestep));
 }
 

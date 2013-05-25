@@ -4,7 +4,7 @@ int main (int argc, char** argv) {
 
     Metadata meta; {
         meta.start      = 60;
-        meta.end        = 80;
+        meta.end        = 63;
         meta.prefix     = "vorts";
         meta.surfix     = "data";
         meta.path       = "/Users/Yang/Develop/Data/vorts";
