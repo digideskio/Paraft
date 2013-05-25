@@ -37,11 +37,11 @@ public:
 
 private:
     void predictRegion(int index, int direction, int mode); // predict region t based on direction
-    void fillRegion();                       // scanline algorithm - fills everything inside edge
-    void expandRegion();                     // grows edge where possible
-    void shrinkRegion();                     // shrinks edge where nescessary
-    bool expandEdge(const Vector3i &point); // sub-func inside expandRegion
-    void shrinkEdge(const Vector3i &point); // sub-func inside shrinkRegion
+    void fillRegion(list<Vector3i> &edgeVoxels, list<Vector3i> &bodyVoxels);                       // scanline algorithm - fills everything inside edge
+    void expandRegion(list<Vector3i> &edgeVoxels, list<Vector3i> &bodyVoxels);                     // grows edge where possible
+    void shrinkRegion(list<Vector3i> &edgeVoxels, list<Vector3i> &bodyVoxels);                     // shrinks edge where nescessary
+    bool expandEdge(list<Vector3i> &edgeVoxels, list<Vector3i> &bodyVoxels, const Vector3i &voxel); // sub-func inside expandRegion
+    void shrinkEdge(list<Vector3i> &edgeVoxels, list<Vector3i> &bodyVoxels, const Vector3i &voxel); // sub-func inside shrinkRegion
     void backupFeatureInfo(int direction);                  // Update the feature vectors information after tracking
 
     float getOpacity(float value) { return pTfMap[(int)(value * (tfRes-1))]; }
@@ -59,14 +59,9 @@ private:
     int timestepsAvailableForward;
     int timestepsAvailableBackward;
 
-    // FeatureInfo
-    list<Vector3i> dataPointList;  // Active queue
-    list<Vector3i> surfacePoints;  // For edge points saving
-    list<Vector3i> innerPoints;    // Hold the temp buffer of the voxel position
-
     Vector3i blockDim;
-    Vector3i centroid;              // center point of a single feature
-    Vector3i sumCoordinateValue;    // Sum of the voxel values of the feature
+    Vector3i centroid;  // center point of a single feature
+    Vector3i sumValue;  // Sum of the voxel values of the feature
     Vector3i delta;
 
     vector<Feature> currentFeaturesHolder; // Features info in current time step

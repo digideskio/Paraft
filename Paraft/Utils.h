@@ -64,8 +64,8 @@ struct Metadata {
 struct Feature {
     int             ID;             // Unique ID for each feature
     float           MaskValue;      // Used to record the color of the feature
-    list<Vector3i>  SurfacePoints;  // Edge information of the feature
-    list<Vector3i>  InnerPoints;    // All the voxels in the feature
+    list<Vector3i>  EdgeVoxels;     // Edge information of the feature
+    list<Vector3i>  BodyVoxels;     // All the voxels in the feature
     Vector3i        Centroid;       // Centers position of the feature
     Vector3i        Min;            // Minimum position (x,y,z) on boundary
     Vector3i        Max;            // Maximum position (x,y,z) on boundary

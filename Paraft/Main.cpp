@@ -4,7 +4,7 @@ int main (int argc, char** argv) {
 
     Metadata meta; {
         meta.start      = 60;
-        meta.end        = 63;
+        meta.end        = 80;
         meta.prefix     = "vorts";
         meta.surfix     = "data";
         meta.path       = "/Users/Yang/Develop/Data/vorts";
@@ -21,9 +21,8 @@ int main (int argc, char** argv) {
 
     while (currentTimestep++ < meta.end) {
         pBlockController->SetCurrentTimestep(currentTimestep);
-        cout << "-- " << currentTimestep;
         pBlockController->TrackForward(meta);
-        cout << " done --" << endl;
+        cout << "-- " << currentTimestep << " done --" << endl;
     }
 
     delete pBlockController;
