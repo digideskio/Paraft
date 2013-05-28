@@ -11,7 +11,6 @@ public:
     FeatureTracker(Vector3i dim);
     ~FeatureTracker() ;
 
-    void Reset();
     void ExtractAllFeatures();
 
     // Set seed at current time step. FindNewFeature will do three things :
@@ -22,7 +21,7 @@ public:
 
     // Track forward based on the center points of the features at the last time step
     void TrackFeature(float* pData, int direction, int mode);
-    void SaveExtractedFeatures(int index)           { featureSequence[index] = currentFeaturesHolder; }
+    void SaveExtractedFeatures(int index)           { featureSequence[index] = currentFeatures; }
     void SetDataPointer(float* pData)               { pVolumeData = pData; }
     void SetTFMap(float* map)                       { pTfMap = map; }
     void SetTFResolution(int res)                   { tfRes = res; }
@@ -33,41 +32,35 @@ public:
 
     // Get all features information of current time step
     vector<Feature>* GetFeatureVectorPointer(int index) { return &featureSequence[index]; }
-    void SetCurrentFeatureInfo(vector<Feature>* pFeature);
 
 private:
-    void predictRegion(int index, int direction, int mode); // predict region t based on direction
-    void fillRegion(list<Vector3i> &edgeVoxels, list<Vector3i> &bodyVoxels);                       // scanline algorithm - fills everything inside edge
-    void expandRegion(list<Vector3i> &edgeVoxels, list<Vector3i> &bodyVoxels);                     // grows edge where possible
-    void shrinkRegion(list<Vector3i> &edgeVoxels, list<Vector3i> &bodyVoxels);                     // shrinks edge where nescessary
-    bool expandEdge(list<Vector3i> &edgeVoxels, list<Vector3i> &bodyVoxels, const Vector3i &voxel); // sub-func inside expandRegion
-    void shrinkEdge(list<Vector3i> &edgeVoxels, list<Vector3i> &bodyVoxels, const Vector3i &voxel); // sub-func inside shrinkRegion
-    void backupFeatureInfo(int direction);                  // Update the feature vectors information after tracking
+    Vector3i predictRegion(int index, int direction, int mode); // predict region t based on direction, returns offset
+    void fillRegion(Feature &f, const Vector3i &offset);    // scanline algorithm - fills everything inside edge
+    void expandRegion(Feature &f);  // grows edge where possible
+    void shrinkRegion(Feature &f);  // shrinks edge where nescessary
+    bool expandEdge(Feature &f, const Vector3i &seed); // sub-func inside expandRegion
+    void shrinkEdge(Feature &f, const Vector3i &seed); // sub-func inside shrinkRegion
+    void backupFeatureInfo(int direction);              // Update the feature vectors information after tracking
 
     float getOpacity(float value) { return pTfMap[(int)(value * (tfRes-1))]; }
 
     float* pMaskCurrent;        // Mask volume, same size with a time step data
     float* pMaskPrevious;       // Mask volume, for backward time step when tracking forward & backward
     float* pVolumeData;         // Raw volume intensity value
-    float* pTfMap;
-    float  threshold;
-    float  maskValue;
+    float* pTfMap;              // Tranfer function setting
+    float  globalMaskValue;     // Global mask value for newly detected features
 
     int tfRes;
     int volumeSize;
-    int numVoxelinFeature;
-    int timestepsAvailableForward;
-    int timestepsAvailableBackward;
+    int timeLeft2Forward;
+    int timeLeft2Backward;
 
     Vector3i blockDim;
-    Vector3i centroid;  // center point of a single feature
-    Vector3i sumValue;  // Sum of the voxel values of the feature
-    Vector3i delta;
 
-    vector<Feature> currentFeaturesHolder; // Features info in current time step
-    vector<Feature> backup1FeaturesHolder; // ... in the 1st backup time step
-    vector<Feature> backup2FeaturesHolder; // ... in the 2nd backup time step
-    vector<Feature> backup3FeaturesHolder; // ... in the 3rd backup time step
+    vector<Feature> currentFeatures; // Features info in current time step
+    vector<Feature> backup1Features; // ... in the 1st backup time step
+    vector<Feature> backup2Features; // ... in the 2nd backup time step
+    vector<Feature> backup3Features; // ... in the 3rd backup time step
 
     FeatureVectorSequence featureSequence;
 };
