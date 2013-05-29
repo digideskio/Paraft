@@ -51,19 +51,18 @@ namespace util {
 typedef util::Vector3<int> Vector3i;
 
 struct Metadata {
-    int             start;
-    int             end;
-    string          prefix;
-    string          surfix;
-    string          path;
-    string          tfPath;
-    string          timeFormat;
-    Vector3i        volumeDim;
+    int      start;
+    int      end;
+    string   prefix;
+    string   surfix;
+    string   path;
+    string   tfPath;
+    string   timeFormat;
+    Vector3i volumeDim;
 };
 
 struct Feature {
     int             id;             // Unique ID for each feature
-    int             numVoxels;      // # voxels in the feature
     float           maskValue;      // Used to record the color of the feature
     list<Vector3i>  edgeVoxels;     // Edge information of the feature
     list<Vector3i>  bodyVoxels;     // All the voxels in the feature

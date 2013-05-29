@@ -25,7 +25,7 @@ public:
     void SetDataPointer(float* pData)               { pVolumeData = pData; }
     void SetTFMap(float* map)                       { pTfMap = map; }
     void SetTFResolution(int res)                   { tfRes = res; }
-    float* GetMaskPointer()                         { return pMaskCurrent; }
+    float* GetMaskPointer()                         { return pMask; }
     float* GetTFOpacityMap()                        { return pTfMap; }
     int GetTFResolution()                           { return tfRes; }
     int GetVoxelIndex(const Vector3i &voxel)        { return blockDim.x*blockDim.y*voxel.z+blockDim.x*voxel.y+voxel.x; }
@@ -44,7 +44,7 @@ private:
 
     float getOpacity(float value) { return pTfMap[(int)(value * (tfRes-1))]; }
 
-    float* pMaskCurrent;        // Mask volume, same size with a time step data
+    float* pMask;               // Mask volume, same size with a time step data
     float* pMaskPrevious;       // Mask volume, for backward time step when tracking forward & backward
     float* pVolumeData;         // Raw volume intensity value
     float* pTfMap;              // Tranfer function setting
