@@ -24,3 +24,6 @@ HEADERS += \
     BlockController.h \
     Utils.h \
     Metadata.h
+
+OTHER_FILES += \
+    meta.config

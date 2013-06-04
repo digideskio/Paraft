@@ -46,20 +46,23 @@ namespace util {
         bool     operator == (Vector3 const& rhs) const { return x==rhs.x && y==rhs.y && z==rhs.z; }
         bool     operator != (Vector3 const& rhs) const { return !(*this == rhs); }
     };
+
+    static inline string ltrim(const string &s) {    // trim string from left
+        int start = s.find_first_not_of(' ');
+        return s.substr(start, s.size() - start);
+    }
+
+    static inline string rtrim(const string &s) {    // trim string from right
+        return s.substr(0, s.find_last_not_of(' ')+1);
+    }
+
+    static inline string trim(const string &s) {     // trim all whitesapces
+        return ltrim(rtrim(s));
+    }
+
 }
 
 typedef util::Vector3<int> Vector3i;
-
-//struct Metadata {
-//    int      start;
-//    int      end;
-//    string   prefix;
-//    string   surfix;
-//    string   path;
-//    string   tfPath;
-//    string   timeFormat;
-//    Vector3i volumeDim;
-//};
 
 struct Feature {
     int             id;         // Unique ID for each feature

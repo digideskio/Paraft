@@ -2,7 +2,7 @@
 #include "Metadata.h"
 
 int main (int argc, char** argv) {
-    Metadata *meta = new Metadata("");
+    Metadata *meta = new Metadata("meta.config");
 //    Metadata meta; {
 //        meta.start      = 0;
 //        meta.end        = 23;
