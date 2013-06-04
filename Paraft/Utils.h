@@ -11,7 +11,7 @@
 #include <list>
 
 const float OPACITY_THRESHOLD  = 0.2;
-const int MIN_NUM_VOXEL_IN_FEATURE = 100;
+const int MIN_NUM_VOXEL_IN_FEATURE = 50;
 const int FT_DIRECT = 0;
 const int FT_LINEAR = 1;
 const int FT_POLYNO = 2;
@@ -50,23 +50,23 @@ namespace util {
 
 typedef util::Vector3<int> Vector3i;
 
-struct Metadata {
-    int      start;
-    int      end;
-    string   prefix;
-    string   surfix;
-    string   path;
-    string   tfPath;
-    string   timeFormat;
-    Vector3i volumeDim;
-};
+//struct Metadata {
+//    int      start;
+//    int      end;
+//    string   prefix;
+//    string   surfix;
+//    string   path;
+//    string   tfPath;
+//    string   timeFormat;
+//    Vector3i volumeDim;
+//};
 
 struct Feature {
-    int             id;             // Unique ID for each feature
-    float           maskValue;      // Used to record the color of the feature
-    list<Vector3i>  edgeVoxels;     // Edge information of the feature
-    list<Vector3i>  bodyVoxels;     // All the voxels in the feature
-    Vector3i        centroid;       // Centers position of the feature
+    int             id;         // Unique ID for each feature
+    float           maskValue;  // Used to record the color of the feature
+    list<Vector3i>  edgeVoxels; // Edge information of the feature
+    list<Vector3i>  bodyVoxels; // All the voxels in the feature
+    Vector3i        centroid;   // Centers position of the feature
 };
 
 typedef hash_map<int, float> IndexValueMap;

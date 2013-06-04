@@ -31,7 +31,7 @@ void FeatureTracker::ExtractAllFeatures() {
             for (int x = 0; x < blockDim.x; x++) {
                 int index = GetVoxelIndex(Vector3i(x, y, z));
                 if (pMask[index] > 0) {  // point already within a feature
-                    continue;                   // most points should stop here
+                    continue;            // most points should stop here
                 }
                 int tfIndex = (int)(pVolumeData[index] * (float)(tfRes-1));
                 if (pTfMap[tfIndex] >= OPACITY_THRESHOLD) {

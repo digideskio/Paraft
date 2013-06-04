@@ -23,7 +23,7 @@ void DataManager::CreateNewMaskVolume() {
     std::fill(pMaskVolume, pMaskVolume+volumeSize, 0);
 }
 
-void DataManager::InitTFSettings(string filename) {
+void DataManager::InitTFSettings(const string &filename) {
     ifstream inf(filename.c_str(), ios::binary);
     if (!inf) { cout << "cannot read tf setting: " + filename << endl; exit(1); }
 
@@ -39,8 +39,8 @@ void DataManager::InitTFSettings(string filename) {
 
 void DataManager::SaveMaskVolume(float* pData, const Metadata &meta, const int timestep) {
     char timestamp[21];  // up to 64-bit #
-    sprintf(timestamp, meta.timeFormat.c_str(), timestep);
-    string fpath = meta.path + "/" + meta.prefix + timestamp + ".mask";
+    sprintf(timestamp, (meta.timeFormat()).c_str(), timestep);
+    string fpath = meta.path() + "/" + meta.prefix() + timestamp + ".mask";
     ofstream outf(fpath.c_str(), ios::binary);
     if (!outf) { cerr << "cannot output to file: " << fpath << endl; return; }
 
@@ -49,7 +49,7 @@ void DataManager::SaveMaskVolume(float* pData, const Metadata &meta, const int t
 }
 
 void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
-    blockDim = meta.volumeDim;
+    blockDim = meta.volumeDim();
     volumeSize = blockDim.Product();
 
     // delete if data is not within [t-2, t+2] of current timestep t
@@ -61,13 +61,13 @@ void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
     }
 
     for (int t = timestep-2; t <= timestep+2; t++) {
-        if (t < meta.start || t > meta.end || dataSequence[t] != NULL) {
+        if (t < meta.start() || t > meta.end() || dataSequence[t] != NULL) {
             continue;
         }
 
         char timestamp[21];  // up to 64-bit #
-        sprintf(timestamp, meta.timeFormat.c_str(), t);
-        string fpath = meta.path + "/" + meta.prefix + timestamp + "." + meta.surfix;
+        sprintf(timestamp, meta.timeFormat().c_str(), t);
+        string fpath = meta.path() + "/" + meta.prefix() + timestamp + "." + meta.suffix();
 
         ifstream inf(fpath.c_str(), ios::binary);
         if (!inf) { cout << "cannot read file: " + fpath << endl; exit(1); }
