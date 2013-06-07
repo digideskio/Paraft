@@ -76,11 +76,58 @@ void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
         inf.read(reinterpret_cast<char*>(dataSequence[t]), volumeSize*sizeof(float));
         inf.close();
 
-        nomalize(dataSequence[t]);
+        preprocessData(dataSequence[t], meta.remapping());
     }
 }
 
-void DataManager::nomalize(float *pData) {
+void DataManager::preprocessData(float *pData, bool remapping) {
+    if (!remapping) {
+        normalize(pData); return;
+    }
+
+    // still not working witht the jet dataset ...
+
+    int granularity = 1;
+    int binLength = tfResolution * granularity;  // divide [0,1] into 1024 * 1 bins
+
+    float min = pData[0], max = pData[0];
+    for (int i = 1; i < volumeSize; i++) {
+        min = min < pData[i] ? min : pData[i];
+        max = max > pData[i] ? max : pData[i];
+    }
+
+    int binIndex = 0;
+
+    map<float, int> histMap;
+    for (int i = 0; i < volumeSize; i++) {
+        pData[i] = (pData[i] - min) / (max - min);
+        binIndex = (int)(pData[i] * binLength);
+        if (histMap.find(binIndex) != histMap.end()) {
+            histMap[binIndex]++;
+        } else {
+            histMap[binIndex] = 1;
+        }
+    }
+
+    vector<pair<float, int> > samples(histMap.begin(), histMap.end());
+    std::sort(samples.begin(), samples.end(), &util::descending);
+
+    float peakValue = samples[0].first / binLength;
+    min = peakValue - 0.1;
+    max = peakValue + 0.1;
+
+    for (int i = 0; i < volumeSize; i++) {
+        if (pData[i] < min) {
+            pData[i] = 0;
+        } else if (pData[i] > max) {
+            pData[i] = 1;
+        } else {
+            pData[i] = (pData[i] - min) / 0.2;
+        }
+    }
+}
+
+void DataManager::normalize(float *pData) {
     float min = pData[0], max = pData[0];
     for (int i = 1; i < volumeSize; i++) {
         min = min < pData[i] ? min : pData[i];

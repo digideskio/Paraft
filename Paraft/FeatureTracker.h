@@ -9,7 +9,7 @@ class FeatureTracker {
 
 public:
     FeatureTracker(Vector3i dim);
-    ~FeatureTracker() ;
+   ~FeatureTracker();
 
     void ExtractAllFeatures();
 

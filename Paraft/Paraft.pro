@@ -26,4 +26,5 @@ HEADERS += \
     Metadata.h
 
 OTHER_FILES += \
-    meta.config
+    vorts.config \
+    jet.config

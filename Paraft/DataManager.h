@@ -8,7 +8,7 @@ class DataManager {
 
 public:
     DataManager();
-    ~DataManager();
+   ~DataManager();
 
     float* GetDataPointer(int index) { return dataSequence[index]; }
     float* GetTFOpacityMap()         { return pTFOpacityMap; }
@@ -20,7 +20,8 @@ public:
     void LoadDataSequence(const Metadata &meta, const int timestep);
     void SaveMaskVolume(float *pData, const Metadata &meta, const int timestep);
 private:
-    void nomalize(float *pData);
+    void preprocessData(float *pData, bool remapping);
+    void normalize(float *pData);
 
     DataSequence dataSequence;
     Vector3i blockDim;

@@ -9,7 +9,7 @@ class BlockController {
 
 public:
     BlockController();
-    ~BlockController();
+   ~BlockController();
 
     void InitParameters(const Metadata &meta);
     void TrackForward(const Metadata &meta);

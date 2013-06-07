@@ -9,9 +9,10 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <map>
 
 const float OPACITY_THRESHOLD  = 0.2;
-const int MIN_NUM_VOXEL_IN_FEATURE = 50;
+const int MIN_NUM_VOXEL_IN_FEATURE = 20;
 const int FT_DIRECT = 0;
 const int FT_LINEAR = 1;
 const int FT_POLYNO = 2;
@@ -60,6 +61,13 @@ namespace util {
         return ltrim(rtrim(s));
     }
 
+    static inline bool ascending(const pair<float, int> &lhs, const pair<float, int> &rhs) {
+        return lhs.second < rhs.second;
+    }
+
+    static inline bool descending(const pair<float, int> &lhs, const pair<float, int> &rhs) {
+        return !ascending(lhs, rhs);
+    }
 }
 
 typedef util::Vector3<int> Vector3i;

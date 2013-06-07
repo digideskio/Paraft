@@ -8,9 +8,9 @@ BlockController::~BlockController() {
 
 void BlockController::InitParameters(const Metadata &meta) {
     pDataManager = new DataManager();
+    pDataManager->InitTFSettings(meta.tfPath());
     pDataManager->LoadDataSequence(meta, currentTimestep);
     pDataManager->CreateNewMaskVolume();
-    pDataManager->InitTFSettings(meta.tfPath());
 
     pFeatureTracker = new FeatureTracker(pDataManager->GetBlockDimension());
     pFeatureTracker->SetTFResolution(pDataManager->GetTFResolution());
