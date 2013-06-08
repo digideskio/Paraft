@@ -21,48 +21,48 @@ public:
 
     // Track forward based on the center points of the features at the last time step
     void TrackFeature(float* pData, int direction, int mode);
-    void SaveExtractedFeatures(int index)           { featureSequence[index] = currentFeatures; }
-    void SetDataPointer(float* pData)               { pVolumeData = pData; }
-    void SetTFMap(float* map)                       { pTfMap = map; }
-    void SetTFResolution(int res)                   { tfRes = res; }
-    float* GetMaskPointer()                         { return pMask; }
-    float* GetTFOpacityMap()                        { return pTfMap; }
-    int GetTFResolution()                           { return tfRes; }
-    int GetVoxelIndex(const Vector3i &voxel)        { return blockDim.x*blockDim.y*voxel.z+blockDim.x*voxel.y+voxel.x; }
+    void SaveExtractedFeatures(int index)       { featureSequence_[index] = currentFeatures_; }
+    void SetDataPtr(float* pData)               { pData_ = pData; }
+    void SetTFMap(float* map)                   { pTfMap_ = map; }
+    void SetTFRes(int res)                      { tfRes_ = res; }
+    float* GetMaskPtr()                         { return pMask_; }
+    float* GetTFOpacityMap()                    { return pTfMap_; }
+    int GetTFResolution()                       { return tfRes_; }
+    int GetVoxelIndex(const Vector3i &v)        { return blockDim_.x*blockDim_.y*v.z+blockDim_.x*v.y+v.x; }
 
     // Get all features information of current time step
-    vector<Feature>* GetFeatureVectorPointer(int index) { return &featureSequence[index]; }
+    vector<Feature>* GetFeatureVectorPointer(int index) { return &featureSequence_[index]; }
 
 private:
-    Vector3i predictRegion(int index, int direction, int mode); // predict region t based on direction, returns offset
-    void fillRegion(Feature &f, const Vector3i &offset);    // scanline algorithm - fills everything inside edge
-    void expandRegion(Feature &f);  // grows edge where possible
-    void shrinkRegion(Feature &f);  // shrinks edge where nescessary
-    bool expandEdge(Feature &f, const Vector3i &seed); // sub-func inside expandRegion
-    void shrinkEdge(Feature &f, const Vector3i &seed); // sub-func inside shrinkRegion
-    void backupFeatureInfo(int direction);              // Update the feature vectors information after tracking
+    Vector3i predictRegion(int index, int direction, int mode); // Predict region t based on direction, returns offset
+    void fillRegion(Feature &f, const Vector3i &offset);        // Scanline algorithm - fills everything inside edge
+    void expandRegion(Feature &f);                              // Grows edge where possible
+    void shrinkRegion(Feature &f);                              // Shrinks edge where nescessary
+    bool expandEdge(Feature &f, const Vector3i &seed);          // Sub-func inside expandRegion
+    void shrinkEdge(Feature &f, const Vector3i &seed);          // Sub-func inside shrinkRegion
+    void backupFeatureInfo(int direction);                      // Update the feature vectors information after tracking
 
-    float getOpacity(float value) { return pTfMap[(int)(value * (tfRes-1))]; }
+    float getOpacity(float value) { return pTfMap_[(int)(value * (tfRes_-1))]; }
 
-    float* pMask;               // Mask volume, same size with a time step data
-    float* pMaskPrevious;       // Mask volume, for backward time step when tracking forward & backward
-    float* pVolumeData;         // Raw volume intensity value
-    float* pTfMap;              // Tranfer function setting
-    float  globalMaskValue;     // Global mask value for newly detected features
+    float* pMask_;              // Mask volume, same size with a time step data
+    float* pMaskPrev_;          // Mask volume, for backward time step when tracking forward & backward
+    float* pData_;              // Raw volume intensity value
+    float* pTfMap_;             // Tranfer function setting
+    float  globalMaskValue_;    // Global mask value for newly detected features
 
-    int tfRes;
-    int volumeSize;
-    int timeLeft2Forward;
-    int timeLeft2Backward;
+    int tfRes_;
+    int volumeSize_;
+    int timeLeft2Forward_;
+    int timeLeft2Backward_;
 
-    Vector3i blockDim;
+    Vector3i blockDim_;
 
-    vector<Feature> currentFeatures; // Features info in current time step
-    vector<Feature> backup1Features; // ... in the 1st backup time step
-    vector<Feature> backup2Features; // ... in the 2nd backup time step
-    vector<Feature> backup3Features; // ... in the 3rd backup time step
+    vector<Feature> currentFeatures_; // Features info in current time step
+    vector<Feature> backup1Features_; // ... in the 1st backup time step
+    vector<Feature> backup2Features_; // ... in the 2nd backup time step
+    vector<Feature> backup3Features_; // ... in the 3rd backup time step
 
-    FeatureVectorSequence featureSequence;
+    FeatureVectorSequence featureSequence_;
 };
 
 #endif // FEATURETRACKER_H

@@ -14,13 +14,13 @@ public:
     void InitParameters(const Metadata &meta);
     void TrackForward(const Metadata &meta);
     void ExtractAllFeatures();
-    void SetCurrentTimestep(int t) { currentTimestep = t; }
+    void SetCurrentTimestep(int t) { t_ = t; }
 
 private:
-    DataManager             *pDataManager;
-    FeatureTracker          *pFeatureTracker;
-    FeatureVectorSequence    featureSequence;
-    int                      currentTimestep;
+    DataManager             *pDataManager_;
+    FeatureTracker          *pFeatureTracker_;
+    FeatureVectorSequence    featureSequence_;
+    int                      t_;
 };
 
 #endif // DATABLOCKCONTROLLER_H

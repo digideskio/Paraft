@@ -12,12 +12,13 @@
 #include <map>
 
 const float OPACITY_THRESHOLD  = 0.2;
-const int MIN_NUM_VOXEL_IN_FEATURE = 20;
+const int MIN_NUM_VOXEL_IN_FEATURE = 10;
 const int FT_DIRECT = 0;
 const int FT_LINEAR = 1;
 const int FT_POLYNO = 2;
 const int FT_FORWARD  = 0;
 const int FT_BACKWARD = 1;
+const int DEFAULT_TF_RES = 1024;
 
 using namespace std;
 
@@ -80,7 +81,6 @@ struct Feature {
     Vector3i        centroid;   // Centers position of the feature
 };
 
-typedef hash_map<int, float> IndexValueMap;
 typedef hash_map<int, float*> DataSequence;
 typedef hash_map<int, vector<Feature> > FeatureVectorSequence;
 

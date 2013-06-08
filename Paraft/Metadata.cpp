@@ -14,8 +14,8 @@ Metadata::Metadata(const string &fpath) {
             start_ = atoi(value.c_str());
         } else if (line.find("end") != line.npos) {
             end_ = atoi(value.c_str());
-        } else if (line.find("remapping") != line.npos) {
-            remapping_ = value == "true" ? true : false;
+        } else if (line.find("dynamicTF") != line.npos) {
+            dynamicTF_ = value == "true" ? true : false;
         } else {
             // remove leading & trailing chars () or ""
             value = value.substr(1, value.size()-2);
