@@ -11,7 +11,7 @@
 #include <list>
 #include <map>
 
-const float OPACITY_THRESHOLD  = 0.2;
+const float OPACITY_THRESHOLD  = 0.1;
 const int MIN_NUM_VOXEL_IN_FEATURE = 10;
 const int FT_DIRECT = 0;
 const int FT_LINEAR = 1;

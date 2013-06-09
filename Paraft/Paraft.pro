@@ -16,14 +16,16 @@ SOURCES += \
     DataManager.cpp \
     FeatureTracker.cpp \
     BlockController.cpp \
-    Metadata.cpp
+    Metadata.cpp \
+    SuperVoxel.cpp
 
 HEADERS += \
     DataManager.h \
     FeatureTracker.h \
     BlockController.h \
     Utils.h \
-    Metadata.h
+    Metadata.h \
+    SuperVoxel.h
 
 OTHER_FILES += \
     vorts.config \
