@@ -3,13 +3,11 @@ QMAKE_CXX    = g++
 #QMAKE_CC     = /usr/local/bin/mpicc
 #QMAKE_CXX    = /usr/local/bin/mpic++
 #LIBS        += -lmpi_cxx -lmpi -lopen-rte -lopen-pal -lutil
-INCLUDEPATH += /usr/local/include \
-               /usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin11/4.2.1/include
+INCLUDEPATH += -I/usr/local/include
 
-QMAKE_CXXFLAGS += -fopenmp
-QMAKE_LFLAGS   += -fopenmp
-LIBS += -L/usr/local/lib \
-        -L/usr/llvm-gcc-4.2/lib/gcc/i686-apple-darwin11/4.2.1/x86_64 -lgomp
+#QMAKE_CXXFLAGS += -fopenmp
+#QMAKE_LFLAGS   += -fopenmp
+LIBS += -L/usr/local/lib -lm -lopencv_core -lopencv_highgui
 
 SOURCES += \
     Main.cpp \
@@ -17,7 +15,8 @@ SOURCES += \
     FeatureTracker.cpp \
     BlockController.cpp \
     Metadata.cpp \
-    SuperVoxel.cpp
+    SuperVoxel.cpp \
+    SuperPixel.cpp
 
 HEADERS += \
     DataManager.h \
@@ -25,7 +24,8 @@ HEADERS += \
     BlockController.h \
     Utils.h \
     Metadata.h \
-    SuperVoxel.h
+    SuperVoxel.h \
+    SuperPixel.h
 
 OTHER_FILES += \
     vorts.config \

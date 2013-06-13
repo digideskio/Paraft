@@ -48,9 +48,9 @@ void SuperVoxel::RGB2XYZ(const int& sR, const int& sG, const int& sB, double& X,
     double B = sB/255.0;
     double r, g, b;
 
-    r = R <= 0.04045 ? R/12.92 : pow((R+0.055)/1.055,2.4);
-    g = G <= 0.04045 ? G/12.92 : pow((G+0.055)/1.055,2.4);
-    b = B <= 0.04045 ? B/12.92 : pow((B+0.055)/1.055,2.4);
+    r = R <= 0.04045 ? R/12.92 : pow((R+0.055)/1.055, 2.4);
+    g = G <= 0.04045 ? G/12.92 : pow((G+0.055)/1.055, 2.4);
+    b = B <= 0.04045 ? B/12.92 : pow((B+0.055)/1.055, 2.4);
 
     X = r*0.4124564 + g*0.3575761 + b*0.1804375;
     Y = r*0.2126729 + g*0.7151522 + b*0.0721750;
@@ -412,7 +412,7 @@ void SuperVoxel::PerformSuperpixelSLIC(vector<double>& kseedsl, vector<double>& 
     vector<double> sigmab(numk, 0);
     vector<double> sigmax(numk, 0);
     vector<double> sigmay(numk, 0);
-    vector<double> distvec(sz, DBL_MAX);
+    vector<double> distvec(sz, numeric_limits<double>::max());
 
     double invwt = 1.0/((STEP/M)*(STEP/M));
 
@@ -421,7 +421,7 @@ void SuperVoxel::PerformSuperpixelSLIC(vector<double>& kseedsl, vector<double>& 
     double dist;
     double distxy;
     for (int itr = 0; itr < 10; itr++) {
-        distvec.assign(sz, DBL_MAX);
+        distvec.assign(sz, numeric_limits<double>::max());
         for (int n = 0; n < numk; n++) {
             y1 = max(0.0, kseedsy[n]-offset);
             y2 = min((double)m_height, kseedsy[n]+offset);
@@ -529,9 +529,9 @@ void SuperVoxel::PerformSupervoxelSLIC(vector<double>& kseedsl, vector<double>& 
     vector<double> sigmay(numk, 0);
     vector<double> sigmaz(numk, 0);
 
-    vector< double > initdouble(sz, DBL_MAX);
+    vector< double > initdouble(sz, numeric_limits<double>::max());
     vector< vector<double> > distvec(m_depth, initdouble);
-    //vector<double> distvec(sz, DBL_MAX);
+    //vector<double> distvec(sz, numeric_limits<double>::max());
 
     double invwt = 1.0/((STEP/compactness)*(STEP/compactness));//compactness = 20.0 is usually good.
 
@@ -958,8 +958,7 @@ void SuperVoxel::DoSuperpixelSegmentation_ForGivenSuperpixelSize(
 /// as follows:
 ///
 /// [1 1 1 1 1 1 1 1]  [1 1 1 1 1 1 1 1]  [1 1 1 1 1 1 1 1]  [1 1 1 1 1 1 1 1]
-///
-///        Nothing              R                 G                  B
+///      Nothing               R                  G                  B
 ///
 /// The RGB values are accessed from (and packed into) the unsigned integers
 /// using bitwise operators as can be seen in the function DoRGBtoLABConversion().
@@ -1000,8 +999,7 @@ void SuperVoxel::DoSuperpixelSegmentation_ForGivenNumberOfSuperpixels(
 /// integer:
 ///
 /// [1 1 1 1 1 1 1 1]  [1 1 1 1 1 1 1 1]  [1 1 1 1 1 1 1 1]  [1 1 1 1 1 1 1 1]
-///
-///        Nothing              R                 G                  B
+///      Nothing               R                  G                  B
 ///
 /// The RGB values are accessed from (and packed into) the unsigned integers
 /// using bitwise operators as can be seen in the function DoRGBtoLABConversion().

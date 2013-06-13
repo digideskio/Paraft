@@ -2,7 +2,6 @@
 #define CONSTS_H
 
 #include <hash_map.h>
-#include <omp.h>
 #include <fstream>
 #include <iostream>
 #include <cmath>
@@ -10,6 +9,8 @@
 #include <vector>
 #include <list>
 #include <map>
+
+#define nullptr NULL
 
 const float OPACITY_THRESHOLD  = 0.1;
 const int MIN_NUM_VOXEL_IN_FEATURE = 10;

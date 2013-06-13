@@ -1,6 +1,8 @@
 #ifndef SUPERVOXEL_H
 #define SUPERVOXEL_H
 
+#include "Utils.h"
+
 // ref: http://ivrg.epfl.ch/research/superpixels
 
 class SuperVoxel {
