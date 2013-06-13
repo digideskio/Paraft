@@ -25,13 +25,11 @@ int main (int argc, char** argv) {
 //    delete pBlockController;
 //    return 0;
 
-    string filename = "/Users/Yang/Pictures/QQ20130131-1.png";
-//    string window = "Blah";
+    string filename = "/Users/Yang/Desktop/1.png";
 
-//    IplImage *img = cvLoadImage(filename.c_str(), CV_LOAD_IMAGE_COLOR);
 
     SuperPixel *sp = new SuperPixel(filename.c_str());
-    sp->SegmentNumber(500, 10);
+    sp->SegmentNumber(100, 5);
     vector<Segment> segs = sp->GetSegments();
 
     int num_segs = sp->GetNumSegments();
@@ -42,15 +40,11 @@ int main (int argc, char** argv) {
         cout << "num of pixels: " << segs[i].num_pixel << endl;
     }
 
-    CvScalar color = CV_RGB(255, 255, 0);
+    CvScalar color = CV_RGB(255, 255, 255);
     string save_path = "./result.jpg";
     sp->DrawContours(color, save_path);
 
     delete sp;
-//    cv::Mat image = cv::imread(filename.c_str(), CV_LOAD_IMAGE_COLOR);
-//    cv::namedWindow(window.c_str(), CV_WINDOW_AUTOSIZE);
-//    cv::imshow(window.c_str(), image);
 
-//    cv::waitKey(0);
     return EXIT_SUCCESS;
 }

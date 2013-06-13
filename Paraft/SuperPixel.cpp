@@ -102,42 +102,46 @@ bool SuperPixel::SegmentSize(const int &expected_seg_size, const float &weight_m
     return true;
 }
 
+// ============================================================================
+// Testing function.
+// Draw the contours of segmented areas on image
+// ============================================================================
 void SuperPixel::DrawContours(const CvScalar& drawing_color, const std::string& save_path) {
     const int dx8[8] = {-1, -1,  0,  1, 1, 1, 0, -1};
     const int dy8[8] = { 0, -1, -1, -1, 0, 1, 1,  1};
-    IplImage* contour = cvCreateImage(cvSize(width_, height_), image_->depth, image_->nChannels);
+    IplImage* contour = cvCreateImage(cvSize(width_, height_),
+                                      image_->depth, image_->nChannels);
     cvCopy(image_, contour);
     int step = contour->widthStep;
     uchar* data = reinterpret_cast<uchar*>(contour->imageData);
     int const kTotalPixelNum = width_ * height_;
     std::vector<bool> istaken(kTotalPixelNum, false);
-    for (int y = 0; y < height_; y++) {
-        for (int x = 0; x < width_; x++) {
+    for (int row = 0; row < height_; ++row) {
+        for (int col = 0; col < width_; ++col) {
             int diff = 0;
-            int pos_a = y * width_ + x;
+            int pos_a = row * width_ + col;
             for (int i = 0; i < 8; ++i) {
-                int x = x + dx8[i];
-                int y = y + dy8[i];
+                int x = col + dx8[i];
+                int y = row + dy8[i];
                 if ((x >= 0 && x < width_) && (y >= 0 && y < height_)) {
                     int pos_b = y * width_ + x;
                     if ((false == istaken[pos_a]) &&
                         (segmentation_map_[pos_a] != segmentation_map_[pos_b])) {
-                        diff++;
+                        ++diff;
                     }
                 }
             }
             if (diff >= 2) {
                 istaken[pos_a] = true;
-                data[y * step + x * 3 + 0] = drawing_color.val[0];
-                data[y * step + x * 3 + 1] = drawing_color.val[1];
-                data[y * step + x * 3 + 2] = drawing_color.val[2];
+                data[row * step + col * 3 + 0] = drawing_color.val[0];
+                data[row * step + col * 3 + 1] = drawing_color.val[1];
+                data[row * step + col * 3 + 2] = drawing_color.val[2];
             }
         }
     }
     cvSaveImage(save_path.c_str(), contour);
     cvReleaseImage(&contour);
 }
-
 void SuperPixel::bgr2lab() {
     int step = image_->widthStep;
     uchar* data = reinterpret_cast<uchar*>(image_->imageData);
