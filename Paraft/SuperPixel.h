@@ -12,8 +12,10 @@ struct Segment {
 
 class SuperPixel {
 public:
-    explicit SuperPixel(const string& image_path);
+    explicit SuperPixel();
     virtual ~SuperPixel();
+
+    void InitWith(const string& image_path);
 
     // segment by specific 1. number of segments or 2. segment size
     bool SegmentNumber(const int& expected_seg_num, const float& weight_m);
@@ -27,12 +29,14 @@ public:
     const vector<Segment> GetSegments() const { return segments_; }
 
 private:
-    IplImage *image_;   // input image
+    IplImage *pImage_;   // input image
     int num_segments_;   // number of segments after segmentation
     int width_;         // input image width
     int height_;        // input image height
     int *segmentation_map_;    // ?
     vector<Segment> segments_;  // segment result
+
+    Vector3i dim_;     // data dimension
 
     float *l_values_;
     float *a_values_;

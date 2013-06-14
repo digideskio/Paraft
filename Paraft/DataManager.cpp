@@ -22,11 +22,11 @@ void DataManager::InitTF(const Metadata &meta) {
     }
 
     ifstream inf(meta.tfPath().c_str(), ios::binary);
-    if (!inf) { cout << "cannot load tf setting: " + meta.tfPath() << endl; exit(1); }
+    if (!inf) { cout << "cannot load tf setting: " << meta.tfPath() << endl; exit(EXIT_FAILURE); }
 
     float tfResF = 0.0f;
     inf.read(reinterpret_cast<char*>(&tfResF), sizeof(float));
-    if (tfResF < 1) { cout << "tfResolution = " << tfResF << endl; exit(2); }
+    if (tfResF < 1) { cout << "tfResolution = " << tfResF << endl; exit(EXIT_FAILURE); }
 
     tfRes_ = (int)tfResF;
     pStaticTfMap_ = new float[tfRes_];
@@ -39,7 +39,7 @@ void DataManager::SaveMaskVolume(float* pData, const Metadata &meta, const int t
     sprintf(timestamp, (meta.timeFormat()).c_str(), timestep);
     string fpath = meta.path() + "/" + meta.prefix() + timestamp + ".mask";
     ofstream outf(fpath.c_str(), ios::binary);
-    if (!outf) { cerr << "cannot output to file: " << fpath << endl; return; }
+    if (!outf) { cerr << "cannot output to file: " << fpath.c_str() << endl; return; }
 
     outf.write(reinterpret_cast<char*>(pData), volumeSize_*sizeof(float));
     outf.close();

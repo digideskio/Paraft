@@ -28,7 +28,8 @@ int main (int argc, char** argv) {
     string filename = "/Users/Yang/Desktop/1.png";
 
 
-    SuperPixel *sp = new SuperPixel(filename.c_str());
+    SuperPixel *sp = new SuperPixel();
+    sp->InitWith(filename.c_str());
     sp->SegmentNumber(100, 5);
     vector<Segment> segs = sp->GetSegments();
 
@@ -41,7 +42,7 @@ int main (int argc, char** argv) {
     }
 
     CvScalar color = CV_RGB(255, 255, 255);
-    string save_path = "./result.jpg";
+    string save_path = "/Users/Yang/Desktop/result.jpg";
     sp->DrawContours(color, save_path);
 
     delete sp;

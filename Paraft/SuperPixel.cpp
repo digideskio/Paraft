@@ -1,14 +1,7 @@
 #include "SuperPixel.h"
-//#include <float.h>
-//#include <algorithm>
 
-SuperPixel::SuperPixel(const string& image_path) {
-    image_ = cvLoadImage(image_path.c_str(), CV_LOAD_IMAGE_COLOR);
+SuperPixel::SuperPixel() {
     num_segments_ = -1;
-
-    width_ = image_->width;     // will change to vector3i later
-    height_ = image_->height;   // will change to vector3i later
-
     segmentation_map_ = nullptr;
     l_values_ = nullptr;
     a_values_ = nullptr;
@@ -17,12 +10,18 @@ SuperPixel::SuperPixel(const string& image_path) {
 }
 
 SuperPixel::~SuperPixel() {
-    if (image_)             { cvReleaseImage(&image_); image_ = nullptr; }
+    if (pImage_)             { cvReleaseImage(&pImage_); pImage_ = nullptr; }
     if (segmentation_map_)  { delete [] segmentation_map_; segmentation_map_ = nullptr; }
     if (l_values_)          { delete [] l_values_; l_values_ = nullptr; }
     if (a_values_)          { delete [] a_values_; a_values_ = nullptr; }
     if (b_values_)          { delete [] b_values_; b_values_ = nullptr; }
     if (gradients_)         { delete [] gradients_; gradients_ = nullptr; }
+}
+
+void SuperPixel::InitWith(const string &image_path) {
+    pImage_ = cvLoadImage(image_path.c_str(), CV_LOAD_IMAGE_COLOR);
+    width_ = pImage_->width;
+    height_ = pImage_->height;
 }
 
 bool SuperPixel::SegmentNumber(const int &expected_seg_num, const float &weight_m) {
@@ -32,7 +31,7 @@ bool SuperPixel::SegmentNumber(const int &expected_seg_num, const float &weight_
 }
 
 bool SuperPixel::SegmentSize(const int &expected_seg_size, const float &weight_m) {
-    if (!image_ || image_->nChannels != 3 || image_->depth != IPL_DEPTH_8U) { return false; }
+    if (!pImage_ || pImage_->nChannels != 3 || pImage_->depth != IPL_DEPTH_8U) { return false; }
     if (expected_seg_size > 100) { return false; }
 
     // 0. init
@@ -110,8 +109,8 @@ void SuperPixel::DrawContours(const CvScalar& drawing_color, const std::string& 
     const int dx8[8] = {-1, -1,  0,  1, 1, 1, 0, -1};
     const int dy8[8] = { 0, -1, -1, -1, 0, 1, 1,  1};
     IplImage* contour = cvCreateImage(cvSize(width_, height_),
-                                      image_->depth, image_->nChannels);
-    cvCopy(image_, contour);
+                                      pImage_->depth, pImage_->nChannels);
+    cvCopy(pImage_, contour);
     int step = contour->widthStep;
     uchar* data = reinterpret_cast<uchar*>(contour->imageData);
     int const kTotalPixelNum = width_ * height_;
@@ -143,8 +142,8 @@ void SuperPixel::DrawContours(const CvScalar& drawing_color, const std::string& 
     cvReleaseImage(&contour);
 }
 void SuperPixel::bgr2lab() {
-    int step = image_->widthStep;
-    uchar* data = reinterpret_cast<uchar*>(image_->imageData);
+    int step = pImage_->widthStep;
+    uchar* data = reinterpret_cast<uchar*>(pImage_->imageData);
     double epsilon = 0.008856;
     double kappa   = 903.3;
     double Xr = 0.950456;

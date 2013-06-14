@@ -73,6 +73,8 @@ namespace util {
 }
 
 typedef util::Vector3<int> Vector3i;
+typedef util::Vector3<float> Vector3f;
+typedef util::Vector3<double> Vector3d;
 
 struct Feature {
     int             id;         // Unique ID for each feature
