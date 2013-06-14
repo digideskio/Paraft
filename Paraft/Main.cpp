@@ -31,9 +31,9 @@ int main (int argc, char** argv) {
     SuperPixel *sp = new SuperPixel();
     sp->InitWith(filename.c_str());
     sp->SegmentNumber(100, 5);
-    vector<Segment> segs = sp->GetSegments();
+    vector<Cluster> segs = sp->GetClusters();
 
-    int num_segs = sp->GetNumSegments();
+    int num_segs = sp->GetNumCluster();
     for (int i = 0; i < num_segs; ++i) {
         cout << "------------- " << i << " -----------------" << endl;
         cout << "center.x: " << segs[i].center.x << endl;

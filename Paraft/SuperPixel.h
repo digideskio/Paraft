@@ -5,7 +5,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-struct Segment {
+struct Cluster {
     Vector3i center;
     int num_pixel;
 };
@@ -18,30 +18,31 @@ public:
     void InitWith(const string& image_path);
 
     // segment by specific 1. number of segments or 2. segment size
-    bool SegmentNumber(const int& expected_seg_num, const float& weight_m);
-    bool SegmentSize(const int& expected_seg_size, const float& weight_m);
-
+    bool SegmentNumber(const int& expectedClusterNum, const float& compactness);
+    bool SegmentSize(const int& expectedClusterSize, const float& compactness);
     void DrawContours(const CvScalar& drawing_color, const string& save_path);
 
     // accessors
-    int GetNumSegments()                const { return num_segments_; }
-    const int* GetSegmentMap()          const { return segmentation_map_; }
-    const vector<Segment> GetSegments() const { return segments_; }
+    int GetNumCluster()                 const { return numCluster_; }
+    const int* GetSegmentMap()          const { return pClusters_; }
+    const vector<Cluster> GetClusters() const { return clusters_; }
 
 private:
-    IplImage *pImage_;   // input image
-    int num_segments_;   // number of segments after segmentation
-    int width_;         // input image width
-    int height_;        // input image height
-    int *segmentation_map_;    // ?
-    vector<Segment> segments_;  // segment result
+    IplImage *pImage_;  // input image
+    int numCluster_;    // number of segments after segmentation
 
-    Vector3i dim_;     // data dimension
+    vector<Cluster> clusters_;  // segment result
 
-    float *l_values_;
-    float *a_values_;
-    float *b_values_;
-    float *gradients_;
+    int *pClusters_;
+    int *pClustersTmp_; // intermedia
+
+    Vector3i dim_;      // data dimension
+    int kNumElements_;   // number of pixels / voxels in the data
+
+    float *pLs;
+    float *pAs;
+    float *pBs;
+    float *pGradients_;
 
     vector<float> k_centers_l_;
     vector<float> k_centers_a_;
@@ -51,10 +52,11 @@ private:
 
     void bgr2lab();  // opencv uses BGR instead of RGB
     void detectGradients(); // detects gradient map to perturb seeds
-    void getInitialCenters(const int& expected_seg_size);
+    void getInitialCenters(const int& expectedClusterSize);
 
     // Super pixel clustering. Need post-processing for enforcing connectivity.
-    void clusteringIteration(const int& expected_seg_size, const float& weight_m, int* temp_segmentation_map);
+    void clusteringIteration(const int& expectedClusterSize, const float& weight_m,
+                             int* temp_segmentation_map);
 
     // Find next connected components(pixel) which belongs to the same cluster.
     // Function is called recursively to get the size of connected area cluster.
