@@ -28,9 +28,9 @@ void SuperPixel::InitWith(const string &image_path) {
     dim_ = Vector3i(pImage_->width, pImage_->height, 1);
     kNumElements_ = dim_.Product();
 
-    pClusters_ = new int[kNumElements_];
-    pClustersTmp_ = new int[kNumElements_];
-    pGradients_ = new float[kNumElements_];
+    pClusters_      = new int[kNumElements_];
+    pClustersTmp_   = new int[kNumElements_];
+    pGradients_     = new float[kNumElements_];
 
     for (int i = 0; i < kNumElements_; i++) {
         pClusters_[i] = -1;
@@ -92,11 +92,11 @@ bool SuperPixel::SegmentSize(const int &expectedClusterSize, const float &compac
     }
 
     // 6. cleaning
-    k_centers_l_.clear();
-    k_centers_a_.clear();
-    k_centers_b_.clear();
-    k_centers_x_.clear();
-    k_centers_y_.clear();
+    pCLs.clear();
+    pCAs.clear();
+    pCBs.clear();
+    pCXs.clear();
+    pCYs.clear();
 
     delete [] pClustersTmp_;
     pClustersTmp_ = nullptr;
@@ -144,6 +144,7 @@ void SuperPixel::DrawContours(const CvScalar& drawing_color, const std::string& 
     cvSaveImage(save_path.c_str(), contour);
     cvReleaseImage(&contour);
 }
+
 void SuperPixel::bgr2lab() {
     int step = pImage_->widthStep;
     uchar* data = reinterpret_cast<uchar*>(pImage_->imageData);
@@ -152,12 +153,12 @@ void SuperPixel::bgr2lab() {
     double Xr = 0.950456;
     double Yr = 1.0;
     double Zr = 1.088754;
-    for (int row = 0; row < dim_.y; ++row) {
-        for (int col = 0; col < dim_.x; ++col) {
+    for (int y = 0; y < dim_.y; y++) {
+        for (int x = 0; x < dim_.x; x++) {
             // Access pixel values.
-            double B = static_cast<double>(data[row * step + col * 3 + 0]) / 255.0;
-            double G = static_cast<double>(data[row * step + col * 3 + 1]) / 255.0;
-            double R = static_cast<double>(data[row * step + col * 3 + 2]) / 255.0;
+            double B = static_cast<double>(data[y * step + x * 3 + 0]) / 255.0;
+            double G = static_cast<double>(data[y * step + x * 3 + 1]) / 255.0;
+            double R = static_cast<double>(data[y * step + x * 3 + 2]) / 255.0;
 
             // Step 1: RGB to XYZ conversion.
             double r = R <= 0.04045 ? R/12.92 : pow((R+0.055)/1.055, 2.4);
@@ -173,12 +174,12 @@ void SuperPixel::bgr2lab() {
             double yr = Y/Yr;
             double zr = Z/Zr;
 
-            double fx = xr > epsilon ? pow(xr, 1.0/3.0) : (kappa*xr + 16.0)/116.0;
-            double fy = yr > epsilon ? pow(yr, 1.0/3.0) : (kappa*yr + 16.0)/116.0;
-            double fz = zr > epsilon ? pow(zr, 1.0/3.0) : (kappa*zr + 16.0)/116.0;
+            double fx = xr > epsilon ? pow(xr, 1.0/3.0) : (kappa*xr + 16.0) / 116.0;
+            double fy = yr > epsilon ? pow(yr, 1.0/3.0) : (kappa*yr + 16.0) / 116.0;
+            double fz = zr > epsilon ? pow(zr, 1.0/3.0) : (kappa*zr + 16.0) / 116.0;
 
             // Add converted color to 1-D vectors.
-            int pos = row * dim_.x + col;
+            int pos = y * dim_.x + x;
             pLs[pos] = 116.0 * fy - 16.0;
             pAs[pos] = 500.0 * (fx - fy);
             pBs[pos] = 200.0 * (fy - fz);
@@ -187,9 +188,9 @@ void SuperPixel::bgr2lab() {
 }
 
 void SuperPixel::detectGradients() {
-    for (int row = 1; row < dim_.y - 1; ++row) {
-        for (int col = 1; col < dim_.x - 1; ++col) {
-            int i = row * dim_.x + col;
+    for (int y = 1; y < dim_.y - 1; y++) {
+        for (int x = 1; x < dim_.x - 1; x++) {
+            int i = y * dim_.x + x;
             double dx = (pLs[i-1]-pLs[i+1]) * (pLs[i-1]-pLs[i+1]) +
                         (pAs[i-1]-pAs[i+1]) * (pAs[i-1]-pAs[i+1]) +
                         (pBs[i-1]-pBs[i+1]) * (pBs[i-1]-pBs[i+1]);
@@ -204,38 +205,33 @@ void SuperPixel::detectGradients() {
 // ============================================================================
 // Get the initial centers(seeds) based on given expected super pixel size.
 // ============================================================================
-void SuperPixel::getInitialCenters(const int& expectedClusterSize) {
+void SuperPixel::getInitialCenters(int expectedClusterSize) {
     // Step 1: evenly dispatch the initial seeds(centers).
-    int x_strips = cvFloor(static_cast<double>(dim_.x) / expectedClusterSize);
-    int y_strips = cvFloor(static_cast<double>(dim_.y) / expectedClusterSize);
-    int x_err = dim_.x - expectedClusterSize * x_strips;
-    int y_err = dim_.y - expectedClusterSize * y_strips;
-    float x_err_per_strip = static_cast<float>(x_err) / x_strips;
-    float y_err_per_strip = static_cast<float>(y_err) / y_strips;
-    float x_offset = expectedClusterSize / 2.0;
-    float y_offset = expectedClusterSize / 2.0;
-    for (int y = 0; y < y_strips; y++) {
-        float y_err = y * y_err_per_strip;
-        for (int x = 0; x < x_strips; x++) {
-            float x_err = x * x_err_per_strip;
-            int x_pos = std::min(cvRound(x * expectedClusterSize + x_offset + x_err), (dim_.x - 1));
-            int y_pos = std::min(cvRound(y * expectedClusterSize + y_offset + y_err), (dim_.y - 1));
-            k_centers_x_.push_back(x_pos);
-            k_centers_y_.push_back(y_pos);
+    Vector3i strips = dim_ / expectedClusterSize;
+    Vector3i deviat = dim_ - strips * expectedClusterSize;
+    Vector3f offset = Vector3f(expectedClusterSize/2.0, expectedClusterSize/2.0, expectedClusterSize/2.0);
+    for (int y = 0; y < strips.y; y++) {
+        float y_err = static_cast<float>(y) * deviat.y / strips.y;
+        for (int x = 0; x < strips.x; x++) {
+            float x_err = static_cast<float>(x) * deviat.x / strips.x;
+            int x_pos = std::min(cvRound(x * expectedClusterSize + offset.x + x_err), (dim_.x - 1));
+            int y_pos = std::min(cvRound(y * expectedClusterSize + offset.y + y_err), (dim_.y - 1));
+            pCXs.push_back(x_pos);
+            pCYs.push_back(y_pos);
             int position = y_pos * dim_.x + x_pos;
-            k_centers_l_.push_back(pLs[position]);
-            k_centers_a_.push_back(pAs[position]);
-            k_centers_b_.push_back(pBs[position]);
+            pCLs.push_back(pLs[position]);
+            pCAs.push_back(pAs[position]);
+            pCBs.push_back(pBs[position]);
         }
     }
 
     // Step 2: Find local lowest gradient positions in 3x3 area and perturb seeds.
     const int kDx8[8] = {-1, -1,  0,  1, 1, 1, 0, -1};
     const int kDy8[8] = { 0, -1, -1, -1, 0, 1, 1,  1};
-    const int kSeedsNum = k_centers_l_.size();
-    for (int n = 0; n < kSeedsNum; ++n) {
-        int original_x = k_centers_x_[n];
-        int original_y = k_centers_y_[n];
+    const int kSeedsNum = pCLs.size();
+    for (int n = 0; n < kSeedsNum; n++) {
+        int original_x = pCXs[n];
+        int original_y = pCYs[n];
         int original_pos = original_y * dim_.x + original_x;
         int new_pos = original_pos;
         for (int i = 0; i < 8; ++i) {
@@ -249,11 +245,11 @@ void SuperPixel::getInitialCenters(const int& expectedClusterSize) {
             }
         }
         if (original_pos != new_pos) {
-            k_centers_x_[n] = new_pos % dim_.x;
-            k_centers_y_[n] = new_pos / dim_.x;
-            k_centers_l_[n] = pLs[new_pos];
-            k_centers_a_[n] = pAs[new_pos];
-            k_centers_b_[n] = pBs[new_pos];
+            pCXs[n] = new_pos % dim_.x;
+            pCYs[n] = new_pos / dim_.x;
+            pCLs[n] = pLs[new_pos];
+            pCAs[n] = pAs[new_pos];
+            pCBs[n] = pBs[new_pos];
         }
     }
 }
@@ -262,61 +258,55 @@ void SuperPixel::getInitialCenters(const int& expectedClusterSize) {
 // Iteratively do super pixel clustering.
 // Need post-processing to enforce connectivity.
 // ============================================================================
-void SuperPixel::clusteringIteration(const int& expectedClusterSize, const float& compactness, int* pClustersTmp_) {
-    int const kTotalPixelNum = dim_.x * dim_.y;
-    const int kSeedsNum = k_centers_l_.size();
+void SuperPixel::clusteringIteration(int expectedClusterSize, float compactness, int* pClustersTmp_) {
+    const int kSeedsNum = pCLs.size();
     const int kWindowOffset = expectedClusterSize * 2;
-    //
-    // A set of variables containing the segmentation result information
-    // of each iteration.
-    //
+
+    // A set of variables containing the segmentation result information of each iteration.
     // The number of pixels dispatched to each center(seed).
     std::vector<int> cluster_size(kSeedsNum, 0);
-    // To calculate the average value of color, we need to store the sum
-    // of pixel colors.
+
+    // To calculate the average value of color, we need to store the sum of pixel colors.
     std::vector<float> sum_l(kSeedsNum, 0.0);
     std::vector<float> sum_a(kSeedsNum, 0.0);
     std::vector<float> sum_b(kSeedsNum, 0.0);
-    // To calculate the geometric center of each cluster, we need to store
-    // the sum of x/y offsets.
+
+    // To calculate the geometric center of each cluster, we need to store the sum of x/y offsets.
     std::vector<int> sum_x(kSeedsNum, 0);
     std::vector<int> sum_y(kSeedsNum, 0);
+
     // Store the distance from each pixel to its nearest clustering center.
-    std::vector<float> min_distances(kTotalPixelNum, DBL_MAX);
+    std::vector<float> min_distances(kNumElements_, DBL_MAX);
+
     // The weighting variable between color hint and space(position) hint.
-    float invert_weight = 1.0 /
-                          ((expectedClusterSize / compactness) * (expectedClusterSize / compactness));
-    // According to the original paper,
-    // We need to set windows centered at the clustering centers,
+    float weight = static_cast<float>(expectedClusterSize) / compactness;
+//    float invert_weight = 1.0 / (weight * weight);
+
+    // According to the paper ,we need to set windows centered at the clustering centers,
     // and to look up all the pixels in the wondow for clustering.
     // Following variables define the window size and position.
-    int x_start, y_start, x_end, y_end;
-    // Temp variables for clustering.
-    float l, a, b;
-    float distance_color;
-    float distance_space;
-    float distance;
     for (int iter = 0; iter < 10; ++iter) {
         // According to the paper,the convergence error drops sharply in a
         // few iterations. They propose to run 10 iterations for experiemnts.
         for (int n = 0; n < kSeedsNum; ++n) {
             // Do clustering for each of the clusters (seeds).
-            y_start = std::max(0, k_centers_y_[n] - kWindowOffset);
-            y_end = std::min(dim_.y, k_centers_y_[n] + kWindowOffset);
-            x_start = std::max(0, k_centers_x_[n] - kWindowOffset);
-            x_end = std::min(dim_.x, k_centers_x_[n] + kWindowOffset);
-            for (int row = y_start; row < y_end; ++row) {
-                for (int col = x_start; col < x_end; ++col) {
-                    int pos = row * dim_.x + col;
-                    l = pLs[pos];
-                    a = pAs[pos];
-                    b = pBs[pos];
-                    distance_color = (l - k_centers_l_[n]) * (l - k_centers_l_[n]) +
-                                     (a - k_centers_a_[n]) * (a - k_centers_a_[n]) +
-                                     (b - k_centers_b_[n]) * (b - k_centers_b_[n]);
-                    distance_space = (col - k_centers_x_[n]) * (col - k_centers_x_[n]) +
-                                     (row - k_centers_y_[n]) * (row - k_centers_y_[n]);
-                    distance = distance_color + distance_space * invert_weight;
+            int x_start = std::max(0, pCXs[n] - kWindowOffset);
+            int y_start = std::max(0, pCYs[n] - kWindowOffset);
+            int x_end = std::min(dim_.x, pCXs[n] + kWindowOffset);
+            int y_end = std::min(dim_.y, pCYs[n] + kWindowOffset);
+
+            for (int y = y_start; y < y_end; y++) {
+                for (int x = x_start; x < x_end; x++) {
+                    int pos = y * dim_.x + x;
+                    Vector3f currentColor = Vector3f(pLs[pos], pAs[pos], pBs[pos]);
+                    Vector3f centerColor  = Vector3f(pCLs[n], pCAs[n], pCBs[n]);
+                    Vector3f currentPos = Vector3f(x, y, 0);
+                    Vector3f centerPos  = Vector3f(pCXs[n], pCYs[n], 0.0);
+
+                    float distanceColor = (currentColor - centerColor).MagnituteSquared();
+                    float distanceSpace = (currentPos - centerPos).MagnituteSquared();
+                    float distance = distanceColor + distanceSpace / (weight * weight);
+
                     if (distance < min_distances[pos]) {
                         min_distances[pos] = distance;
                         pClustersTmp_[pos] = n;
@@ -324,6 +314,7 @@ void SuperPixel::clusteringIteration(const int& expectedClusterSize, const float
                 }
             }
         }
+
         // After assigning pixels, recalculate the cluster centers for next iter.
         sum_l.assign(kSeedsNum, 0.0);
         sum_a.assign(kSeedsNum, 0.0);
@@ -331,24 +322,24 @@ void SuperPixel::clusteringIteration(const int& expectedClusterSize, const float
         sum_x.assign(kSeedsNum, 0);
         sum_y.assign(kSeedsNum, 0);
         cluster_size.assign(kSeedsNum, 0);
-        for (int row = 0; row < dim_.y; ++row) {
-            for (int col = 0; col < dim_.x; ++col) {
-                int pos = row * dim_.x + col;
+        for (int y = 0; y < dim_.y; y++) {
+            for (int x = 0; x < dim_.x; x++) {
+                int pos = y * dim_.x + x;
                 sum_l[pClustersTmp_[pos]] += pLs[pos];
                 sum_a[pClustersTmp_[pos]] += pAs[pos];
                 sum_b[pClustersTmp_[pos]] += pBs[pos];
-                sum_y[pClustersTmp_[pos]] += row;
-                sum_x[pClustersTmp_[pos]] += col;
+                sum_y[pClustersTmp_[pos]] += y;
+                sum_x[pClustersTmp_[pos]] += x;
                 cluster_size[pClustersTmp_[pos]] += 1;
             }
         }
-        for (int k = 0; k < kSeedsNum; ++k) {
+        for (int k = 0; k < kSeedsNum; k++) {
             if (cluster_size[k] <= 0) cluster_size[k] = 1;
-            k_centers_l_[k] = sum_l[k] / cluster_size[k];
-            k_centers_a_[k] = sum_a[k] / cluster_size[k];
-            k_centers_b_[k] = sum_b[k] / cluster_size[k];
-            k_centers_x_[k] = std::min(dim_.x - 1, cvRound(sum_x[k] / cluster_size[k]));
-            k_centers_y_[k] = std::min(dim_.y - 1, cvRound(sum_y[k] / cluster_size[k]));
+            pCLs[k] = sum_l[k] / cluster_size[k];
+            pCAs[k] = sum_a[k] / cluster_size[k];
+            pCBs[k] = sum_b[k] / cluster_size[k];
+            pCXs[k] = std::min(dim_.x - 1, cvRound(sum_x[k] / cluster_size[k]));
+            pCYs[k] = std::min(dim_.y - 1, cvRound(sum_y[k] / cluster_size[k]));
         }
     }
 }

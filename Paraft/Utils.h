@@ -31,21 +31,22 @@ namespace util {
         Vector3(T x_ = 0, T y_ = 0, T z_ = 0) : x(x_), y(y_), z(z_) { }
         T*       GetPointer()                           { return &x; }
         T        Product()                              { return x * y * z; }
-        float    Magnitute()                            { return sqrt(x*x + y*y + z*z); }
+        float    MagnituteSquared()                     { return x*x + y*y + z*z; }
+        float    Magnitute()                            { return sqrt((*this).MagnituteSquared()); }
         float    DistanceFrom(Vector3 const& rhs) const { return (*this - rhs).Magnitute(); }
         Vector3  operator -  ()                         { return Vector3(-x, -y, -z); }
         Vector3  operator +  (Vector3 const& rhs) const { Vector3 t(*this); t+=rhs; return t; }
         Vector3  operator -  (Vector3 const& rhs) const { Vector3 t(*this); t-=rhs; return t; }
         Vector3  operator *  (Vector3 const& rhs) const { Vector3 t(*this); t*=rhs; return t; }
         Vector3  operator /  (Vector3 const& rhs) const { Vector3 t(*this); t/=rhs; return t; }
-        Vector3  operator *  (int scale)          const { Vector3 t(*this); t*=scale; return t; }
-        Vector3  operator /  (int scale)          const { Vector3 t(*this); t/=scale; return t; }
+        Vector3  operator *  (float scale)        const { Vector3 t(*this); t*=scale; return t; }
+        Vector3  operator /  (float scale)        const { Vector3 t(*this); t/=scale; return t; }
         Vector3& operator += (Vector3 const& rhs)       { x+=rhs.x, y+=rhs.y, z+=rhs.z; return *this; }
         Vector3& operator -= (Vector3 const& rhs)       { x-=rhs.x, y-=rhs.y, z-=rhs.z; return *this; }
         Vector3& operator *= (Vector3 const& rhs)       { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
         Vector3& operator /= (Vector3 const& rhs)       { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
-        Vector3& operator *= (int scale)                { x*=scale, y*=scale, z*=scale; return *this; }
-        Vector3& operator /= (int scale)                { x/=scale, y/=scale, z/=scale; return *this; }
+        Vector3& operator *= (float scale)              { x*=scale, y*=scale, z*=scale; return *this; }
+        Vector3& operator /= (float scale)              { x/=scale, y/=scale, z/=scale; return *this; }
         bool     operator == (Vector3 const& rhs) const { return x==rhs.x && y==rhs.y && z==rhs.z; }
         bool     operator != (Vector3 const& rhs) const { return !(*this == rhs); }
     };

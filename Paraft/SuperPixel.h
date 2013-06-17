@@ -44,19 +44,18 @@ private:
     float *pBs;
     float *pGradients_;
 
-    vector<float> k_centers_l_;
-    vector<float> k_centers_a_;
-    vector<float> k_centers_b_;
-    vector<int> k_centers_x_;
-    vector<int> k_centers_y_;
+    vector<float> pCLs;
+    vector<float> pCAs;
+    vector<float> pCBs;
+    vector<int> pCXs;
+    vector<int> pCYs;
 
     void bgr2lab();  // opencv uses BGR instead of RGB
     void detectGradients(); // detects gradient map to perturb seeds
-    void getInitialCenters(const int& expectedClusterSize);
+    void getInitialCenters(int expectedClusterSize);
 
     // Super pixel clustering. Need post-processing for enforcing connectivity.
-    void clusteringIteration(const int& expectedClusterSize, const float& weight_m,
-                             int* temp_segmentation_map);
+    void clusteringIteration(int expectedClusterSize, float compactness, int* pClustersTmp_);
 
     // Find next connected components(pixel) which belongs to the same cluster.
     // Function is called recursively to get the size of connected area cluster.
