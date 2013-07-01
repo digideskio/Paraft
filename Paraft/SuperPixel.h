@@ -59,10 +59,9 @@ private:
 
     // Find next connected components(pixel) which belongs to the same cluster.
     // Function is called recursively to get the size of connected area cluster.
-    void findNext(const int* temp_segmentation_map, const int& row_index, const int& col_index,
-                  const int& segment_index, int* x_pos, int* y_pos, int* num_count);
+    void findNext(const int* pClustersTmp_, int x, int y, int clusterIndex, int* x_pos, int* y_pos, int* num_count);
 
-    void enforceConnectivity(const int* temp_segmentation_map, const int& expected_seg_size);
+    void enforceConnectivity(const int* pClustersTmp_, int expectedClusterSize);
 };
 
 #endif // SUPERPIXEL_H

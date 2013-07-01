@@ -345,60 +345,24 @@ void SuperPixel::clusteringIteration(int expectedClusterSize, float compactness,
 }
 
 // ============================================================================
-// Find next connected components(pixel) which belongs to the same cluster.
-// This is called recursively to get the size of connected area cluster.
-// ============================================================================
-void SuperPixel::findNext(const int* pClustersTmp_,
-                          const int& row_index,
-                          const int& col_index,
-                          const int& segment_index,
-                          int* x_pos,
-                          int* y_pos,
-                          int* count) {
-    const int kDx4[4] = {-1, 0, 1, 0};
-    const int kDy4[4] = {0, -1, 0, 1};
-    int old_index = pClustersTmp_[row_index * dim_.x + col_index];
-    for (int i = 0; i < 4; ++i) {
-        int col_new = col_index + kDx4[i];
-        int row_new = row_index + kDy4[i];
-        // Find a connected pixel belong to the same segment
-        // in pClustersTmp_.
-        if ((row_new < dim_.y && row_new >= 0) &&
-            (col_new < dim_.x && col_new >= 0)) {
-            int new_pos = row_new * dim_.x + col_new;
-            if (pClusters_[new_pos] < 0 &&
-                pClustersTmp_[new_pos] == old_index) {
-                x_pos[*count] = col_new;
-                y_pos[*count] = row_new;
-                *count = *count + 1;
-                pClusters_[new_pos] = segment_index;
-                findNext(pClustersTmp_, row_new, col_new, segment_index, x_pos, y_pos, count);
-            }
-        }
-    }
-}
-
-// ============================================================================
 // Post-processing. Enforce connectivity.
 // After clustering iterations, a few stray labels may remian.
 // That is, a few pixels in the vicinity of a large segment having the same
 // label but not connected to it. We enforce connectivity finally by relabeling
 // disjoint segments with the labels of the largest neighboring cluster.
 // ============================================================================
-void SuperPixel::enforceConnectivity(const int* pClustersTmp_,
-                                     const int& expected_seg_size) {
+void SuperPixel::enforceConnectivity(const int* pClustersTmp_, int expectedClusterSize) {
     const int kDx4[4] = {-1, 0, 1, 0};
     const int kDy4[4] = {0, -1, 0, 1};
-    const int kAverageSize = expected_seg_size * expected_seg_size;
-    const int kTotalPixelNum = dim_.x * dim_.y;
-    int segment_index = 0;
+    const int kAverageSize = expectedClusterSize * expectedClusterSize;
     int i = 0;
+    int segment_index = 0;
     int adjacent_index = 0;
-    int* x_pos = new int[kTotalPixelNum];
-    int* y_pos = new int[kTotalPixelNum];
+    int* x_pos = new int[kNumElements_];
+    int* y_pos = new int[kNumElements_];
 
-    for (int row = 0; row < dim_.y; ++row) {
-        for (int col = 0; col < dim_.x; ++col) {
+    for (int y = 0; y < dim_.y; y++) {
+        for (int x = 0; x < dim_.x; x++) {
             // We initialize all the elements in segmentation_map as -1.
             // Then by Traversing all the pixels, we assign them with segment
             // indexes. Since segmentation_map_ only contains
@@ -409,25 +373,26 @@ void SuperPixel::enforceConnectivity(const int* pClustersTmp_,
                 // Step 1:
                 // Quickly find an adjacent label for use later if needed.
                 for (int n = 0; n < 4; n++) {
-                    int x = col + kDx4[n];
-                    int y = row + kDy4[n];
+                    int x = x + kDx4[n];
+                    int y = y + kDy4[n];
                     if ((x >= 0 && x < dim_.x) && (y >= 0 && y < dim_.y)) {
                         int pos = y * dim_.x + x;
-                        if (pClusters_[pos] >= 0)
+                        if (pClusters_[pos] >= 0) {
                             adjacent_index = pClusters_[pos];
+                        }
                     }
                 }
                 // Step 2: traverse from the current pixel and find all the
                 // connected components. Store their x and y positions in
                 // "x_pos" and "y_pos". "*count" is the number of pixels in
                 // current segment.
-                x_pos[0] = col;
-                y_pos[0] = row;
+                x_pos[0] = x;
+                y_pos[0] = y;
                 // Store number of pixels in current segment.
                 int num_of_pixels = 1;
                 int* count;
                 count = &num_of_pixels;
-                findNext(pClustersTmp_, row, col, segment_index, x_pos, y_pos, count);
+                findNext(pClustersTmp_, x, y, segment_index, x_pos, y_pos, count);
                 // Step 3: check if current segment is too small.
                 // The limit is defined as half of the expected super pixel size.
                 // If the current segment is too small, replace it with adjacent
@@ -453,5 +418,31 @@ void SuperPixel::enforceConnectivity(const int* pClustersTmp_,
     if (y_pos) {
         delete [] y_pos;
         y_pos = NULL;
+    }
+}
+
+// ============================================================================
+// Find next connected components(pixel) which belongs to the same cluster.
+// This is called recursively to get the size of connected area cluster.
+// ============================================================================
+void SuperPixel::findNext(const int* pClustersTmp_, int x, int y, int clusterIndex, int* x_pos, int* y_pos, int* count) {
+    const int kDx4[4] = {-1, 0, 1, 0};
+    const int kDy4[4] = {0, -1, 0, 1};
+    int old_index = pClustersTmp_[y * dim_.x + x];
+    for (int i = 0; i < 4; ++i) {
+        int col_new = x + kDx4[i];
+        int row_new = y + kDy4[i];
+        // Find a connected pixel belong to the same segment in pClustersTmp_.
+        if ((row_new < dim_.y && row_new >= 0) && (col_new < dim_.x && col_new >= 0)) {
+            int new_pos = row_new * dim_.x + col_new;
+            if (pClusters_[new_pos] < 0 &&
+                pClustersTmp_[new_pos] == old_index) {
+                x_pos[*count] = col_new;
+                y_pos[*count] = row_new;
+                *count = *count + 1;
+                pClusters_[new_pos] = clusterIndex;
+                findNext(pClustersTmp_, col_new, row_new, clusterIndex, x_pos, y_pos, count);
+            }
+        }
     }
 }
