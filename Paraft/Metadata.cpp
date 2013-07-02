@@ -45,3 +45,5 @@ Metadata::Metadata(const string &fpath) {
         }
     }
 }
+
+Metadata::~Metadata() {}

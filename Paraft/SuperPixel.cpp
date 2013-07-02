@@ -10,12 +10,12 @@ SuperPixel::SuperPixel() {
 }
 
 SuperPixel::~SuperPixel() {
-    if (pImage_)            { cvReleaseImage(&pImage_); pImage_ = nullptr; }
-    if (pClusters_)         { delete [] pClusters_; pClusters_ = nullptr; }
-    if (pLs)          { delete [] pLs; pLs = nullptr; }
-    if (pAs)          { delete [] pAs; pAs = nullptr; }
-    if (pBs)          { delete [] pBs; pBs = nullptr; }
-    if (pGradients_)         { delete [] pGradients_; pGradients_ = nullptr; }
+    if (pImage_)        { cvReleaseImage(&pImage_); pImage_ = nullptr; }
+    if (pClusters_)     { delete [] pClusters_; pClusters_ = nullptr; }
+    if (pLs)            { delete [] pLs; pLs = nullptr; }
+    if (pAs)            { delete [] pAs; pAs = nullptr; }
+    if (pBs)            { delete [] pBs; pBs = nullptr; }
+    if (pGradients_)    { delete [] pGradients_; pGradients_ = nullptr; }
 }
 
 void SuperPixel::InitWith(const string &image_path) {
@@ -43,16 +43,16 @@ void SuperPixel::InitWith(const string &image_path) {
     pBs = new float[kNumElements_];
 }
 
-bool SuperPixel::SegmentNumber(const int &expectedClusterNum, const float &compactness) {
+void SuperPixel::SegmentByNumber(const int &expectedClusterNum, const float &compactness) {
     int clusterSize = cvRound(sqrt(static_cast<double>(kNumElements_) / expectedClusterNum));
     if (clusterSize > 100) {
         cerr << "Warning - cluster size is too large." << endl;
-        return false;
+        return;
     }
-    return SegmentSize(clusterSize, compactness);
+    SegmentBySize(clusterSize, compactness);
 }
 
-bool SuperPixel::SegmentSize(const int &expectedClusterSize, const float &compactness) {
+void SuperPixel::SegmentBySize(const int &expectedClusterSize, const float &compactness) {
     // 1. RGB to LAB
     bgr2lab();
 
@@ -100,8 +100,6 @@ bool SuperPixel::SegmentSize(const int &expectedClusterSize, const float &compac
 
     delete [] pClustersTmp_;
     pClustersTmp_ = nullptr;
-
-    return true;
 }
 
 // ============================================================================

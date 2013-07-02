@@ -91,8 +91,8 @@ void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
 int DataManager::preprocessData(float *pData, bool dynamicTF) {
     float min = pData[0], max = pData[0];
     for (int i = 1; i < volumeSize_; i++) {
-        min = min < pData[i] ? min : pData[i];
-        max = max > pData[i] ? max : pData[i];
+        min = std::min(min, pData[i]);
+        max = std::max(max, pData[i]);
     }
 
     if (dynamicTF) {

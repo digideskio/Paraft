@@ -2,220 +2,85 @@
 #define SUPERVOXEL_H
 
 #include "Utils.h"
-
-// ref: http://ivrg.epfl.ch/research/superpixels
+#include "Metadata.h"
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 class SuperVoxel {
 public:
-    SuperVoxel();
+    explicit SuperVoxel(const Vector3i dim);
+    explicit SuperVoxel(const Metadata& meta);
     virtual ~SuperVoxel();
 
-    // todo:
-    // 1. change lab to intensitive value
+//    void InitWith(const string& image_path);
+//    void InitWith(const Metadata& meta);
 
-    //============================================================================
-    // Superpixel segmentation for a given step size (superpixel size ~= step*step)
-    //============================================================================
-    void DoSuperpixelSegmentation_ForGivenSuperpixelSize(
-            const unsigned int* ubuff,  // Each 32 bit unsigned int contains ARGB pixel values.
-            const int			width,
-            const int			height,
-            int*&				klabels,
-            int&				numlabels,
-            const int&			superpixelsize,
-            const double&       compactness);
-    //============================================================================
-    // Superpixel segmentation for a given number of superpixels
-    //============================================================================
-    void DoSuperpixelSegmentation_ForGivenNumberOfSuperpixels(
-            const unsigned int* ubuff,
-            const int           width,
-            const int			height,
-            int*&				klabels,
-            int&				numlabels,
-            const int&			K,  // required number of superpixels
-            const double&       compactness); // 10-20 is a good value for CIELAB space
-    //============================================================================
-    // Supervoxel segmentation for a given step size (supervoxel size ~= step*step*step)
-    //============================================================================
-    void DoSupervoxelSegmentation(
-            unsigned int**&     ubuffvec,
-            const int&			width,
-            const int&			height,
-            const int&          depth,
-            int**&				klabels,
-            int&				numlabels,
-            const int&			supervoxelsize,
-            const double&       compactness);
-    //============================================================================
-    // Save superpixel labels in a text file in raster scan order
-    //============================================================================
-    void SaveSuperpixelLabels(
-            const int*&         labels,
-            const int&			width,
-            const int&          height,
-            const string&		filename,
-            const string&		path);
-    //============================================================================
-    // Save supervoxel labels in a text file in raster scan, depth order
-    //============================================================================
-    void SaveSupervoxelLabels(
-            const int**&		labels,
-            const int&			width,
-            const int&			height,
-            const int&			depth,
-            const string&		filename,
-            const string&		path);
-    //============================================================================
-    // Function to draw boundaries around superpixels of a given 'color'.
-    // Can also be used to draw boundaries around supervoxels, i.e layer by layer.
-    //============================================================================
-    void DrawContoursAroundSegments(
-            unsigned int*&		segmentedImage,
-            int*&				labels,
-            const int&			width,
-            const int&			height,
-            const unsigned int&	color );
+    // segment by specific 1. number of segments or 2. segment size
+    void SegmentByNumber(const int expectedClusterNum, const float compactness);
+    void SegmentBySize(const int expectedClusterSize, const float compactness);
+    void DrawContours(const CvScalar& drawing_color, const string& save_path);
+
+    // accessors
+    int GetNumCluster()                 const { return numCluster_; }
+    const int* GetSegmentMap()          const { return pClusters_; }
+    const vector<Cluster> GetClusters() const { return clusters_; }
+
+    void SetDataPtr(float *pData) { pData_ = pData; }
 
 private:
-    //============================================================================
-    // The main SLIC algorithm for generating superpixels
-    //============================================================================
-    void PerformSuperpixelSLIC(
-            vector<double>&			kseedsl,
-            vector<double>&			kseedsa,
-            vector<double>&			kseedsb,
-            vector<double>&			kseedsx,
-            vector<double>&			kseedsy,
-            int*&					klabels,
-            const int&				STEP,
-            const vector<double>&	edgemag,
-            const double&			m = 10.0);
-    //============================================================================
-    // The main SLIC algorithm for generating supervoxels
-    //============================================================================
-    void PerformSupervoxelSLIC(
-            vector<double>&			kseedsl,
-            vector<double>&			kseedsa,
-            vector<double>&			kseedsb,
-            vector<double>&			kseedsx,
-            vector<double>&			kseedsy,
-            vector<double>&			kseedsz,
-            int**&					klabels,
-            const int&				STEP,
-            const double&			compactness);
-    //============================================================================
-    // Pick seeds for superpixels when step size of superpixels is given.
-    //============================================================================
-    void GetLABXYSeeds_ForGivenStepSize(
-            vector<double>&			kseedsl,
-            vector<double>&			kseedsa,
-            vector<double>&			kseedsb,
-            vector<double>&			kseedsx,
-            vector<double>&			kseedsy,
-            const int&				STEP,
-            const bool&				perturbseeds,
-            const vector<double>&	edgemag);
-    //============================================================================
-    // Pick seeds for supervoxels
-    //============================================================================
-    void GetKValues_LABXYZ(
-            vector<double>&         kseedsl,
-            vector<double>&			kseedsa,
-            vector<double>&			kseedsb,
-            vector<double>&			kseedsx,
-            vector<double>&			kseedsy,
-            vector<double>&			kseedsz,
-            const int&				STEP);
-    //============================================================================
-    // Move the superpixel seeds to low gradient positions to avoid putting seeds
-    // at region boundaries.
-    //============================================================================
-    void PerturbSeeds(
-            vector<double>&			kseedsl,
-            vector<double>&			kseedsa,
-            vector<double>&			seedsb,
-            vector<double>&			kseedsx,
-            vector<double>&			kseedsy,
-            const vector<double>&	edges);
-    //============================================================================
-    // Detect color edges, to help PerturbSeeds()
-    //============================================================================
-    void DetectLabEdges(
-            const double*			lvec,
-            const double*			avec,
-            const double*			bvec,
-            const int&				width,
-            const int&				height,
-            vector<double>&			edges);
-    //============================================================================
-    // sRGB to XYZ conversion; helper for RGB2LAB()
-    //============================================================================
-    void RGB2XYZ(
-            const int&              sR,
-            const int&              sG,
-            const int&              sB,
-            double&                 X,
-            double&                 Y,
-            double&                 Z);
-    //============================================================================
-    // sRGB to CIELAB conversion (uses RGB2XYZ function)
-    //============================================================================
-    void RGB2LAB(
-            const int&          	sR,
-            const int&          	sG,
-            const int&          	sB,
-            double&             	lval,
-            double&             	aval,
-            double&             	bval);
-    //============================================================================
-    // sRGB to CIELAB conversion for 2-D images
-    //============================================================================
-    void DoRGBtoLABConversion(
-            const unsigned int*&	ubuff,
-            double*&				lvec,
-            double*&				avec,
-            double*&				bvec);
-    //============================================================================
-    // sRGB to CIELAB conversion for 3-D volumes
-    //============================================================================
-    void DoRGBtoLABConversion(
-            unsigned int**&			ubuff,
-            double**&				lvec,
-            double**&				avec,
-            double**&				bvec);
-    //============================================================================
-    // Post-processing of SLIC segmentation, to avoid stray labels.
-    //============================================================================
-    void EnforceLabelConnectivity(
-            const int*				labels, //input labels that need to be corrected to remove stray labels
-            const int				width,
-            const int				height,
-            int*&					nlabels,//new labels
-            int&					numlabels,//the number of labels changes in the end if segments are removed
-            const int&				K); //the number of superpixels desired by the user
-    //============================================================================
-    // Post-processing of SLIC supervoxel segmentation, to avoid stray labels.
-    //============================================================================
-    void EnforceSupervoxelLabelConnectivity(
-            int**&					labels,//input - previous labels, output - new labels
-            const int&				width,
-            const int&				height,
-            const int&				depth,
-            int&					numlabels,
-            const int&				STEP);
-private:
-    int			m_width;
-    int			m_height;
-    int			m_depth;
+    float *pData_;
+    float *pMask_;
 
-    double*		m_lvec;
-    double*		m_avec;
-    double*		m_bvec;
+    Vector3i dim_;
 
-    double**	m_lvecvec;
-    double**	m_avecvec;
-    double**	m_bvecvec;
+    int GetVoxelIndex(const Vector3i &v) const { return dim_.x*dim_.y*v.z+dim_.x*v.y+v.x; }
+    Vector3i GetVoxelPosition(const int idx) const {
+        int z = idx / (dim_.x * dim_.y);
+        int y = (idx - z * dim_.x * dim_.y) / dim_.x;
+        int x = idx % dim_.x;
+        return Vector3i(x,y,z);
+    }
+
+    //-----
+
+    IplImage *pImage_;  // input image
+    int numCluster_;    // number of segments after segmentation
+
+    vector<Cluster> clusters_;  // segment result
+
+    int *pClusters_;
+    int *pClustersTmp_; // intermedia
+
+
+    int kNumElements_;   // number of pixels / voxels in the data
+
+    float *pLs;
+    float *pAs;
+    float *pBs;
+    float *pGradients_;
+
+    vector<Vector3i> centroids_;
+    vector<float>    centroidsValues_;
+
+    vector<float> pCLs;
+    vector<float> pCAs;
+    vector<float> pCBs;
+    vector<int> pCXs;
+    vector<int> pCYs;
+
+    void bgr2lab();  // opencv uses BGR instead of RGB
+    void detectGradients(); // detects gradient map to perturb seeds
+    void getInitialCenters(int expectedClusterSize);
+    void getInitialCentroids(int expectedClusterSize);  // for voxel, 3d
+
+    // Super pixel clustering. Need post-processing for enforcing connectivity.
+    void clusteringIteration(int expectedClusterSize, float compactness, int* pClustersTmp_);
+
+    // Find next connected components(pixel) which belongs to the same cluster.
+    // Function is called recursively to get the size of connected area cluster.
+    void findNext(const int* pClustersTmp_, int x, int y, int clusterIndex, int* x_pos, int* y_pos, int* num_count);
+
+    void enforceConnectivity(const int* pClustersTmp_, int expectedClusterSize);
 };
 
 #endif // SUPERVOXEL_H

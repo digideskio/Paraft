@@ -2,13 +2,9 @@
 #define SUPERPIXEL_H
 
 #include "Utils.h"
+#include "Metadata.h"
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
-
-struct Cluster {
-    Vector3i center;
-    int num_pixel;
-};
 
 class SuperPixel {
 public:
@@ -18,8 +14,8 @@ public:
     void InitWith(const string& image_path);
 
     // segment by specific 1. number of segments or 2. segment size
-    bool SegmentNumber(const int& expectedClusterNum, const float& compactness);
-    bool SegmentSize(const int& expectedClusterSize, const float& compactness);
+    void SegmentByNumber(const int& expectedClusterNum, const float& compactness);
+    void SegmentBySize(const int& expectedClusterSize, const float& compactness);
     void DrawContours(const CvScalar& drawing_color, const string& save_path);
 
     // accessors

@@ -29,4 +29,5 @@ HEADERS += \
 
 OTHER_FILES += \
     vorts.config \
-    jet.config
+    jet.config \
+    supervoxel.config

@@ -1,15 +1,15 @@
 #include "BlockController.h"
 #include "Metadata.h"
 
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
+//#include <opencv2/core/core.hpp>
+//#include <opencv2/highgui/highgui.hpp>
 
-#include "SuperPixel.h"
+#include "SuperVoxel.h"
 
 using namespace std;
 
 int main (int argc, char** argv) {
-//    Metadata *meta = new Metadata("jet.config");
+//    Metadata *meta = new Metadata("/Users/Yang/Develop/Paraft/Paraft/supervoxel.config");
 //    int currentTimestep = meta->start();
 
 //    BlockController *pBlockController = new BlockController();
@@ -25,27 +25,26 @@ int main (int argc, char** argv) {
 //    delete pBlockController;
 //    return 0;
 
-    string filename = "/Users/Yang/Desktop/1.png";
+//    string filename = "/Users/Yang/Desktop/1.png";
 
+    Metadata meta("/Users/Yang/Develop/Paraft/Paraft/supervoxel.config");
+    SuperVoxel sv(meta);
+//    SuperVoxel *sv = new SuperVoxel();
+//    sv->InitWith(*meta);
+    sv.SegmentByNumber(100, 5);
+    vector<Cluster> clusters = sv.GetClusters();
 
-    SuperPixel *sp = new SuperPixel();
-    sp->InitWith(filename.c_str());
-    sp->SegmentNumber(100, 5);
-    vector<Cluster> segs = sp->GetClusters();
-
-    int num_segs = sp->GetNumCluster();
-    for (int i = 0; i < num_segs; ++i) {
+    int numClusters = sv.GetNumCluster();
+    for (int i = 0; i < numClusters; ++i) {
         cout << "------------- " << i << " -----------------" << endl;
-        cout << "center.x: " << segs[i].center.x << endl;
-        cout << "center.y: " << segs[i].center.y << endl;
-        cout << "num of pixels: " << segs[i].num_pixel << endl;
+        cout << "center.x: " << clusters[i].center.x << endl;
+        cout << "center.y: " << clusters[i].center.y << endl;
+        cout << "num of pixels: " << clusters[i].num_pixel << endl;
     }
 
     CvScalar color = CV_RGB(255, 255, 255);
     string save_path = "/Users/Yang/Desktop/result.jpg";
-    sp->DrawContours(color, save_path);
-
-    delete sp;
+    sv.DrawContours(color, save_path);
 
     return EXIT_SUCCESS;
 }

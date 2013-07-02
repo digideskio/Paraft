@@ -71,6 +71,10 @@ namespace util {
     static inline bool descending(const pair<float, int> &lhs, const pair<float, int> &rhs) {
         return !ascending(lhs, rhs);
     }
+
+    static inline int round(float f) {
+        return static_cast<int>(floor(f + 0.5f));
+    }
 }
 
 typedef util::Vector3<int> Vector3i;
@@ -83,6 +87,11 @@ struct Feature {
     list<Vector3i>  edgeVoxels; // Edge information of the feature
     list<Vector3i>  bodyVoxels; // All the voxels in the feature
     Vector3i        centroid;   // Centers position of the feature
+};
+
+struct Cluster {
+    Vector3i center;
+    int num_pixel;
 };
 
 typedef hash_map<int, float*> DataSequence;
