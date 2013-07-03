@@ -22,8 +22,9 @@ public:
 
     // accessors
     int GetNumCluster()                 const { return numClusters_; }
-    const int* GetSegmentMap()          const { return pClusters_; }
-    const vector<Cluster> GetClusters() const { return clusters_; }
+//    const int* GetSegmentMap()          const { return pClusters_; }
+//    const vector<int>& GetMasks()       const { return &masks_; }
+    const vector<Cluster> GetClusters() const { return clusterInfo_; }
 
     void SetDataPtr(float *pData) { pData_ = pData; }
 
@@ -52,29 +53,28 @@ private:
     //-----
 
     IplImage *pImage_;  // input image
-    int numClusters_;    // number of segments after segmentation
-
-    vector<Cluster> clusters_;  // segment result
-
-    int *pClusters_;
-    int *pClustersTmp_; // intermedia
-
 
     int numVoxels_;   // number of pixels / voxels in the data
+    int numClusters_;    // number of segments after segmentation
 
-    float *pLs;
-    float *pAs;
-    float *pBs;
-    float *pGradients_;
+    vector<Cluster> clusterInfo_;  // segment result
 
-    vector<Vector3i> centroidPos_;
+    vector<int> masks_;
+    vector<int> masksTmp_;
+
+    vector<int> xcenters_;
+    vector<int> ycenters_;
+
+    vector<float> ls_;
+    vector<float> as_;
+    vector<float> bs_;
+    vector<float> lcenters_;
+    vector<float> acenters_;
+    vector<float> bcenters_;
+    vector<float> gradients_;
+
+    vector<Vector3i> centroidCoords_;
     vector<float>    centroidValues_;
-
-    vector<float> pCLs;
-    vector<float> pCAs;
-    vector<float> pCBs;
-    vector<int> pCXs;
-    vector<int> pCYs;
 
     void bgr2lab();  // opencv uses BGR instead of RGB
     void detectGradients(); // detects gradient map to perturb seeds
