@@ -31,6 +31,8 @@ public:
     void SetDataPtr(float *pData) { pData_ = pData; }
 
 private:
+    std::vector<Vector3i> kNeighbors_;
+
     float *pData_;
     float *pMask_;
 
@@ -48,6 +50,8 @@ private:
     void dispatchInitialSeeds(int segLength);
     void perturbSeedsToLocalMinGradient();
     void clustering(int segLength, float compactness);
+    void enforceConnectivity(int segLength);
+
     //-----
 
     IplImage *pImage_;  // input image
@@ -66,8 +70,8 @@ private:
     float *pBs;
     float *pGradients_;
 
-    vector<Vector3i> centroids_;
-    vector<float>    centroidsValues_;
+    vector<Vector3i> centroidPos_;
+    vector<float>    centroidValues_;
 
     vector<float> pCLs;
     vector<float> pCAs;
@@ -87,7 +91,8 @@ private:
     // Function is called recursively to get the size of connected area cluster.
     void findNext(int x, int y, int clusterIndex, int* x_pos, int* y_pos, int* num_count);
 
-    void enforceConnectivity(int expectedClusterSize);
+    void enforceConnect(int expectedClusterSize);
+    void growRegion(const Vector3i& seed, const int clusterIndex, std::vector<Vector3i> &pos, int& count);
 };
 
 #endif // SUPERVOXEL_H
