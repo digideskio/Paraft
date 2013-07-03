@@ -91,7 +91,7 @@ struct Feature {
 
 struct Cluster {
     Vector3i center;
-    int num_pixel;
+    int numVoxels;
 };
 
 typedef hash_map<int, float*> DataSequence;

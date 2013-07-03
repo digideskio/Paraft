@@ -71,7 +71,7 @@ void SuperPixel::SegmentBySize(const int &expectedClusterSize, const float &comp
         Cluster cls; {
             cls.center.x = 0;
             cls.center.y = 0;
-            cls.num_pixel = 0;
+            cls.numVoxels = 0;
         }
         clusters_.push_back(cls);
     }
@@ -81,12 +81,12 @@ void SuperPixel::SegmentBySize(const int &expectedClusterSize, const float &comp
             int index = pClusters_[pos];
             clusters_[index].center.x += x;
             clusters_[index].center.y += y;
-            clusters_[index].num_pixel++;
+            clusters_[index].numVoxels++;
         }
     }
     for (int i = 0; i < numCluster_; i++) {
-        clusters_[i].center.x = cvRound(static_cast<float>(clusters_[i].center.x) / clusters_[i].num_pixel);
-        clusters_[i].center.y = cvRound(static_cast<float>(clusters_[i].center.y) / clusters_[i].num_pixel);
+        clusters_[i].center.x = cvRound(static_cast<float>(clusters_[i].center.x) / clusters_[i].numVoxels);
+        clusters_[i].center.y = cvRound(static_cast<float>(clusters_[i].center.y) / clusters_[i].numVoxels);
         clusters_[i].center.x = clusters_[i].center.x >= dim_.x ? dim_.x - 1 : clusters_[i].center.x;
         clusters_[i].center.y = clusters_[i].center.y >= dim_.y ? dim_.y - 1 : clusters_[i].center.y;
     }

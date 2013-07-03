@@ -39,7 +39,7 @@ int main (int argc, char** argv) {
         cout << "------------- " << i << " -----------------" << endl;
         cout << "center.x: " << clusters[i].center.x << endl;
         cout << "center.y: " << clusters[i].center.y << endl;
-        cout << "num of pixels: " << clusters[i].num_pixel << endl;
+        cout << "num of pixels: " << clusters[i].numVoxels << endl;
     }
 
     CvScalar color = CV_RGB(255, 255, 255);

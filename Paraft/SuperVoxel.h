@@ -12,9 +12,6 @@ public:
     explicit SuperVoxel(const Metadata& meta);
     virtual ~SuperVoxel();
 
-//    void InitWith(const string& image_path);
-//    void InitWith(const Metadata& meta);
-
     // segment by specific 1. number of segments or 2. segment size
     void ClusterByNumber(const int numClusters, const float compactness);
     void ClusterBySize(const int segLength, const float compactness);
@@ -24,7 +21,7 @@ public:
     void DrawContours(const CvScalar& drawing_color, const string& save_path);
 
     // accessors
-    int GetNumCluster()                 const { return numCluster_; }
+    int GetNumCluster()                 const { return numClusters_; }
     const int* GetSegmentMap()          const { return pClusters_; }
     const vector<Cluster> GetClusters() const { return clusters_; }
 
@@ -55,7 +52,7 @@ private:
     //-----
 
     IplImage *pImage_;  // input image
-    int numCluster_;    // number of segments after segmentation
+    int numClusters_;    // number of segments after segmentation
 
     vector<Cluster> clusters_;  // segment result
 
@@ -63,7 +60,7 @@ private:
     int *pClustersTmp_; // intermedia
 
 
-    int kNumElements_;   // number of pixels / voxels in the data
+    int numVoxels_;   // number of pixels / voxels in the data
 
     float *pLs;
     float *pAs;
