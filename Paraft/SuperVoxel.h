@@ -16,6 +16,9 @@ public:
 //    void InitWith(const Metadata& meta);
 
     // segment by specific 1. number of segments or 2. segment size
+    void ClusterByNumber(const int numClusters, const float compactness);
+    void ClusterBySize(const int segLength, const float compactness);
+
     void SegmentByNumber(const int expectedClusterNum, const float compactness);
     void SegmentBySize(const int expectedClusterSize, const float compactness);
     void DrawContours(const CvScalar& drawing_color, const string& save_path);
@@ -41,6 +44,10 @@ private:
         return Vector3i(x,y,z);
     }
 
+    void calculateGradientsForEachVoxel();
+    void dispatchInitialSeeds(int segLength);
+    void perturbSeedsToLocalMinGradient();
+    void clustering(int segLength, float compactness);
     //-----
 
     IplImage *pImage_;  // input image
@@ -74,13 +81,13 @@ private:
     void getInitialCentroids(int expectedClusterSize);  // for voxel, 3d
 
     // Super pixel clustering. Need post-processing for enforcing connectivity.
-    void clusteringIteration(int expectedClusterSize, float compactness, int* pClustersTmp_);
+    void clusteringIteration(int expectedClusterSize, float compactness);
 
     // Find next connected components(pixel) which belongs to the same cluster.
     // Function is called recursively to get the size of connected area cluster.
-    void findNext(const int* pClustersTmp_, int x, int y, int clusterIndex, int* x_pos, int* y_pos, int* num_count);
+    void findNext(int x, int y, int clusterIndex, int* x_pos, int* y_pos, int* num_count);
 
-    void enforceConnectivity(const int* pClustersTmp_, int expectedClusterSize);
+    void enforceConnectivity(int expectedClusterSize);
 };
 
 #endif // SUPERVOXEL_H
