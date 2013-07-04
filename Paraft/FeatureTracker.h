@@ -22,11 +22,10 @@ public:
     // Track forward based on the center points of the features at the last time step
     void TrackFeature(float* pData, int direction, int mode);
     void SaveExtractedFeatures(int index)       { featureSequence_[index] = currentFeatures_; }
-    void SetDataPtr(float* pData)               { pData_ = pData; }
-    void SetTFMap(float* map)                   { pTfMap_ = map; }
+    void SetDataPtr(float* pData)               { data_.assign(pData, pData+volumeSize_); }
     void SetTFRes(int res)                      { tfRes_ = res; }
-    float* GetMaskPtr()                         { return pMask_; }
-    float* GetTFOpacityMap()                    { return pTfMap_; }
+    void SetTFMap(float* map)                   { tfMap_.assign(map, map+tfRes_); }
+    float* GetMaskPtr()                         { return &mask_.front(); }
     int GetTFResolution()                       { return tfRes_; }
     int GetVoxelIndex(const Vector3i &v)        { return blockDim_.x*blockDim_.y*v.z+blockDim_.x*v.y+v.x; }
 
@@ -42,12 +41,13 @@ private:
     void shrinkEdge(Feature &f, const Vector3i &seed);          // Sub-func inside shrinkRegion
     void backupFeatureInfo(int direction);                      // Update the feature vectors information after tracking
 
-    float getOpacity(float value) { return pTfMap_[(int)(value * (tfRes_-1))]; }
+    float getOpacity(float value) { return tfMap_[(int)(value * (tfRes_-1))]; }
 
-    float* pMask_;              // Mask volume, same size with a time step data
-    float* pMaskPrev_;          // Mask volume, for backward time step when tracking forward & backward
-    float* pData_;              // Raw volume intensity value
-    float* pTfMap_;             // Tranfer function setting
+    vector<float> data_;        // Raw volume intensity value
+    vector<float> mask_;        // Mask volume, same size with a time step data
+    vector<float> maskPrev_;    // Mask volume, same size with a time step data
+    vector<float> tfMap_;       // Tranfer function setting
+
     float  globalMaskValue_;    // Global mask value for newly detected features
 
     int tfRes_;

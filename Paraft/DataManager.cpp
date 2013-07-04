@@ -73,8 +73,6 @@ void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
 
         // normalize data and returns the position of peak value in [0, tfRes]
         int peakPos = preprocessData(dataSequence_[t], meta.dynamicTF());
-//        peakPos = peakPos < 300 ? tfRes_ : peakPos;
-//        cout << "peakPos: " << peakPos << endl;
 
         if (meta.dynamicTF()) {
             float *pDynamicTF = new float[tfRes_];

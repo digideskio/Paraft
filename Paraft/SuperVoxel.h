@@ -61,7 +61,6 @@ private:
 
     vector<int> masks_;
     vector<int> masksTmp_;
-
     vector<int> xcenters_;
     vector<int> ycenters_;
 

@@ -2,17 +2,13 @@
 
 FeatureTracker::FeatureTracker(Vector3i dim) : blockDim_(dim) {
     globalMaskValue_ = 0.0f;
-    tfRes_ = 0;
-    pTfMap_ = NULL;
+    tfRes_ = 1024;  // default
     volumeSize_ = blockDim_.Product();
-    pMask_ = new float[volumeSize_]();
-    pMaskPrev_ = new float[volumeSize_]();
+    mask_ = vector<float>(volumeSize_);
+    maskPrev_ = vector<float>(volumeSize_);
 }
 
 FeatureTracker::~FeatureTracker() {
-    delete [] pMask_;
-    delete [] pMaskPrev_;
-
     if (featureSequence_.size() > 0) {
         for (FeatureVectorSequence::iterator it = featureSequence_.begin(); it != featureSequence_.end(); it++) {
             vector<Feature> featureVector = it->second;
@@ -30,9 +26,9 @@ void FeatureTracker::ExtractAllFeatures() {
         for (int y = 0; y < blockDim_.y; y++) {
             for (int x = 0; x < blockDim_.x; x++) {
                 int index = GetVoxelIndex(Vector3i(x, y, z));
-                if (pMask_[index] > 0) continue; // point already within a feature
-                int tfIndex = (int)(pData_[index] * (tfRes_-1));
-                if (pTfMap_[tfIndex] >= OPACITY_THRESHOLD) {
+                if (mask_[index] > 0) continue; // point already within a feature
+                int tfIndex = (int)(data_[index] * (tfRes_-1));
+                if (tfMap_[tfIndex] >= OPACITY_THRESHOLD) {
                     FindNewFeature(Vector3i(x,y,z));
                 }
             }
@@ -63,15 +59,15 @@ void FeatureTracker::FindNewFeature(Vector3i seed) {
 }
 
 void FeatureTracker::TrackFeature(float* pData, int direction, int mode) {
-    if (pTfMap_ == NULL || tfRes_ <= 0) {
+    if (tfMap_.size() == 0 || tfRes_ <= 0) {
         cout << "Set TF pointer first." << endl; exit(3);
     }
 
-    pData_ = pData;
+    data_.assign(pData, pData+volumeSize_);
 
     // save current 0-1 matrix to previous, then clear current maxtrix
-    std::copy(pMask_, pMask_+volumeSize_, pMaskPrev_);
-    std::fill(pMask_, pMask_+volumeSize_, 0);
+    maskPrev_ = mask_;
+    std::fill(mask_.begin(), mask_.end(), 0.0f);
 
     for (size_t i = 0; i < currentFeatures_.size(); i++) {
         Feature f = currentFeatures_[i];
@@ -148,8 +144,8 @@ inline void FeatureTracker::fillRegion(Feature &f, const Vector3i &offset) {
     // predicted to be on edge
     for (list<Vector3i>::iterator p = f.edgeVoxels.begin(); p != f.edgeVoxels.end(); p++) {
         int index = GetVoxelIndex(*p);
-        if (pMask_[index] == 0) {
-            pMask_[index] = f.maskValue;
+        if (mask_[index] == 0) {
+            mask_[index] = f.maskValue;
         }
         f.bodyVoxels.push_back(*p);
         f.centroid += (*p);
@@ -162,10 +158,10 @@ inline void FeatureTracker::fillRegion(Feature &f, const Vector3i &offset) {
         while ((*p).x >= 0 && (*p).x <= blockDim_.x && (*p).x - offset.x >= 0 && (*p).x - offset.x <= blockDim_.x &&
                (*p).y >= 0 && (*p).y <= blockDim_.y && (*p).y - offset.y >= 0 && (*p).y - offset.y <= blockDim_.y &&
                (*p).z >= 0 && (*p).z <= blockDim_.z && (*p).z - offset.z >= 0 && (*p).z - offset.z <= blockDim_.z &&
-               pMask_[index] == 0 && pMaskPrev_[indexPrev] == f.maskValue) {
+               mask_[index] == 0 && maskPrev_[indexPrev] == f.maskValue) {
 
             // Mark all points: 1. currently = 1; 2. currently = 0 but previously = 1;
-            pMask_[index] = f.maskValue;
+            mask_[index] = f.maskValue;
             f.bodyVoxels.push_back(*p);
             f.centroid += (*p);
         }
@@ -186,7 +182,7 @@ inline void FeatureTracker::shrinkRegion(Feature &f) {
 
         int index = GetVoxelIndex(seed);
         bool seedOnEdge = false;
-        if (getOpacity(pData_[index]) < OPACITY_THRESHOLD) {
+        if (getOpacity(data_[index]) < OPACITY_THRESHOLD) {
             seedOnEdge = false;
             // if point is invisible, mark its adjacent points as 0
             shrinkEdge(f, seed);                                            // center
@@ -196,15 +192,15 @@ inline void FeatureTracker::shrinkRegion(Feature &f) {
             if (--seed.x >= 0)          { shrinkEdge(f, seed); } seed.x++;   // left
             if (--seed.y >= 0)          { shrinkEdge(f, seed); } seed.y++;   // bottom
             if (--seed.z >= 0)          { shrinkEdge(f, seed); } seed.z++;   // front
-        } else if (pMask_[index] == 0.0f) { seedOnEdge = true; }
+        } else if (mask_[index] == 0.0f) { seedOnEdge = true; }
 
         if (seedOnEdge) { f.edgeVoxels.push_back(seed); }
     }
 
     for (list<Vector3i>::iterator p = f.edgeVoxels.begin(); p != f.edgeVoxels.end(); p++) {
         int index = GetVoxelIndex(*p);
-        if (pMask_[index] != f.maskValue) {
-            pMask_[index] = f.maskValue;
+        if (mask_[index] != f.maskValue) {
+            mask_[index] = f.maskValue;
             f.bodyVoxels.push_back(*p);
             f.centroid += (*p);
         }
@@ -213,8 +209,8 @@ inline void FeatureTracker::shrinkRegion(Feature &f) {
 
 inline void FeatureTracker::shrinkEdge(Feature &f, const Vector3i &seed) {
     int index = GetVoxelIndex(seed);
-    if (pMask_[index] == f.maskValue) {
-        pMask_[index] = 0;  // shrink
+    if (mask_[index] == f.maskValue) {
+        mask_[index] = 0;  // shrink
         list<Vector3i>::iterator p = find(f.bodyVoxels.begin(), f.bodyVoxels.end(), seed);
         f.bodyVoxels.erase(p);
         f.edgeVoxels.push_back(seed);
@@ -248,11 +244,11 @@ inline bool FeatureTracker::expandEdge(Feature &f, const Vector3i &seed) {
 
     // this neighbor voxel is already labeled, or the opacity is not large enough to
     // to be labeled as within the feature, so the original seed is still on edge.
-    if (pMask_[index] > 0 || getOpacity(pData_[index]) < OPACITY_THRESHOLD) {
+    if (mask_[index] > 0 || getOpacity(data_[index]) < OPACITY_THRESHOLD) {
         return true;
     }
 
-    pMask_[index] = f.maskValue;
+    mask_[index] = f.maskValue;
     f.edgeVoxels.push_back(seed);
     f.bodyVoxels.push_back(seed);
     f.centroid += seed;
