@@ -207,7 +207,7 @@ void SuperPixel::getInitialCenters(int expectedClusterSize) {
     // Step 1: evenly dispatch the initial seeds(centers).
     Vector3i strips = dim_ / expectedClusterSize;
     Vector3i deviat = dim_ - strips * expectedClusterSize;
-    Vector3f offset = Vector3f(expectedClusterSize/2.0, expectedClusterSize/2.0, expectedClusterSize/2.0);
+    vector3f offset = vector3f(expectedClusterSize/2.0, expectedClusterSize/2.0, expectedClusterSize/2.0);
     for (int y = 0; y < strips.y; y++) {
         float y_err = static_cast<float>(y) * deviat.y / strips.y;
         for (int x = 0; x < strips.x; x++) {
@@ -296,10 +296,10 @@ void SuperPixel::clusteringIteration(int expectedClusterSize, float compactness,
             for (int y = y_start; y < y_end; y++) {
                 for (int x = x_start; x < x_end; x++) {
                     int pos = y * dim_.x + x;
-                    Vector3f currentColor = Vector3f(pLs[pos], pAs[pos], pBs[pos]);
-                    Vector3f centerColor  = Vector3f(pCLs[n], pCAs[n], pCBs[n]);
-                    Vector3f currentPos = Vector3f(x, y, 0);
-                    Vector3f centerPos  = Vector3f(pCXs[n], pCYs[n], 0.0);
+                    vector3f currentColor = vector3f(pLs[pos], pAs[pos], pBs[pos]);
+                    vector3f centerColor  = vector3f(pCLs[n], pCAs[n], pCBs[n]);
+                    vector3f currentPos = vector3f(x, y, 0);
+                    vector3f centerPos  = vector3f(pCXs[n], pCYs[n], 0.0);
 
                     float distanceColor = (currentColor - centerColor).MagnituteSquared();
                     float distanceSpace = (currentPos - centerPos).MagnituteSquared();

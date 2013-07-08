@@ -1,5 +1,6 @@
-QMAKE_CC     = gcc
-QMAKE_CXX    = g++
+#QMAKE_CC     = gcc-4.8
+#QMAKE_CXX    = g++-4.8
+#QMAKE_CXXFLAGS += -std=c++11
 #QMAKE_CC     = /usr/local/bin/mpicc
 #QMAKE_CXX    = /usr/local/bin/mpic++
 #LIBS        += -lmpi_cxx -lmpi -lopen-rte -lopen-pal -lutil

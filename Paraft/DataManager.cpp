@@ -4,13 +4,13 @@ DataManager::DataManager() {}
 
 DataManager::~DataManager() {
     if (!dataSequence_.empty()) {
-        for (DataSequence::iterator it = dataSequence_.begin(); it != dataSequence_.end(); it++) {
+        for (auto it = dataSequence_.begin(); it != dataSequence_.end(); it++) {
             delete [] it->second;
         }   // unload data
     }
 
     if (!tfSequence_.empty()) {
-        for (DataSequence::iterator it = tfSequence_.begin(); it != tfSequence_.end(); it++) {
+        for (auto it = tfSequence_.begin(); it != tfSequence_.end(); it++) {
             delete [] it->second;
         }   // unload transfer function setting
     }
@@ -50,7 +50,7 @@ void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
     volumeSize_ = blockDim_.Product();
 
     // delete if data is not within [t-2, t+2] of current timestep t
-    for (DataSequence::iterator it = dataSequence_.begin(); it != dataSequence_.end(); it++) {
+    for (auto it = dataSequence_.begin(); it != dataSequence_.end(); it++) {
         if (it->first < timestep-2 || it->first > timestep+2) {
             delete [] it->second;
             dataSequence_.erase(it);

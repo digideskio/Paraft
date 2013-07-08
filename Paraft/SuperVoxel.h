@@ -22,14 +22,15 @@ public:
 
     // accessors
     int GetNumCluster()                 const { return numClusters_; }
-//    const int* GetSegmentMap()          const { return pClusters_; }
-//    const vector<int>& GetMasks()       const { return &masks_; }
     const vector<Cluster> GetClusters() const { return clusterInfo_; }
 
     void SetDataPtr(float *pData) { pData_ = pData; }
 
 private:
-    std::vector<Vector3i> kNeighbors_;
+    vector<Vector3i> kNeighbors_;
+    vector<float> data_;
+    vector<int> masks_;
+    vector<int> masksTmp_;
 
     float *pData_;
     float *pMask_;
@@ -59,8 +60,7 @@ private:
 
     vector<Cluster> clusterInfo_;  // segment result
 
-    vector<int> masks_;
-    vector<int> masksTmp_;
+
     vector<int> xcenters_;
     vector<int> ycenters_;
 

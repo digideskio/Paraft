@@ -1,7 +1,9 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
-#include <hash_map.h>
+#include <hash_map>
+#include <unordered_map>
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <cmath>
@@ -9,8 +11,6 @@
 #include <vector>
 #include <list>
 #include <map>
-
-#define nullptr NULL
 
 const float OPACITY_THRESHOLD  = 0.1;
 const int MIN_NUM_VOXEL_IN_FEATURE = 10;
@@ -77,24 +77,26 @@ namespace util {
     }
 }
 
-typedef util::Vector3<int> Vector3i;
-typedef util::Vector3<float> Vector3f;
-typedef util::Vector3<double> Vector3d;
+typedef util::Vector3<int> vector3i;
+typedef util::Vector3<float> vector3f;
 
 struct Feature {
     int             id;         // Unique ID for each feature
     float           maskValue;  // Used to record the color of the feature
-    list<Vector3i>  edgeVoxels; // Edge information of the feature
-    list<Vector3i>  bodyVoxels; // All the voxels in the feature
-    Vector3i        centroid;   // Centers position of the feature
+    list<vector3i>  edgeVoxels; // Edge information of the feature
+    list<vector3i>  bodyVoxels; // All the voxels in the feature
+    vector3i        centroid;   // Centers position of the feature
 };
 
 struct Cluster {
-    Vector3i center;
+    vector3i center;
     int numVoxels;
 };
 
-typedef hash_map<int, float*> DataSequence;
+typedef hash_map<int, float*> DataSeq;
 typedef hash_map<int, vector<Feature> > FeatureVectorSequence;
+
+//typedef unordered_map<int, float*> DataSeq;
+//typedef unordered_map<int, vector<Feature> > FeatureVectorSequence;
 
 #endif // CONSTS_H

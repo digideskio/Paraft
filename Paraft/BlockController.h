@@ -19,7 +19,6 @@ public:
 private:
     DataManager             *pDataManager_;
     FeatureTracker          *pFeatureTracker_;
-    FeatureVectorSequence    featureSequence_;
     int                      t_;
 };
 

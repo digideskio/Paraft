@@ -2,6 +2,7 @@
 #define FEATURETRACKER_H
 
 #include "Utils.h"
+#include <unordered_map>
 
 using namespace std;
 
@@ -62,7 +63,7 @@ private:
     vector<Feature> backup2Features_; // ... in the 2nd backup time step
     vector<Feature> backup3Features_; // ... in the 3rd backup time step
 
-    FeatureVectorSequence featureSequence_;
+    std::unordered_map<int, vector<Feature>> featureSequence_;
 };
 
 #endif // FEATURETRACKER_H
