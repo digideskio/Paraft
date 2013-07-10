@@ -8,7 +8,7 @@
 
 class SuperVoxel {
 public:
-    explicit SuperVoxel(const Vector3i dim);
+    explicit SuperVoxel(const vector3i dim);
     explicit SuperVoxel(const Metadata& meta);
     virtual ~SuperVoxel();
 
@@ -27,7 +27,7 @@ public:
     void SetDataPtr(float *pData) { pData_ = pData; }
 
 private:
-    vector<Vector3i> kNeighbors_;
+    vector<vector3i> kNeighbors_;
     vector<float> data_;
     vector<int> masks_;
     vector<int> masksTmp_;
@@ -35,14 +35,14 @@ private:
     float *pData_;
     float *pMask_;
 
-    Vector3i dim_;
+    vector3i dim_;
 
-    int GetVoxelIndex(const Vector3i &v) const { return dim_.x*dim_.y*v.z+dim_.x*v.y+v.x; }
-    Vector3i GetVoxelPosition(const int idx) const {
+    int GetVoxelIndex(const vector3i &v) const { return dim_.x*dim_.y*v.z+dim_.x*v.y+v.x; }
+    vector3i GetVoxelPosition(const int idx) const {
         int z = idx / (dim_.x * dim_.y);
         int y = (idx - z * dim_.x * dim_.y) / dim_.x;
         int x = idx % dim_.x;
-        return Vector3i(x,y,z);
+        return vector3i(x,y,z);
     }
 
     void calculateGradientsForEachVoxel();
@@ -72,7 +72,7 @@ private:
     vector<float> bcenters_;
     vector<float> gradients_;
 
-    vector<Vector3i> centroidCoords_;
+    vector<vector3i> centroidCoords_;
     vector<float>    centroidValues_;
 
     void bgr2lab();  // opencv uses BGR instead of RGB
@@ -88,7 +88,7 @@ private:
     void findNext(int x, int y, int clusterIndex, int* x_pos, int* y_pos, int* num_count);
 
     void enforceConnect(int expectedClusterSize);
-    void growRegion(const Vector3i& seed, const int clusterIndex, std::vector<Vector3i> &pos, int& count);
+    void growRegion(const vector3i& seed, const int clusterIndex, std::vector<vector3i> &pos, int& count);
 };
 
 #endif // SUPERVOXEL_H

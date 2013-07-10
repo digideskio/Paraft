@@ -1,7 +1,7 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
-#include <hash_map>
+//#include <hash_map>
 #include <unordered_map>
 #include <algorithm>
 #include <fstream>
@@ -25,30 +25,30 @@ using namespace std;
 
 namespace util {
     template<class T>
-    class Vector3 {
+    class vector3 {
     public:
         T x, y, z;
-        Vector3(T x_ = 0, T y_ = 0, T z_ = 0) : x(x_), y(y_), z(z_) { }
+        vector3(T x_ = 0, T y_ = 0, T z_ = 0) : x(x_), y(y_), z(z_) { }
         T*       GetPointer()                           { return &x; }
         T        Product()                              { return x * y * z; }
         float    MagnituteSquared()                     { return x*x + y*y + z*z; }
         float    Magnitute()                            { return sqrt((*this).MagnituteSquared()); }
-        float    DistanceFrom(Vector3 const& rhs) const { return (*this - rhs).Magnitute(); }
-        Vector3  operator -  ()                         { return Vector3(-x, -y, -z); }
-        Vector3  operator +  (Vector3 const& rhs) const { Vector3 t(*this); t+=rhs; return t; }
-        Vector3  operator -  (Vector3 const& rhs) const { Vector3 t(*this); t-=rhs; return t; }
-        Vector3  operator *  (Vector3 const& rhs) const { Vector3 t(*this); t*=rhs; return t; }
-        Vector3  operator /  (Vector3 const& rhs) const { Vector3 t(*this); t/=rhs; return t; }
-        Vector3  operator *  (float scale)        const { Vector3 t(*this); t*=scale; return t; }
-        Vector3  operator /  (float scale)        const { Vector3 t(*this); t/=scale; return t; }
-        Vector3& operator += (Vector3 const& rhs)       { x+=rhs.x, y+=rhs.y, z+=rhs.z; return *this; }
-        Vector3& operator -= (Vector3 const& rhs)       { x-=rhs.x, y-=rhs.y, z-=rhs.z; return *this; }
-        Vector3& operator *= (Vector3 const& rhs)       { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
-        Vector3& operator /= (Vector3 const& rhs)       { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
-        Vector3& operator *= (float scale)              { x*=scale, y*=scale, z*=scale; return *this; }
-        Vector3& operator /= (float scale)              { x/=scale, y/=scale, z/=scale; return *this; }
-        bool     operator == (Vector3 const& rhs) const { return x==rhs.x && y==rhs.y && z==rhs.z; }
-        bool     operator != (Vector3 const& rhs) const { return !(*this == rhs); }
+        float    DistanceFrom(vector3 const& rhs) const { return (*this - rhs).Magnitute(); }
+        vector3  operator -  ()                         { return vector3(-x, -y, -z); }
+        vector3  operator +  (vector3 const& rhs) const { vector3 t(*this); t+=rhs; return t; }
+        vector3  operator -  (vector3 const& rhs) const { vector3 t(*this); t-=rhs; return t; }
+        vector3  operator *  (vector3 const& rhs) const { vector3 t(*this); t*=rhs; return t; }
+        vector3  operator /  (vector3 const& rhs) const { vector3 t(*this); t/=rhs; return t; }
+        vector3  operator *  (float scale)        const { vector3 t(*this); t*=scale; return t; }
+        vector3  operator /  (float scale)        const { vector3 t(*this); t/=scale; return t; }
+        vector3& operator += (vector3 const& rhs)       { x+=rhs.x, y+=rhs.y, z+=rhs.z; return *this; }
+        vector3& operator -= (vector3 const& rhs)       { x-=rhs.x, y-=rhs.y, z-=rhs.z; return *this; }
+        vector3& operator *= (vector3 const& rhs)       { x*=rhs.x, y*=rhs.y, z*=rhs.z; return *this; }
+        vector3& operator /= (vector3 const& rhs)       { x/=rhs.x, y/=rhs.y, z/=rhs.z; return *this; }
+        vector3& operator *= (float scale)              { x*=scale, y*=scale, z*=scale; return *this; }
+        vector3& operator /= (float scale)              { x/=scale, y/=scale, z/=scale; return *this; }
+        bool     operator == (vector3 const& rhs) const { return x==rhs.x && y==rhs.y && z==rhs.z; }
+        bool     operator != (vector3 const& rhs) const { return !(*this == rhs); }
     };
 
     static inline string ltrim(const string &s) {    // trim string from left
@@ -77,8 +77,8 @@ namespace util {
     }
 }
 
-typedef util::Vector3<int> vector3i;
-typedef util::Vector3<float> vector3f;
+typedef util::vector3<int> vector3i;
+typedef util::vector3<float> vector3f;
 
 struct Feature {
     int             id;         // Unique ID for each feature
@@ -93,10 +93,7 @@ struct Cluster {
     int numVoxels;
 };
 
-typedef hash_map<int, float*> DataSeq;
-typedef hash_map<int, vector<Feature> > FeatureVectorSequence;
-
-//typedef unordered_map<int, float*> DataSeq;
-//typedef unordered_map<int, vector<Feature> > FeatureVectorSequence;
+typedef unordered_map<int, float*> DataSeq;
+typedef unordered_map<int, vector<Feature> > FeatureVectorSequence;
 
 #endif // CONSTS_H

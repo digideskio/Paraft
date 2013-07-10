@@ -32,7 +32,7 @@ private:
     int *pClusters_;
     int *pClustersTmp_; // intermedia
 
-    Vector3i dim_;      // data dimension
+    vector3i dim_;      // data dimension
     int kNumElements_;   // number of pixels / voxels in the data
 
     float *pLs;

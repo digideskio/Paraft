@@ -1,14 +1,10 @@
-#QMAKE_CC     = gcc-4.8
-#QMAKE_CXX    = g++-4.8
-#QMAKE_CXXFLAGS += -std=c++11
-#QMAKE_CC     = /usr/local/bin/mpicc
-#QMAKE_CXX    = /usr/local/bin/mpic++
-#LIBS        += -lmpi_cxx -lmpi -lopen-rte -lopen-pal -lutil
-INCLUDEPATH += -I/usr/local/include
+QMAKE_CXX       = g++-4.8
+QMAKE_CXXFLAGS += -std=c++11
+INCLUDEPATH    += -I/usr/local/include
+LIBS           += -L/usr/local/lib -lm -lopencv_core -lopencv_highgui
 
-#QMAKE_CXXFLAGS += -fopenmp
-#QMAKE_LFLAGS   += -fopenmp
-LIBS += -L/usr/local/lib -lm -lopencv_core -lopencv_highgui
+QMAKE_LINK       = $$QMAKE_CXX
+QMAKE_LINK_SHLIB = $$QMAKE_CXX
 
 SOURCES += \
     Main.cpp \

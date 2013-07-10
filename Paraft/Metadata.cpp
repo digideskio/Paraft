@@ -40,7 +40,7 @@ Metadata::Metadata(const string &fpath) {
                 dim.push_back(atoi(util::trim(value).c_str()));
 
                 if (dim.size() != 3) { cout << "incorrect volumeDim format" << endl; exit(1); }
-                volumeDim_ = Vector3i(dim[0], dim[1], dim[2]);
+                volumeDim_ = vector3i(dim[0], dim[1], dim[2]);
             }
         }
     }

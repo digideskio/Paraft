@@ -12,7 +12,7 @@ public:
     string   path()       const { return path_; }
     string   tfPath()     const { return tfPath_; }
     string   timeFormat() const { return timeFormat_; }
-    Vector3i volumeDim()  const { return volumeDim_; }
+    vector3i volumeDim()  const { return volumeDim_; }
     bool     dynamicTF()  const { return dynamicTF_; }
 
     Metadata(const string &fpath);
@@ -26,7 +26,7 @@ private:
     string   path_;
     string   tfPath_;
     string   timeFormat_;
-    Vector3i volumeDim_;
+    vector3i volumeDim_;
     bool     dynamicTF_;
 };
 

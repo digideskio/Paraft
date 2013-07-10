@@ -13,7 +13,7 @@ public:
     float* GetDataPtr(int t)    { return dataSequence_[t]; }
     float* GetTFMap(int t)      { return tfSequence_[t]; }
     int GetTFRes()              { return tfRes_ < 1 ? DEFAULT_TF_RES : tfRes_; }
-    Vector3i GetBlockDim()      { return blockDim_; }
+    vector3i GetBlockDim()      { return blockDim_; }
 
     void InitTF(const Metadata &meta);
     void LoadDataSequence(const Metadata &meta, const int timestep);
@@ -24,7 +24,7 @@ private:
 
     DataSeq dataSequence_;
     DataSeq tfSequence_;
-    Vector3i blockDim_;
+    vector3i blockDim_;
 
     int volumeSize_;
     int tfRes_;

@@ -25,7 +25,7 @@ void SuperPixel::InitWith(const string &image_path) {
         exit(EXIT_FAILURE);
     }
 
-    dim_ = Vector3i(pImage_->width, pImage_->height, 1);
+    dim_ = vector3i(pImage_->width, pImage_->height, 1);
     kNumElements_ = dim_.Product();
 
     pClusters_      = new int[kNumElements_];
@@ -205,8 +205,8 @@ void SuperPixel::detectGradients() {
 // ============================================================================
 void SuperPixel::getInitialCenters(int expectedClusterSize) {
     // Step 1: evenly dispatch the initial seeds(centers).
-    Vector3i strips = dim_ / expectedClusterSize;
-    Vector3i deviat = dim_ - strips * expectedClusterSize;
+    vector3i strips = dim_ / expectedClusterSize;
+    vector3i deviat = dim_ - strips * expectedClusterSize;
     vector3f offset = vector3f(expectedClusterSize/2.0, expectedClusterSize/2.0, expectedClusterSize/2.0);
     for (int y = 0; y < strips.y; y++) {
         float y_err = static_cast<float>(y) * deviat.y / strips.y;
