@@ -1,9 +1,7 @@
 #include "FeatureTracker.h"
 
 FeatureTracker::FeatureTracker(vector3i dim) : blockDim_(dim) {
-    globalMaskValue_ = 0.0f;
-    tfRes_ = 1024;  // default
-    volumeSize_ = blockDim_.Product();
+    volumeSize_ = blockDim_.VolumeSize();
     mask_ = vector<float>(volumeSize_);
     maskPrev_ = vector<float>(volumeSize_);
 }

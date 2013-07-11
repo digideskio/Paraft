@@ -30,7 +30,7 @@ namespace util {
         T x, y, z;
         vector3(T x_ = 0, T y_ = 0, T z_ = 0) : x(x_), y(y_), z(z_) { }
         T*       GetPointer()                           { return &x; }
-        T        Product()                              { return x * y * z; }
+        T        VolumeSize()                              { return x * y * z; }
         float    MagnituteSquared()                     { return x*x + y*y + z*z; }
         float    Magnitute()                            { return sqrt((*this).MagnituteSquared()); }
         float    DistanceFrom(vector3 const& rhs) const { return (*this - rhs).Magnitute(); }
@@ -93,7 +93,7 @@ struct Cluster {
     int numVoxels;
 };
 
-typedef unordered_map<int, float*> DataSeq;
+typedef unordered_map<int, float*> DataSequence;
 typedef unordered_map<int, vector<Feature> > FeatureVectorSequence;
 
 #endif // CONSTS_H

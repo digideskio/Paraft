@@ -2,7 +2,6 @@
 #define FEATURETRACKER_H
 
 #include "Utils.h"
-//#include <unordered_map>
 
 using namespace std;
 
@@ -26,7 +25,7 @@ public:
     void SetDataPtr(float* pData)               { data_.assign(pData, pData+volumeSize_); }
     void SetTFRes(int res)                      { tfRes_ = res; }
     void SetTFMap(float* map)                   { tfMap_.assign(map, map+tfRes_); }
-    float* GetMaskPtr()                         { return &mask_.front(); }
+    float* GetMaskPtr()                         { return mask_.data(); }
     int GetTFResolution()                       { return tfRes_; }
     int GetVoxelIndex(const vector3i &v)        { return blockDim_.x*blockDim_.y*v.z+blockDim_.x*v.y+v.x; }
 
@@ -35,11 +34,11 @@ public:
 
 private:
     vector3i predictRegion(int index, int direction, int mode); // Predict region t based on direction, returns offset
-    void fillRegion(Feature &f, const vector3i &offset);        // Scanline algorithm - fills everything inside edge
-    void expandRegion(Feature &f);                              // Grows edge where possible
-    void shrinkRegion(Feature &f);                              // Shrinks edge where nescessary
-    bool expandEdge(Feature &f, const vector3i &seed);          // Sub-func inside expandRegion
-    void shrinkEdge(Feature &f, const vector3i &seed);          // Sub-func inside shrinkRegion
+    void fillRegion(Feature& f, const vector3i& offset);        // Scanline algorithm - fills everything inside edge
+    void expandRegion(Feature& f);                              // Grows edge where possible
+    void shrinkRegion(Feature& f);                              // Shrinks edge where nescessary
+    bool expandEdge(Feature& f, const vector3i& seed);          // Sub-func inside expandRegion
+    void shrinkEdge(Feature& f, const vector3i& seed);          // Sub-func inside shrinkRegion
     void backupFeatureInfo(int direction);                      // Update the feature vectors information after tracking
 
     float getOpacity(float value) { return tfMap_[(int)(value * (tfRes_-1))]; }
@@ -49,9 +48,8 @@ private:
     vector<float> maskPrev_;    // Mask volume, same size with a time step data
     vector<float> tfMap_;       // Tranfer function setting
 
-    float  globalMaskValue_;    // Global mask value for newly detected features
-
-    int tfRes_;
+    float globalMaskValue_ = 0.0f;  // Global mask value for newly detected features
+    int tfRes_ = 1024;              // Default transfer function resolution
     int volumeSize_;
     int timeLeft2Forward_;
     int timeLeft2Backward_;
@@ -63,7 +61,7 @@ private:
     vector<Feature> backup2Features_; // ... in the 2nd backup time step
     vector<Feature> backup3Features_; // ... in the 3rd backup time step
 
-    std::unordered_map<int, vector<Feature>> featureSequence_;
+    std::unordered_map<int, vector<Feature> > featureSequence_;
 };
 
 #endif // FEATURETRACKER_H

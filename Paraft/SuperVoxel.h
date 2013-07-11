@@ -24,18 +24,22 @@ public:
     int GetNumCluster()                 const { return numClusters_; }
     const vector<Cluster> GetClusters() const { return clusterInfo_; }
 
-    void SetDataPtr(float *pData) { pData_ = pData; }
+    void SetDataPtr(float *pData) { mask_.assign(pData, pData + numVoxels_); }
 
 private:
-    vector<vector3i> kNeighbors_;
+    vector<vector3i> kNeighbors_ = {
+        vector3i(-1, 0, 0),    // left
+        vector3i( 1, 0, 0),    // right
+        vector3i( 0, 1, 0),    // top
+        vector3i( 0,-1, 0),    // bottom
+        vector3i( 0, 0,-1),    // front
+        vector3i( 0, 0, 1)     // back
+    };
+
     vector<float> data_;
-    vector<int> masks_;
-    vector<int> masksTmp_;
-
-    float *pData_;
-    float *pMask_;
-
-    vector3i dim_;
+    vector<int>   mask_;
+    vector<int>   maskTmp_;
+    vector3i      dim_;
 
     int GetVoxelIndex(const vector3i &v) const { return dim_.x*dim_.y*v.z+dim_.x*v.y+v.x; }
     vector3i GetVoxelPosition(const int idx) const {
@@ -59,7 +63,6 @@ private:
     int numClusters_;    // number of segments after segmentation
 
     vector<Cluster> clusterInfo_;  // segment result
-
 
     vector<int> xcenters_;
     vector<int> ycenters_;

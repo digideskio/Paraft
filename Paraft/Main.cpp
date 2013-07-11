@@ -5,25 +5,25 @@
 using namespace std;
 
 int main () {
-    Metadata meta("/Users/Yang/Develop/Paraft/Paraft/vorts.config");
-    int currentTimestep = meta.start();
+//    Metadata meta("/Users/Yang/Develop/Paraft/Paraft/vorts.config");
+//    int currentTimestep = meta.start();
 
-    BlockController blockController;
-    blockController.SetCurrentTimestep(currentTimestep);
-    blockController.InitParameters(meta);
+//    BlockController blockController;
+//    blockController.SetCurrentTimestep(currentTimestep);
+//    blockController.InitParameters(meta);
 
-    while (currentTimestep++ < meta.end()) {
-        blockController.SetCurrentTimestep(currentTimestep);
-        blockController.TrackForward(meta);
-        cout << "-- " << currentTimestep << " done --" << endl;
-    }
+//    while (currentTimestep++ < meta.end()) {
+//        blockController.SetCurrentTimestep(currentTimestep);
+//        blockController.TrackForward(meta);
+//        cout << "-- " << currentTimestep << " done --" << endl;
+//    }
 
-    return EXIT_SUCCESS;
+//    return EXIT_SUCCESS;
 
 
 //    Metadata meta("/Users/Yang/Develop/Paraft/Paraft/supervoxel.config");
 //    SuperVoxel sv(meta);
-//    sv.SegmentByNumber(100, 5);
+//    sv.SegmentByNumber(1000, 20);
 //    vector<Cluster> clusters = sv.GetClusters();
 
 //    int numClusters = sv.GetNumCluster();
@@ -39,4 +39,13 @@ int main () {
 //    sv.DrawContours(color, save_path);
 
 //    return EXIT_SUCCESS;
+
+    Metadata meta("/Users/Yang/Develop/Paraft/Paraft/vorts.config");
+    int currentTimestep = meta.start();
+
+    BlockController bc;
+    bc.SetCurrentTimestep(currentTimestep);
+    bc.Segment2SuperVoxel(meta);
+
+    return EXIT_SUCCESS;
 }

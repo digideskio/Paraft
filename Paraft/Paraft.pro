@@ -1,7 +1,7 @@
 QMAKE_CXX       = g++-4.8
-QMAKE_CXXFLAGS += -std=c++11
-INCLUDEPATH    += -I/usr/local/include
-LIBS           += -L/usr/local/lib -lm -lopencv_core -lopencv_highgui
+QMAKE_CXXFLAGS  = -std=c++11
+INCLUDEPATH     = -I/usr/local/include
+LIBS            = -L/usr/local/lib -lm -lopencv_core -lopencv_highgui
 
 QMAKE_LINK       = $$QMAKE_CXX
 QMAKE_LINK_SHLIB = $$QMAKE_CXX
@@ -12,8 +12,7 @@ SOURCES += \
     FeatureTracker.cpp \
     BlockController.cpp \
     Metadata.cpp \
-    SuperVoxel.cpp \
-    SuperPixel.cpp
+    SuperVoxel.cpp
 
 HEADERS += \
     DataManager.h \
@@ -21,8 +20,7 @@ HEADERS += \
     BlockController.h \
     Utils.h \
     Metadata.h \
-    SuperVoxel.h \
-    SuperPixel.h
+    SuperVoxel.h
 
 OTHER_FILES += \
     vorts.config \

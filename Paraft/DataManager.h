@@ -22,8 +22,8 @@ private:
     int preprocessData(float *pData, bool remapping);   // returns peak value position
     void normalize(float *pData);
 
-    DataSeq dataSequence_;
-    DataSeq tfSequence_;
+    DataSequence dataSequence_;
+    DataSequence tfSequence_;
     vector3i blockDim_;
 
     int volumeSize_;

@@ -47,7 +47,7 @@ void DataManager::SaveMaskVolume(float* pData, const Metadata &meta, const int t
 
 void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
     blockDim_ = meta.volumeDim();
-    volumeSize_ = blockDim_.Product();
+    volumeSize_ = blockDim_.VolumeSize();
 
     // delete if data is not within [t-2, t+2] of current timestep t
     for (auto it = dataSequence_.begin(); it != dataSequence_.end(); it++) {
