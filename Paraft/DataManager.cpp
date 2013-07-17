@@ -67,9 +67,11 @@ void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
         ifstream inf(fpath.c_str(), ios::binary);
         if (!inf) { cout << "cannot read file: " + fpath << endl; exit(1); }
 
-        dataSequence_[t] = new float[volumeSize_];
-        inf.read(reinterpret_cast<char*>(dataSequence_[t]), volumeSize_*sizeof(float));
+        float* pTemp = new float[volumeSize_];
+        inf.read(reinterpret_cast<char*>(pTemp), volumeSize_*sizeof(float));
         inf.close();
+
+        dataSequence_[t] = pTemp;
 
         // normalize data and returns the position of peak value in [0, tfRes]
         int peakPos = preprocessData(dataSequence_[t], meta.dynamicTF());
@@ -83,6 +85,8 @@ void DataManager::LoadDataSequence(const Metadata &meta, const int timestep) {
         } else {
             tfSequence_[t] = pStaticTfMap_;
         }
+
+        cout << t << " done." << endl;
     }
 }
 
@@ -92,6 +96,8 @@ int DataManager::preprocessData(float *pData, bool dynamicTF) {
         min = std::min(min, pData[i]);
         max = std::max(max, pData[i]);
     }
+
+    cout << min << ", " << max << endl;
 
     if (dynamicTF) {
         std::map<float, int> dataHistMap;

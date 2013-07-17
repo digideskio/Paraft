@@ -30,7 +30,7 @@ void BlockController::Segment2SuperVoxel(const Metadata &meta) {
     pDataManager_ = new DataManager();
     pDataManager_->LoadDataSequence(meta, currentTimestep_);
 
-    pSuperVoxel_ = new SuperVoxel(meta);
+    pSuperVoxel_ = new SuperVoxel(meta.volumeDim());
     pSuperVoxel_->SetDataPtr(pDataManager_->GetDataPtr(currentTimestep_));
-    pSuperVoxel_->ClusterByNumber(2000, 20);
+    pSuperVoxel_->ClusterByNumber(8, 20);
 }

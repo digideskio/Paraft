@@ -1,54 +1,58 @@
 #include "SuperVoxel.h"
 
-SuperVoxel::SuperVoxel(const Metadata &meta) {
-    pImage_ = cvLoadImage(meta.tfPath().c_str(), CV_LOAD_IMAGE_COLOR);
-    if (!pImage_ || pImage_->nChannels != 3 || pImage_->depth != IPL_DEPTH_8U) {
-        cerr << "Error - Unsupport image format." << endl;
-        exit(EXIT_FAILURE);
-    }
+//SuperVoxel::SuperVoxel(const Metadata &meta) {
+//    pImage_ = cvLoadImage(meta.tfPath().c_str(), CV_LOAD_IMAGE_COLOR);
+//    if (!pImage_ || pImage_->nChannels != 3 || pImage_->depth != IPL_DEPTH_8U) {
+//        cerr << "Error - Unsupport image format." << endl;
+//        exit(EXIT_FAILURE);
+//    }
 
-    dim_ = vector3i(pImage_->width, pImage_->height, 1);
-    numVoxels_ = dim_.VolumeSize();
+//    dim_ = vector3i(pImage_->width, pImage_->height, 1);
+//    numVoxels_ = dim_.VolumeSize();
 
-    mask_ = vector<int>(numVoxels_, -1);
-    maskTmp_ = vector<int>(numVoxels_, -1);
+//    mask_ = vector<int>(numVoxels_, -1);
+//    maskTmp_ = vector<int>(numVoxels_, -1);
 
-    ls_ = vector<float>(numVoxels_, 0.0f);
-    as_ = vector<float>(numVoxels_, 0.0f);
-    bs_ = vector<float>(numVoxels_, 0.0f);
-    gradients_ = vector<float>(numVoxels_, 0.0f);
-}
+//    ls_ = vector<float>(numVoxels_, 0.0f);
+//    as_ = vector<float>(numVoxels_, 0.0f);
+//    bs_ = vector<float>(numVoxels_, 0.0f);
+//    gradients_ = vector<float>(numVoxels_, 0.0f);
+//}
 
 SuperVoxel::SuperVoxel(const vector3i dim) : dim_(dim) {
     numVoxels_ = dim_.VolumeSize();
-    mask_      = vector<int>(numVoxels_, 0);
-    maskTmp_   = vector<int>(numVoxels_, 0);
+    mask_      = vector<int>(numVoxels_, -1);
+    maskTmp_   = vector<int>(numVoxels_, -1);
     gradients_ = vector<float>(numVoxels_, 0.0f);
 }
 
 SuperVoxel::~SuperVoxel() {
-    if (pImage_)        { cvReleaseImage(&pImage_); pImage_ = nullptr; }
+    if (pImage_)    { cvReleaseImage(&pImage_); pImage_ = nullptr; }
+    if (pData_)     { delete [] pData_; pData_ = nullptr; }
 }
 
 void SuperVoxel::ClusterByNumber(const int numClusters, const float compactness) {
-    ClusterBySize(static_cast<int>(sqrtf(static_cast<float>(numVoxels_)/numClusters)), compactness);
+    const int segLength = util::round(powf(static_cast<float>(numVoxels_)/numClusters, 1.0f/3.0f));
+    ClusterBySize(segLength, compactness);
 }
 
 void SuperVoxel::ClusterBySize(const int segLength, const float compactness) {
-    // todo: load data
 
     calculateGradientsForEachVoxel();
     dispatchInitialSeeds(segLength);
-    perturbSeedsToLocalMinGradient();
+    perturbSeedsToLocalMinimumGradient();
     clustering(segLength, compactness);
     enforceConnectivity(segLength);
+
+    if (numClusters_ == 0) {
+        cout << "no cluster found..." << endl; return;
+    }
 
     // 5. generate segmentation results
     for (int i = 0; i < numClusters_; i++) {
         Cluster cluster = { vector3i() /*center*/, 0 /*numVoxels*/ };
         clusterInfo_.push_back(cluster);
     }
-
 
     for (int z = 0; z < dim_.y; z++) {
         for (int y = 0; y < dim_.y; y++) {
@@ -69,10 +73,13 @@ void SuperVoxel::ClusterBySize(const int segLength, const float compactness) {
         clusterInfo_[i].center.y = std::min(clusterInfo_[i].center.y, dim_.y - 1);
         clusterInfo_[i].center.z = std::min(clusterInfo_[i].center.z, dim_.z - 1);
     }
+
+    cout << "~~" << endl;
 }
 
 // 1.
 void SuperVoxel::calculateGradientsForEachVoxel() {
+//    cout << "data.size: " << data_.size() << endl;
     for (int z = 1; z < dim_.z - 1; z++) {
         for (int y = 1; y < dim_.y - 1; y++) {
             for (int x = 1; x < dim_.x - 1; x++) {
@@ -83,9 +90,9 @@ void SuperVoxel::calculateGradientsForEachVoxel() {
                 int bottom = GetVoxelIndex(vector3i(x,y-1,z));
                 int front  = GetVoxelIndex(vector3i(x,y,z-1));
                 int back   = GetVoxelIndex(vector3i(x,y,z+1));
-                float dx   = (data_[right] - data_[left]) * (data_[right] - data_[left]);
-                float dy   = (data_[top] - data_[bottom]) * (data_[top] - data_[bottom]);
-                float dz   = (data_[back] - data_[front]) * (data_[back] - data_[front]);
+                float dx   = (pData_[right] - pData_[left]) * (pData_[right] - pData_[left]);
+                float dy   = (pData_[top] - pData_[bottom]) * (pData_[top] - pData_[bottom]);
+                float dz   = (pData_[back] - pData_[front]) * (pData_[back] - pData_[front]);
                 gradients_[self] = dx + dy + dz;
             }
         }
@@ -104,7 +111,6 @@ void SuperVoxel::dispatchInitialSeeds(int segLength) {
             float yErr = static_cast<float>(y * remains.y) / numSeg.y;
             for (int x = 0; x < numSeg.x; x++) {
                 float xErr = static_cast<float>(x * remains.x) / numSeg.x;
-
                 vector3i segIndex; {
                     segIndex.x = std::min(util::round(x * segLength + roundFactor + xErr), dim_.x - 1);
                     segIndex.y = std::min(util::round(y * segLength + roundFactor + yErr), dim_.y - 1);
@@ -113,32 +119,35 @@ void SuperVoxel::dispatchInitialSeeds(int segLength) {
                 int index = GetVoxelIndex(vector3i(x,y,z));
 
                 centroidCoords_.push_back(segIndex);
-                centroidValues_.push_back(data_[index]);
+                centroidValues_.push_back(pData_[index]);
             }
         }
     }
+
+    cout << "centroid size = " << centroidCoords_.size() << endl;
 }
 
 // 3. optional
-void SuperVoxel::perturbSeedsToLocalMinGradient() {
+void SuperVoxel::perturbSeedsToLocalMinimumGradient() {
     for (size_t n = 0; n < centroidCoords_.size(); n++) {
         vector3i originalCentroid = centroidCoords_[n];
         int index = GetVoxelIndex(originalCentroid);
         int indexNew = index;
-        for (size_t i = 0; i < kNeighbors_.size(); i++) {
-            vector3i tempCentroid = originalCentroid + kNeighbors_[i];
-            if (tempCentroid.x >= 0 && tempCentroid.x < dim_.x &&
-                tempCentroid.y >= 0 && tempCentroid.y < dim_.y &&
-                tempCentroid.z >= 0 && tempCentroid.z < dim_.z) {
-                int indexTemp = GetVoxelIndex(tempCentroid);
+        for (auto neighbor : kNeighbors_) {
+            vector3i neighborPos = originalCentroid + neighbor;
+            if (neighborPos.x >= 0 && neighborPos.x < dim_.x &&
+                neighborPos.y >= 0 && neighborPos.y < dim_.y &&
+                neighborPos.z >= 0 && neighborPos.z < dim_.z) {
+                int indexTemp = GetVoxelIndex(neighborPos);
                 if (gradients_[indexTemp] < gradients_[indexNew]) {
                     indexNew = indexTemp;   // index of least gradient after iteration.
                 }
             }
         }
-        if (index != indexNew) {  // shifted to neighbor
+
+        if (index != indexNew) {  // shifted to neighbor with less gradient
             centroidCoords_[n] = GetVoxelPosition(n);
-            centroidValues_[n] = centroidValues_[indexNew];
+            centroidValues_[n] = pData_[indexNew];
         }
     }
 }
@@ -177,10 +186,7 @@ void SuperVoxel::clustering(int segLength, float compactness) {
 
                         int currentIndex = GetVoxelIndex(currentPos);
 
-                        float currentValue = data_[currentIndex];
-                        float centroidValue = centroidValues_[n];
-
-                        float distValue = currentValue - centroidValue;
+                        float distValue = pData_[currentIndex] - centroidValues_[n];
                         float distSpace = (currentPos - centroidPos).MagnituteSquared();
                         float distance = distValue + distSpace * weight;
 
@@ -204,7 +210,7 @@ void SuperVoxel::clustering(int segLength, float compactness) {
                 for (int x = 0; x < dim_.x; x++) {
                     vector3i pos(x,y,z);
                     int clusterIndex = maskTmp_[GetVoxelIndex(pos)];
-                    sumValues[clusterIndex] += data_[clusterIndex];
+                    sumValues[clusterIndex] += pData_[clusterIndex];
                     sumCentroids[clusterIndex] += pos;
                     clusterSize[clusterIndex]++;
                 }
@@ -216,9 +222,9 @@ void SuperVoxel::clustering(int segLength, float compactness) {
             if (size <= 0) continue;
 
             centroidValues_[n] = sumValues[n] / size;
-            centroidCoords_[n].x = std::min(util::round(static_cast<float>(sumCentroids[n].x) / size), dim_.x);
-            centroidCoords_[n].y = std::min(util::round(static_cast<float>(sumCentroids[n].y) / size), dim_.y);
-            centroidCoords_[n].z = std::min(util::round(static_cast<float>(sumCentroids[n].z) / size), dim_.z);
+            centroidCoords_[n].x = std::min(util::round(static_cast<float>(sumCentroids[n].x)/size), dim_.x);
+            centroidCoords_[n].y = std::min(util::round(static_cast<float>(sumCentroids[n].y)/size), dim_.y);
+            centroidCoords_[n].z = std::min(util::round(static_cast<float>(sumCentroids[n].z)/size), dim_.z);
         }
     }
 }
@@ -233,12 +239,14 @@ void SuperVoxel::enforceConnectivity(int segLength) {
     for (int z = 0; z < dim_.z; z++) {
         for (int y = 0; y < dim_.y; y++) {
             for (int x = 0; x < dim_.x; x++) {
+                int index = GetVoxelIndex(vector3i(x,y,z));
+
                 if (mask_[i] < 0) {    // all init to as -1
                     mask_[i] = clusterIndex;
                     // 1. find neighboring labels
                     vector3i currentPos(x,y,z);
-                    for (size_t n = 0; n < kNeighbors_.size(); n++) {
-                        vector3i neighborPos = currentPos + kNeighbors_[n];
+                    for (auto neighbor : kNeighbors_) {
+                        vector3i neighborPos = currentPos + neighbor;
                         if (neighborPos.x >= 0 && neighborPos.x < dim_.x &&
                             neighborPos.y >= 0 && neighborPos.y < dim_.y &&
                             neighborPos.z >= 0 && neighborPos.z < dim_.z) {
@@ -251,7 +259,11 @@ void SuperVoxel::enforceConnectivity(int segLength) {
                     // 2. traverse from the current pixel and find all the connected components.
                     pos[0] = vector3i(x,y,z);
                     int numVoxelsInCluster = 1;
-                    growRegion(currentPos, clusterIndex, pos, numVoxelsInCluster);
+                    int *count;
+                    count = &numVoxelsInCluster;
+                    //////////////////////////////////////////////////////////////
+                    grow(currentPos, clusterIndex, pos, count);
+                    //////////////////////////////////////////////////////////////
                     // 3. check if current cluster is too small
                     if (numVoxelsInCluster <= kAverageClusterSize * 0.25) {
                         for (int i = 0; i < numVoxelsInCluster; i++) {
@@ -259,6 +271,7 @@ void SuperVoxel::enforceConnectivity(int segLength) {
                             mask_[index] = neighborClusterIndex;
                         }
                         clusterIndex--;
+                        cout << "too small" << endl;
                     }
                     clusterIndex++;
                 }
@@ -270,10 +283,28 @@ void SuperVoxel::enforceConnectivity(int segLength) {
     numClusters_ = clusterIndex;
 }
 
+void SuperVoxel::grow(const vector3i &seed, const int clusterIndex, std::vector<vector3i> &pos, int *count) {
+    int seedIndex = GetVoxelIndex(seed);
+    for (auto offset : kNeighbors_) {
+        vector3i neighbor = seed + offset;
+        if (neighbor.x >= 0 && neighbor.x < dim_.x &&
+            neighbor.y >= 0 && neighbor.y < dim_.y &&
+            neighbor.z >= 0 && neighbor.z < dim_.z) {
+            int neighborIndex = GetVoxelIndex(neighbor);
+            if (mask_[neighborIndex] < 0 && maskTmp_[neighborIndex] == maskTmp_[seedIndex]) {
+                mask_[neighborIndex] = clusterIndex;
+                pos[*count] = neighbor;
+                *count = *count + 1;
+                grow(neighbor, clusterIndex, pos, count);
+            }
+        }
+    }
+}
+
 void SuperVoxel::growRegion(const vector3i& seed, const int clusterIndex, std::vector<vector3i>& pos, int& count) {
     int seedIndex = GetVoxelIndex(seed);
-    for (size_t i = 0; i < kNeighbors_.size(); i++) {
-        vector3i neighborPos = seed + kNeighbors_[i];
+    for (auto neighbor : kNeighbors_) {
+        vector3i neighborPos = seed + neighbor;
         if (neighborPos.x >= 0 && neighborPos.x < dim_.x &&
             neighborPos.y >= 0 && neighborPos.y < dim_.y &&
             neighborPos.z >= 0 && neighborPos.z < dim_.z) {
@@ -449,13 +480,13 @@ void SuperVoxel::getInitialCentroids(int expectedClusterSize) {
             for (int x = 1; x < dim_.x - 1; x++) {
                 int pos = GetVoxelIndex(vector3i(x+1,y,z));
                 int neg = GetVoxelIndex(vector3i(x-1,y,z));
-                float dx = (data_[pos] - data_[neg]) * (data_[pos] - data_[neg]);
+                float dx = (pData_[pos] - pData_[neg]) * (pData_[pos] - pData_[neg]);
                     pos = GetVoxelIndex(vector3i(x,y+1,z));
                     neg = GetVoxelIndex(vector3i(x,y-1,z));
-                float dy = (data_[pos] - data_[neg]) * (data_[pos] - data_[neg]);
+                float dy = (pData_[pos] - pData_[neg]) * (pData_[pos] - pData_[neg]);
                     pos = GetVoxelIndex(vector3i(x,y,z+1));
                     neg = GetVoxelIndex(vector3i(x,y,z-1));
-                float dz = (data_[pos] - data_[neg]) * (data_[pos] - data_[neg]);
+                float dz = (pData_[pos] - pData_[neg]) * (pData_[pos] - pData_[neg]);
                 gradients_[GetVoxelIndex(vector3i(x,y,z))] = dx + dy + dz;
             }
         }
@@ -481,7 +512,7 @@ void SuperVoxel::getInitialCentroids(int expectedClusterSize) {
                 int index = GetVoxelIndex(vector3i(x,y,z));
 
                 centroidCoords_.push_back(segIndex);
-                centroidValues_.push_back(data_[index]);
+                centroidValues_.push_back(pData_[index]);
             }
         }
     }
@@ -516,7 +547,6 @@ void SuperVoxel::getInitialCentroids(int expectedClusterSize) {
             centroidValues_[n] = centroidValues_[indexNew];
         }
     }
-
 }
 
 // ============================================================================

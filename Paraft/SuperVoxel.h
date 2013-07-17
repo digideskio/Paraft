@@ -9,7 +9,7 @@
 class SuperVoxel {
 public:
     explicit SuperVoxel(const vector3i dim);
-    explicit SuperVoxel(const Metadata& meta);
+//    explicit SuperVoxel(const Metadata& meta);
     virtual ~SuperVoxel();
 
     // segment by specific 1. number of segments or 2. segment size
@@ -23,11 +23,10 @@ public:
     // accessors
     int GetNumCluster()                 const { return numClusters_; }
     const vector<Cluster> GetClusters() const { return clusterInfo_; }
-
-    void SetDataPtr(float *pData) { mask_.assign(pData, pData + numVoxels_); }
+    void SetDataPtr(float *pData)             { pData_ = pData; }
 
 private:
-    vector<vector3i> kNeighbors_ = {
+    const std::vector<vector3i> kNeighbors_ = {
         vector3i(-1, 0, 0),    // left
         vector3i( 1, 0, 0),    // right
         vector3i( 0, 1, 0),    // top
@@ -36,10 +35,19 @@ private:
         vector3i( 0, 0, 1)     // back
     };
 
-    vector<float> data_;
-    vector<int>   mask_;
-    vector<int>   maskTmp_;
+    float* pData_;
+
+//    std::vector<float> data_;
+    std::vector<int>   mask_;
+    std::vector<int>   maskTmp_;
+    std::vector<float> gradients_;
+    std::vector<float> centroidValues_;
+    std::vector<vector3i> centroidCoords_;
+    std::vector<Cluster> clusterInfo_;  // segment result
+
     vector3i      dim_;
+    int           numVoxels_;   // number of voxels in the volume data
+    int           numClusters_; // number of segments after segmentation
 
     int GetVoxelIndex(const vector3i &v) const { return dim_.x*dim_.y*v.z+dim_.x*v.y+v.x; }
     vector3i GetVoxelPosition(const int idx) const {
@@ -51,18 +59,13 @@ private:
 
     void calculateGradientsForEachVoxel();
     void dispatchInitialSeeds(int segLength);
-    void perturbSeedsToLocalMinGradient();
+    void perturbSeedsToLocalMinimumGradient();
     void clustering(int segLength, float compactness);
     void enforceConnectivity(int segLength);
 
     //-----
 
     IplImage *pImage_;  // input image
-
-    int numVoxels_;   // number of pixels / voxels in the data
-    int numClusters_;    // number of segments after segmentation
-
-    vector<Cluster> clusterInfo_;  // segment result
 
     vector<int> xcenters_;
     vector<int> ycenters_;
@@ -73,10 +76,7 @@ private:
     vector<float> lcenters_;
     vector<float> acenters_;
     vector<float> bcenters_;
-    vector<float> gradients_;
 
-    vector<vector3i> centroidCoords_;
-    vector<float>    centroidValues_;
 
     void bgr2lab();  // opencv uses BGR instead of RGB
     void detectGradients(); // detects gradient map to perturb seeds
@@ -92,6 +92,7 @@ private:
 
     void enforceConnect(int expectedClusterSize);
     void growRegion(const vector3i& seed, const int clusterIndex, std::vector<vector3i> &pos, int& count);
+    void grow(const vector3i& seed, const int clusterIndex, std::vector<vector3i>& pos, int* count);
 };
 
 #endif // SUPERVOXEL_H
