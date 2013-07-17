@@ -1,0 +1,26 @@
+                    PAn - Projection Analyzer 
+          http://code.google.com/p/projection-analyzer/
+
+
+PAn follows the standard GNU installation procedure.  To compile PAn
+you will need an ANSI C-compiler.  After unpacking the distribution,
+rename the Makefile.[mac|unix|windows] to your suitable platform.
+
+You can then build the library simply by typing,
+
+  make
+
+The libraries will be compiled into the '/lib/bin' folder.
+
+
+For further details download 'pan-doc.zip' available from our website.
+
+
+
+
+
+
+
+
+
+
