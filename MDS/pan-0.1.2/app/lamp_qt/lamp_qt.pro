@@ -1,8 +1,7 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2011-09-08T15:54:47
-#
-#-------------------------------------------------
+QMAKE_CXX        =  g++-4.8
+QMAKE_CXXFLAGS   = -std=c++11
+QMAKE_LINK       = $$QMAKE_CXX
+QMAKE_LINK_SHLIB = $$QMAKE_CXX
 
 TARGET   = lamp_qt
 TEMPLATE = app

@@ -2,10 +2,10 @@
 #include "ui_mainwindow.h"
 
 extern "C" {
-#include "pan_dconv.h"
-#include "pan_force.h"
-#include "pan_lamp.h"
-#include "pan_estimate.h"
+    #include "pan_dconv.h"
+    #include "pan_force.h"
+    #include "pan_lamp.h"
+    #include "pan_estimate.h"
 }
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
@@ -32,7 +32,7 @@ int MainWindow::lampmethod() {
     /*
     *   Parameters
     */
-    inputfilename = "/Users/Yang/Develop/Paraft/MDS/pan-0.1.2/data/iris.arff"; //<-- change here for using another dataset!
+    inputfilename = "/Users/Yang/Develop/Paraft/MDS/pan-0.1.2/app/data/faces.arff"; //<-- change here for using another dataset!
     strcpy(outputfilename, strrep(inputfilename, ".arff","_lamp.arff"));
 
     // Stress ans plot
