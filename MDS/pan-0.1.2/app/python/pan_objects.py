@@ -36,8 +36,8 @@ from ctypes import *
 # Libs
 #
 def pan_loadlibs():
-    libpath = "../../lib/bin/"    
-    libext = ".so" if os.name == "posix" else ".dll"        
+    libpath = "../../lib/"    
+    libext = ".dylib" if os.name == "posix" else ".dll"        
     libpanuseful = cdll.LoadLibrary(libpath + "libpanuseful" + libext)    
     libpandconv = cdll.LoadLibrary(libpath + "libpandconv" + libext) 
     return libpanuseful, libpandconv

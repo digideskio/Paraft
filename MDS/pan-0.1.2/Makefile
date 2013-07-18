@@ -6,51 +6,51 @@
 WRKDIR = `pwd`
 MAKE = make
 
-all: projects_panuseful_panuseful projects_panmath_panmath projects_panmetric_panmetric projects_panforce_panforce projects_pandconv_pandconv projects_panestimate_panestimate projects_panlamp_panlamp
+all: panuseful panmath panmetric panforce pandconv panestimate panlamp
 
-projects_panuseful_panuseful: 
-	$(MAKE) -C projects/panuseful all -f panuseful.mak.unix
+panuseful: 
+	$(MAKE) -C src/panuseful all -f panuseful.mak.mac
 
-projects_panmath_panmath: 
-	$(MAKE) -C projects/panmath all -f panmath.mak.unix
+panmath: 
+	$(MAKE) -C src/panmath all -f panmath.mak.mac
 
-projects_panmetric_panmetric: 
-	$(MAKE) -C projects/panmetric all -f panmetric.mak.unix
+panmetric: 
+	$(MAKE) -C src/panmetric all -f panmetric.mak.mac
 
-projects_panforce_panforce: 
-	$(MAKE) -C projects/panforce all -f panforce.mak.unix
+panforce: 
+	$(MAKE) -C src/panforce all -f panforce.mak.mac
 
-projects_pandconv_pandconv: projects_panuseful_panuseful
-	$(MAKE) -C projects/pandconv all -f pandconv.mak.unix
+pandconv: panuseful
+	$(MAKE) -C src/pandconv all -f pandconv.mak.mac
 
-projects_panestimate_panestimate: projects_panmetric_panmetric
-	$(MAKE) -C projects/panestimate all -f panestimate.mak.unix
+panestimate: panmetric
+	$(MAKE) -C src/panestimate all -f panestimate.mak.mac
 
-projects_panlamp_panlamp: projects_panuseful_panuseful projects_panmath_panmath projects_panmetric_panmetric projects_pandconv_pandconv projects_panestimate_panestimate projects_panforce_panforce
-	$(MAKE) -C projects/panlamp all -f panlamp.mak.unix
+panlamp: panuseful panmath panmetric pandconv panestimate panforce
+	$(MAKE) -C src/panlamp all -f panlamp.mak.mac
 
-clean: clean_projects_panuseful_panuseful clean_projects_panmath_panmath clean_projects_panmetric_panmetric clean_projects_panforce_panforce clean_projects_pandconv_pandconv clean_projects_panestimate_panestimate clean_projects_panlamp_panlamp
+clean: clean_panuseful clean_panmath clean_panmetric clean_panforce clean_pandconv clean_panestimate clean_panlamp
 
-clean_projects_panuseful_panuseful: 
-	$(MAKE) -C projects/panuseful clean -f panuseful.mak.unix
+clean_panuseful: 
+	$(MAKE) -C src/panuseful clean -f panuseful.mak.mac
 
-clean_projects_panmath_panmath: 
-	$(MAKE) -C projects/panmath clean -f panmath.mak.unix
+clean_panmath: 
+	$(MAKE) -C src/panmath clean -f panmath.mak.mac
 
-clean_projects_panmetric_panmetric: 
-	$(MAKE) -C projects/panmetric clean -f panmetric.mak.unix
+clean_panmetric: 
+	$(MAKE) -C src/panmetric clean -f panmetric.mak.mac
 
-clean_projects_panforce_panforce: 
-	$(MAKE) -C projects/panforce clean -f panforce.mak.unix
+clean_panforce: 
+	$(MAKE) -C src/panforce clean -f panforce.mak.mac
 
-clean_projects_pandconv_pandconv: 
-	$(MAKE) -C projects/pandconv clean -f pandconv.mak.unix
+clean_pandconv: 
+	$(MAKE) -C src/pandconv clean -f pandconv.mak.mac
 
-clean_projects_panestimate_panestimate: 
-	$(MAKE) -C projects/panestimate clean -f panestimate.mak.unix
+clean_panestimate: 
+	$(MAKE) -C src/panestimate clean -f panestimate.mak.mac
 
-clean_projects_panlamp_panlamp: 
-	$(MAKE) -C projects/panlamp clean -f panlamp.mak.unix
+clean_panlamp: 
+	$(MAKE) -C src/panlamp clean -f panlamp.mak.mac
 
-.PHONY: clean_projects_panuseful_panuseful clean_projects_panmath_panmath clean_projects_panmetric_panmetric clean_projects_panforce_panforce clean_projects_pandconv_pandconv clean_projects_panestimate_panestimate clean_projects_panlamp_panlamp
+.PHONY: clean_panuseful clean_panmath clean_panmetric clean_panforce clean_pandconv clean_panestimate clean_panlamp
 
