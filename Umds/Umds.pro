@@ -12,6 +12,14 @@ LIBS           += -L/usr/local/lib
 LIBS           += -L/usr/local/opt/qt5/lib
 LIBS           += -lm -larmadillo
 
+#QMAKE_CFLAGS_X86_64             -= -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.5
+#QMAKE_OBJECTIVE_CFLAGS_X86_64   -= -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.5
+#QMAKE_CXXFLAGS_X86_64           -= -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.5
+#QMAKE_LFLAGS_X86_64             -= -arch x86_64 -Xarch_x86_64 -mmacosx-version-min=10.5
+
+QMAKE_LINK       = $$QMAKE_CXX
+QMAKE_LINK_SHLIB = $$QMAKE_CXX
+
 QT += core gui opengl widgets
 
 TARGET = Umds
@@ -22,15 +30,15 @@ SOURCES += \
     MainWidget.cpp \
     Lamp.cpp \
     Node.cpp \
-    GraphWidget.cpp \
     Edge.cpp \
-    ProjectionView.cpp
+    ProjectionView.cpp \
+    GraphWidget.cpp
 
 HEADERS += \
     MainWidget.h \
     Lamp.h \
     Node.h \
-    GraphWidget.h \
     Edge.h \
     ProjectionView.h \
-    Utils.h
+    Utils.h \
+    GraphWidget.h

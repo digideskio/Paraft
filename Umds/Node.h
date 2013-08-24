@@ -6,11 +6,13 @@
 
 class Edge;
 class GraphWidget;
+class ProjectionView;
 class QGraphicsSceneMouseEvent;
 
 class Node : public QGraphicsItem {
 public:
-    Node(GraphWidget *graphWidget);
+//    Node(GraphWidget *graphWidget);
+    Node(ProjectionView *projView);
 
     // builtin
     QRectF boundingRect() const;
@@ -35,7 +37,8 @@ protected:
 private:
     QList<Edge *> edgeList;
     QPointF newPos;
-    GraphWidget *graph;
+//    GraphWidget *graph;
+    ProjectionView *projView;
 };
 
 #endif // NODE_H

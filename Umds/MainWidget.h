@@ -6,6 +6,7 @@
 #include <QWidget>
 #include <QGridLayout>
 #include <QPushButton>
+#include <unordered_map>
 #include "ProjectionView.h"
 
 class MainWidget : public QWidget {
@@ -37,14 +38,15 @@ private:
 
     void loadData();
     void setupViews();
-    void generateSeedIndices(std::vector<int> &indices);
+    void spreadSeed();
+    std::vector<int> generateSeedIndices();
 
-    std::vector<std::vector<double> > dataMat;
-    std::vector<std::vector<double> > seedMat;
+    std::unordered_map<int, std::vector<double> > dataMat;
+    std::unordered_map<int, std::vector<double> > seedMat;
     std::vector<double> dataVec;
     std::vector<double> seedVec;
-    std::vector<double> labelVec;
-
+    std::vector<double> dataLabelVec;
+    std::vector<double> seedLabelVec;
 };
 
 #endif // MAINWIDGET_H

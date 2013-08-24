@@ -1,13 +1,14 @@
 #include "Node.h"
 #include "Edge.h"
 #include "GraphWidget.h"
+#include "ProjectionView.h"
 
 #include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
 #include <QPainter>
 #include <QStyleOption>
 
-Node::Node(GraphWidget *graphWidget) : graph(graphWidget) {
+Node::Node(ProjectionView *projView) : projView(projView) {
     setFlag(ItemIsMovable);
     setFlag(ItemSendsGeometryChanges);
     setCacheMode(DeviceCoordinateCache);
@@ -111,9 +112,9 @@ void Node::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWid
 QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value) {
     switch (change) {
     case ItemPositionHasChanged:
-        foreach (Edge *edge, edgeList)
-            edge->adjust();
-        graph->itemMoved();
+//        foreach (Edge *edge, edgeList)
+//            edge->adjust();
+//        graph->itemMoved();
         break;
     default:
         break;
