@@ -14,3 +14,7 @@ egpgv13/ptrack.fdb_latexmk
 Paraft/Paraft.pro.user.d104183
 
 *.autosave
+
+*.7pre1
+
+Umds/Makefile
