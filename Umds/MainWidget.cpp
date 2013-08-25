@@ -10,6 +10,7 @@ MainWidget::~MainWidget() {
     if (loadButton)     delete loadButton;
     if (sampleButton)   delete sampleButton;
     if (projectButton)  delete projectButton;
+    if (lamp)           delete lamp;
 }
 
 void MainWidget::setupViews() {
@@ -35,8 +36,20 @@ void MainWidget::setupViews() {
 }
 
 void MainWidget::spreadSeed() {
-    for (unsigned int i = 0; i < seedLabelVec.size(); i++) {
-        projView->addNode(i, static_cast<int>(seedLabelVec[i]));
+    for (unsigned int i = 0; i < seedLabelVec.size(); i++)
+        projView->addNode(i, static_cast<int>(seedLabelVec[i]), -20*i, 20*i);
+}
+
+void MainWidget::projectData() {
+    std::vector<double> projSeed = projView->getProjSeed();
+    std::vector<double> projData;
+    lamp->project(seedVec, projSeed, dataVec, projData);
+    qDebug() << "projData.size(): " << projData.size()/2;
+
+    for (unsigned int i = 0; i < projData.size()/2; i++) {
+        int x = static_cast<int>(projData[i*2]);
+        int y = static_cast<int>(projData[i*2+1]);
+        projView->addNode(i, static_cast<int>(dataLabelVec[i]), x, y);
     }
 }
 
@@ -50,6 +63,7 @@ void MainWidget::loadData() {
             if (entry.isEmpty()) continue;
             QStringList tokens = entries[row].split(';');
             if (tokens.isEmpty()) continue;
+            dataVec.clear();
             for (QString token : tokens)
                 dataVec.push_back(token.toDouble());
             dataLabelVec.push_back(dataVec.back());
@@ -58,6 +72,9 @@ void MainWidget::loadData() {
         }
         f.close();
     }
+
+    int numDataDim = static_cast<int>(dataVec.size());
+    qDebug() << "numDataDim: " << numDataDim;
 
     std::vector<int> indices = generateSeedIndices();
     for (int i = 0; i < numSeed; i++) {
@@ -76,6 +93,8 @@ void MainWidget::loadData() {
     for (auto entry : seedMat)
         for (double value : entry.second)
             seedVec.push_back(value);
+
+    lamp = new Lamp(numData, numDataDim, numSeed, 2);
 
     qDebug() << "Total data entry: " << dataLabelVec.size();
 }
@@ -103,5 +122,5 @@ void MainWidget::onSampleButtonClicked() {
 }
 
 void MainWidget::onProjectButtonClicked() {
-    qDebug() << "onProjectButtonClicked";
+    projectData();
 }

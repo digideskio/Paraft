@@ -30,15 +30,11 @@ SOURCES += \
     MainWidget.cpp \
     Lamp.cpp \
     Node.cpp \
-    Edge.cpp \
-    ProjectionView.cpp \
-    GraphWidget.cpp
+    ProjectionView.cpp
 
 HEADERS += \
     MainWidget.h \
     Lamp.h \
     Node.h \
-    Edge.h \
     ProjectionView.h \
-    Utils.h \
-    GraphWidget.h
+    Utils.h

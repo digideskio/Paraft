@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <unordered_map>
 #include "ProjectionView.h"
+#include "Lamp.h"
 
 class MainWidget : public QWidget {
     Q_OBJECT
@@ -34,11 +35,14 @@ private:
     QPushButton *loadButton = nullptr;
     QPushButton *sampleButton = nullptr;
     QPushButton *projectButton = nullptr;
+
+    Lamp *lamp = nullptr;
     // ---------------------------- //
 
     void loadData();
     void setupViews();
     void spreadSeed();
+    void projectData();
     std::vector<int> generateSeedIndices();
 
     std::unordered_map<int, std::vector<double> > dataMat;

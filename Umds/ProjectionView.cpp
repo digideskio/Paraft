@@ -3,7 +3,6 @@
 ProjectionView::ProjectionView(QWidget *parent) : QGraphicsView(parent) {
     int w = width();
     int h = height();
-    qDebug() << "w: " << w << "h: " << h;
     scene = new QGraphicsScene(this);
     scene->setItemIndexMethod(QGraphicsScene::NoIndex);
     scene->setSceneRect(-w/2, -h/2, w, h);
@@ -22,11 +21,20 @@ ProjectionView::~ProjectionView() {
             delete seed;
 }
 
-void ProjectionView::addNode(int nodeId, int nodeLabel) {
-    Node *node = new Node(this);
-    node->setPos(10*nodeId, -10*nodeId);
+void ProjectionView::addNode(int nodeId, int nodeLabel, int x, int y) {
+    Node *node = new Node(this, nodeLabel);
+    node->setPos(x, y);
     seeds.push_back(node);
     scene->addItem(node);
+}
+
+std::vector<double> ProjectionView::getProjSeed() {
+    std::vector<double> projSeed;
+    for (Node *seed : seeds) {
+        projSeed.push_back(seed->pos().x());
+        projSeed.push_back(seed->pos().y());
+    }
+    return projSeed;
 }
 
 void ProjectionView::drawBackground(QPainter *painter, const QRectF &rect) {

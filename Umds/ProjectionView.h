@@ -3,6 +3,7 @@
 
 #include <QDebug>
 #include <QGraphicsView>
+#include <QMouseEvent>
 #include "Node.h"
 
 class ProjectionView : public QGraphicsView {
@@ -11,7 +12,7 @@ public:
     ProjectionView(QWidget *parent = 0);
     ~ProjectionView();
 
-    void addNode(int nodeId, int nodeLabel);
+    void addNode(int nodeId, int nodeLabel, int x, int y);
     std::vector<double> getProjSeed();
 
 protected:
