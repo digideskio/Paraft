@@ -12,7 +12,8 @@ public:
     ProjectionView(QWidget *parent = 0);
     ~ProjectionView();
 
-    void addNode(int nodeId, int nodeLabel, int x, int y);
+    void addNode(int nodeLabel, int x, int y, bool isSeed);
+    void clearScene();
     std::vector<double> getProjSeed();
 
 protected:

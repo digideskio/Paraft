@@ -16,12 +16,6 @@ void Lamp::project(const vector<double> &seed, const vector<double> &projSeed,
 
     projData.resize(m, 0.0);
 
-    cout << "---- Lamp ----" << endl;
-    cout << "numData: " << m << endl;
-    cout << "numDataDim: " << d << endl;
-    cout << "numSeed: " << k << endl;
-    cout << "numProjDim: " << r << endl;
-
     vec alpha(k); alpha.fill(0.0);
     for (int p = 0; p < m; p++) {  // for each data point
         vector<double> xvec(data.begin()+p*d, data.begin()+p*d+d);
@@ -87,7 +81,7 @@ void Lamp::project(const vector<double> &seed, const vector<double> &projSeed,
         //==============================================================
         // equation (7)
         mat AtB = A.t() * B;
-        mat U(d,r), V(r,r);
+        mat U, V(r,r);
         vec S(r);
         svd(U, S, V, AtB);
         mat M = AtB * V;

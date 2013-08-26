@@ -21,11 +21,16 @@ ProjectionView::~ProjectionView() {
             delete seed;
 }
 
-void ProjectionView::addNode(int nodeId, int nodeLabel, int x, int y) {
+void ProjectionView::addNode(int nodeLabel, int x, int y, bool isSeed) {
     Node *node = new Node(this, nodeLabel);
     node->setPos(x, y);
     seeds.push_back(node);
     scene->addItem(node);
+}
+
+void ProjectionView::clearScene() {
+//    scene->clear();
+    seeds.clear();
 }
 
 std::vector<double> ProjectionView::getProjSeed() {

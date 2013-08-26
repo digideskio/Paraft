@@ -25,6 +25,8 @@ public slots:
 private:
     const int DEFAULT_WIDTH = 1280;
     const int DEFAULT_HEIGHT = 800;
+    const int NUM_SEED = 10;
+    const int NUM_DATA = 100;
 
     int numSeed;
     int numData;

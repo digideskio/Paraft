@@ -36,6 +36,7 @@ void MainWidget::setupViews() {
 }
 
 void MainWidget::spreadSeed() {
+//    projView->clearScene();
     for (unsigned int i = 0; i < seedLabelVec.size(); i++)
         projView->addNode(i, static_cast<int>(seedLabelVec[i]), -20*i, 20*i);
 }
@@ -54,6 +55,13 @@ void MainWidget::projectData() {
 }
 
 void MainWidget::loadData() {
+    dataMat.clear();
+    seedMat.clear();
+    dataVec.clear();
+    seedVec.clear();
+    dataLabelVec.clear();
+    seedLabelVec.clear();
+
     QFile f("/Users/Yang/Develop/Paraft/Umds/Data/winequality-red.csv");
     if (f.open(QIODevice::ReadOnly)) {
         QString dataString = f.readAll();
@@ -100,8 +108,8 @@ void MainWidget::loadData() {
 }
 
 std::vector<int> MainWidget::generateSeedIndices() {
-    numSeed = 10;
-    numData = dataMat.size();
+    numSeed = NUM_SEED;
+    numData = dataMat.size() < NUM_DATA ? dataMat.size() : NUM_DATA;
     std::vector<int> indices;
     for (int i = 0; i < numSeed; i++) {
         int randomIndex;
