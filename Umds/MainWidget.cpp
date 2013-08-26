@@ -36,21 +36,21 @@ void MainWidget::setupViews() {
 }
 
 void MainWidget::spreadSeed() {
-//    projView->clearScene();
     for (unsigned int i = 0; i < seedLabelVec.size(); i++)
-        projView->addNode(i, static_cast<int>(seedLabelVec[i]), -20*i, 20*i);
+        projView->addNode(static_cast<int>(seedLabelVec[i]), -20*i, 20*i, true);
 }
 
 void MainWidget::projectData() {
     std::vector<double> projSeed = projView->getProjSeed();
     std::vector<double> projData;
     lamp->project(seedVec, projSeed, dataVec, projData);
-    qDebug() << "projData.size(): " << projData.size()/2;
+    for (double value : projData)
+        qDebug() << value;
 
     for (unsigned int i = 0; i < projData.size()/2; i++) {
         int x = static_cast<int>(projData[i*2]);
         int y = static_cast<int>(projData[i*2+1]);
-        projView->addNode(i, static_cast<int>(dataLabelVec[i]), x, y);
+        projView->addNode(static_cast<int>(dataLabelVec[i]), x, y, false);
     }
 }
 
@@ -109,7 +109,7 @@ void MainWidget::loadData() {
 
 std::vector<int> MainWidget::generateSeedIndices() {
     numSeed = NUM_SEED;
-    numData = dataMat.size() < NUM_DATA ? dataMat.size() : NUM_DATA;
+    numData = static_cast<int>(dataMat.size()) < NUM_DATA ? dataMat.size() : NUM_DATA;
     std::vector<int> indices;
     for (int i = 0; i < numSeed; i++) {
         int randomIndex;

@@ -33,7 +33,7 @@ QPainterPath Node::shape() const {
 }
 
 void Node::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *) {
-    painter->setBrush(colorScheme[label]);
+    painter->setBrush(colorScheme[label%colorScheme.size()]);
     painter->setPen(Qt::NoPen);
     painter->drawEllipse(-RADIUS, -RADIUS, RADIUS*2, RADIUS*2);
 

@@ -23,10 +23,10 @@ public slots:
     void onProjectButtonClicked();
 
 private:
-    const int DEFAULT_WIDTH = 1280;
-    const int DEFAULT_HEIGHT = 800;
+    const int DEFAULT_WIDTH = 640;
+    const int DEFAULT_HEIGHT = 480;
     const int NUM_SEED = 10;
-    const int NUM_DATA = 100;
+    const int NUM_DATA = 20;
 
     int numSeed;
     int numData;

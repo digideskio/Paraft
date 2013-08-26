@@ -28,10 +28,9 @@ void ProjectionView::addNode(int nodeLabel, int x, int y, bool isSeed) {
     scene->addItem(node);
 }
 
-void ProjectionView::clearScene() {
-//    scene->clear();
-    seeds.clear();
-}
+//void ProjectionView::clearScene() {
+//    seeds.clear();
+//}
 
 std::vector<double> ProjectionView::getProjSeed() {
     std::vector<double> projSeed;
