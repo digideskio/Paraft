@@ -21,12 +21,13 @@ public slots:
     void onLoadButtonClicked();
     void onSampleButtonClicked();
     void onProjectButtonClicked();
+    void onResetButtonClicked();
 
 private:
-    const int DEFAULT_WIDTH = 640;
-    const int DEFAULT_HEIGHT = 480;
+    const int DEFAULT_WIDTH = 1280;
+    const int DEFAULT_HEIGHT = 800;
     const int NUM_SEED = 10;
-    const int NUM_DATA = 20;
+    const int NUM_DATA = 100;
 
     int numSeed;
     int numData;
@@ -37,6 +38,7 @@ private:
     QPushButton *loadButton = nullptr;
     QPushButton *sampleButton = nullptr;
     QPushButton *projectButton = nullptr;
+    QPushButton *resetButton = nullptr;
 
     Lamp *lamp = nullptr;
     // ---------------------------- //
@@ -45,9 +47,10 @@ private:
     void setupViews();
     void spreadSeed();
     void projectData();
+    void reset();
     std::vector<int> generateSeedIndices();
 
-    std::unordered_map<int, std::vector<double> > dataMat;
+    std::unordered_map<int, std::vector<double> > dataMat;    
     std::unordered_map<int, std::vector<double> > seedMat;
     std::vector<double> dataVec;
     std::vector<double> seedVec;

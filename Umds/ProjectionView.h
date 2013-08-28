@@ -13,7 +13,6 @@ public:
     ~ProjectionView();
 
     void addNode(int nodeLabel, int x, int y, bool isSeed);
-//    void clearScene();
     std::vector<double> getProjSeed();
 
 protected:

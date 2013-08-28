@@ -21,10 +21,12 @@ void MainWidget::setupViews() {
     loadButton = new QPushButton("Load");
     sampleButton = new QPushButton("Sample");
     projectButton = new QPushButton("Project");
+    resetButton = new QPushButton("Reset");
 
     connect(loadButton, SIGNAL(clicked()), this, SLOT(onLoadButtonClicked()));
     connect(sampleButton, SIGNAL(clicked()), this, SLOT(onSampleButtonClicked()));
     connect(projectButton, SIGNAL(clicked()), this, SLOT(onProjectButtonClicked()));
+    connect(resetButton, SIGNAL(clicked()), this, SLOT(onResetButtonClicked()));
 
     gridLayout = new QGridLayout();  // 8*8
     gridLayout->addWidget(projView, 1, 0, 8, 8);
@@ -54,6 +56,10 @@ void MainWidget::projectData() {
     }
 }
 
+void MainWidget::reset() {
+
+}
+
 void MainWidget::loadData() {
     dataMat.clear();
     seedMat.clear();
@@ -81,8 +87,28 @@ void MainWidget::loadData() {
         f.close();
     }
 
+    numData = static_cast<int>(dataMat.size());
     int numDataDim = static_cast<int>(dataVec.size());
     qDebug() << "numDataDim: " << numDataDim;
+
+    // -- normalize to gaussian distribution with µ = 0 -- //
+    std::vector<double> tempDataVec(numDataDim, 0.0);
+    for (auto entry : dataMat)
+        for (int i = 0; i < numDataDim; i++)
+            tempDataVec[i] += entry.second[i];
+
+    for (unsigned int i = 0; i < tempDataVec.size(); i++) {
+        std::cout << tempDataVec[i] << "->";
+        tempDataVec[i] /= numData;
+        std::cout << tempDataVec[i] << std::endl;
+    }
+
+    for (auto entry : dataMat)
+        for (int i = 0; i < numDataDim; i++) {
+            std::cout << entry.second[i] << "->";
+            entry.second[i] = entry.second[i] / tempDataVec[i] - 1;
+            std::cout << entry.second[i] << std::endl;
+        }
 
     std::vector<int> indices = generateSeedIndices();
     for (int i = 0; i < numSeed; i++) {
@@ -109,7 +135,7 @@ void MainWidget::loadData() {
 
 std::vector<int> MainWidget::generateSeedIndices() {
     numSeed = NUM_SEED;
-    numData = static_cast<int>(dataMat.size()) < NUM_DATA ? dataMat.size() : NUM_DATA;
+    numData = numData < NUM_DATA ? numData : NUM_DATA;
     std::vector<int> indices;
     for (int i = 0; i < numSeed; i++) {
         int randomIndex;
@@ -131,4 +157,8 @@ void MainWidget::onSampleButtonClicked() {
 
 void MainWidget::onProjectButtonClicked() {
     projectData();
+}
+
+void MainWidget::onResetButtonClicked() {
+    reset();
 }
