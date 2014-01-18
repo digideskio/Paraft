@@ -1,7 +1,6 @@
 #ifndef CONSTS_H
 #define CONSTS_H
 
-//#include <hash_map>
 #include <unordered_map>
 #include <algorithm>
 #include <fstream>
@@ -30,7 +29,7 @@ namespace util {
         T x, y, z;
         vector3(T x_ = 0, T y_ = 0, T z_ = 0) : x(x_), y(y_), z(z_) { }
         T*       GetPointer()                           { return &x; }
-        T        VolumeSize()                              { return x * y * z; }
+        T        VolumeSize()                           { return x * y * z; }
         float    MagnituteSquared()                     { return x*x + y*y + z*z; }
         float    Magnitute()                            { return sqrt((*this).MagnituteSquared()); }
         float    DistanceFrom(vector3 const& rhs) const { return (*this - rhs).Magnitute(); }

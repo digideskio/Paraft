@@ -2,7 +2,10 @@
 
 Metadata::Metadata(const string &fpath) {
     ifstream meta(fpath.c_str());
-    if (!meta) { cout << "cannot read meta file: " << fpath << endl; exit(1); }
+    if (!meta) {
+        cout << "cannot read meta file: " << fpath << endl;
+        exit(EXIT_FAILURE);
+    }
 
     string line;
     while (getline(meta, line)) {
@@ -14,8 +17,6 @@ Metadata::Metadata(const string &fpath) {
             start_ = atoi(value.c_str());
         } else if (line.find("end") != line.npos) {
             end_ = atoi(value.c_str());
-        } else if (line.find("dynamicTF") != line.npos) {
-            dynamicTF_ = value == "true" ? true : false;
         } else {
             // remove leading & trailing chars () or ""
             value = value.substr(1, value.size()-2);
@@ -39,7 +40,10 @@ Metadata::Metadata(const string &fpath) {
                 }
                 dim.push_back(atoi(util::trim(value).c_str()));
 
-                if (dim.size() != 3) { cout << "incorrect volumeDim format" << endl; exit(1); }
+                if (dim.size() != 3) {
+                    cout << "incorrect volumeDim format" << endl;
+                    exit(EXIT_FAILURE);
+                }
                 volumeDim_ = vector3i(dim[0], dim[1], dim[2]);
             }
         }

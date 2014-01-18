@@ -11,24 +11,23 @@ public:
    ~DataManager();
 
     float* GetDataPtr(int t)    { return dataSequence_[t]; }
-    float* GetTFMap(int t)      { return tfSequence_[t]; }
-    int GetTFRes()              { return tfRes_ < 1 ? DEFAULT_TF_RES : tfRes_; }
+    float* GetTFMap()           { return pTFMap_; }
+    int GetTFRes()              { return tfRes_ > 0 ? tfRes_ : DEFAULT_TF_RES; }
     vector3i GetBlockDim()      { return blockDim_; }
 
     void InitTF(const Metadata &meta);
-    void LoadDataSequence(const Metadata &meta, const int timestep);
+    void LoadDataSequence(const Metadata &meta, const int currentT);
     void SaveMaskVolume(float *pData, const Metadata &meta, const int timestep);
+
 private:
-    int preprocessData(float *pData, bool remapping);   // returns peak value position
-    void normalize(float *pData);
+    void preprocessData(float *pData);
 
     DataSequence dataSequence_;
-    DataSequence tfSequence_;
     vector3i blockDim_;
 
     int volumeSize_;
     int tfRes_;
-    float *pStaticTfMap_;
+    float *pTFMap_;
 };
 
 #endif // DATAMANAGER_H

@@ -10,7 +10,7 @@ FeatureTracker::~FeatureTracker() {
     if (featureSequence_.size() > 0) {
         for (auto it = featureSequence_.begin(); it != featureSequence_.end(); it++) {
             vector<Feature> featureVector = it->second;
-            for (size_t i = 0; i < featureVector.size(); i++) {
+            for (size_t i = 0; i < featureVector.size(); ++i) {
                 Feature f = featureVector[i];
                 f.edgeVoxels.clear();
                 f.bodyVoxels.clear();
@@ -67,7 +67,7 @@ void FeatureTracker::TrackFeature(float* pData, int direction, int mode) {
     maskPrev_ = mask_;
     std::fill(mask_.begin(), mask_.end(), 0.0f);
 
-    for (size_t i = 0; i < currentFeatures_.size(); i++) {
+    for (size_t i = 0; i < currentFeatures_.size(); ++i) {
         Feature f = currentFeatures_[i];
 
         vector3i offset = predictRegion(i, direction, mode);
